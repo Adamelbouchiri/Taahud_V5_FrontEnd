@@ -1,0 +1,381 @@
+/* ============================================================
+ *  Thmanyah Typeface (self-hosted)
+ *  ----------------------------------------------------------------
+ *  Three families:
+ *    'Thmanyah Sans'           — body / UI default
+ *    'Thmanyah Serif Text'     — body serif, optimized for paragraphs
+ *    'Thmanyah Serif Display'  — display serif, for headings/large sizes
+ *
+ *  Each family ships 5 weights mapped to standard CSS values:
+ *    Light    → 300
+ *    Regular  → 400
+ *    Medium   → 500
+ *    Bold     → 700
+ *    Black    → 900
+ *
+ *  Tailwind utilities like `font-medium` / `font-bold` will pick
+ *  the right file automatically. `font-display: swap` keeps text
+ *  visible while the font loads.
+ *
+ *  Files live in src/assets/fonts/ — Vite resolves the path below
+ *  via the relative URL.
+ * ============================================================ */
+
+/* ---------- Thmanyah Sans ---------- */
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/thmanyahsans-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/thmanyahsans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/thmanyahsans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/thmanyahsans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/thmanyahsans-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Thmanyah Serif Text ---------- */
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('../assets/fonts/thmanyahseriftext-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('../assets/fonts/thmanyahseriftext-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('../assets/fonts/thmanyahseriftext-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('../assets/fonts/thmanyahseriftext-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('../assets/fonts/thmanyahseriftext-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Thmanyah Serif Display ---------- */
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('../assets/fonts/thmanyahserifdisplay-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('../assets/fonts/thmanyahserifdisplay-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('../assets/fonts/thmanyahserifdisplay-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('../assets/fonts/thmanyahserifdisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('../assets/fonts/thmanyahserifdisplay-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    height: 100%;
+    /* Native smooth scroll for in-page anchors and scrollIntoView
+       calls (e.g. the create-project wizard's scrollTo at step
+       changes). Disabled below for users who prefer reduced motion. */
+    scroll-behavior: smooth;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Thmanyah Sans', system-ui, sans-serif;
+    background: #fafaf6;
+    color: #0f1129;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  input,
+  button,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  /* Respect the user's OS-level motion preference. Strip the fancy
+     stuff but keep functional indicators. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------- Form fields ---------- */
+  .field {
+    @apply w-full bg-white border border-app-border rounded-[11px] text-ink outline-none transition-all;
+    padding: 14px 44px 14px 16px;
+    font-size: 14.5px;
+  }
+  .field::placeholder {
+    color: #b5b5c2;
+  }
+  .field:hover {
+    border-color: #cfcdc4;
+  }
+  .field:focus {
+    border-color: #2c2f7c;
+    box-shadow: 0 0 0 4px rgba(44, 47, 124, 0.1);
+  }
+  .field.error {
+    border-color: #b91c1c;
+  }
+  .field.error:focus {
+    box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
+  }
+  .field-no-icon {
+    padding-right: 16px;
+  }
+
+  .field-label {
+    @apply block text-[13px] font-medium text-ink-soft mb-2;
+  }
+  .field-hint {
+    @apply text-xs text-muted mt-1.5;
+  }
+  .field-err {
+    @apply text-xs text-danger mt-1.5;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn-primary {
+    @apply w-full inline-flex items-center justify-center gap-2 bg-primary text-white border border-primary rounded-[11px] text-[15px] font-semibold transition-all cursor-pointer;
+    padding: 14px 24px;
+    box-shadow: 0 6px 14px rgba(44, 47, 124, 0.18);
+  }
+  .btn-primary:hover {
+    background: #1f2258;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(44, 47, 124, 0.28);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    @apply w-full inline-flex items-center justify-center gap-2 bg-white text-ink border border-app-border rounded-[11px] text-[15px] font-medium transition-all cursor-pointer;
+    padding: 13px 24px;
+  }
+  .btn-secondary:hover {
+    border-color: #cfcdc4;
+    background: #f4f1e9;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1 bg-transparent border-0 text-muted cursor-pointer transition-colors;
+    padding: 8px;
+  }
+  .btn-ghost:hover {
+    color: #2c2f7c;
+  }
+
+  .link {
+    @apply text-secondary font-semibold cursor-pointer transition-colors;
+    text-decoration: none;
+  }
+  .link:hover {
+    color: #0d5538;
+  }
+
+  /* ---------- Account type cards ---------- */
+  .acct {
+    @apply flex flex-col items-center gap-2.5 bg-white cursor-pointer text-center transition-all;
+    padding: 16px 12px;
+    border: 1.5px solid #e5e3dc;
+    border-radius: 12px;
+  }
+  .acct:hover {
+    border-color: #2c2f7c;
+    transform: translateY(-1px);
+  }
+  .acct.active {
+    border-color: #2c2f7c;
+    background: rgba(44, 47, 124, 0.04);
+  }
+  .acct .ico {
+    @apply flex items-center justify-center bg-cream text-muted transition-all;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+  .acct.active .ico {
+    @apply bg-primary text-white;
+  }
+
+  /* ---------- OTP ---------- */
+  .otp {
+    @apply text-center font-bold bg-white text-ink outline-none transition-all;
+    width: 52px;
+    height: 60px;
+    font-size: 22px;
+    border: 1.5px solid #e5e3dc;
+    border-radius: 11px;
+  }
+  .otp:focus {
+    border-color: #2c2f7c;
+    box-shadow: 0 0 0 4px rgba(44, 47, 124, 0.1);
+  }
+  .otp.filled {
+    border-color: #136d4a;
+    color: #136d4a;
+    background: rgba(19, 109, 74, 0.04);
+  }
+  .otp.error {
+    border-color: #b91c1c;
+  }
+
+  /* ---------- Toggle pills ---------- */
+  .pill-group {
+    @apply flex gap-1 p-1 bg-cream rounded-xl;
+  }
+  .pill {
+    @apply flex-1 rounded-[9px] border-0 bg-transparent text-muted font-semibold cursor-pointer transition-all;
+    padding: 10px 14px;
+    font-size: 13.5px;
+  }
+  .pill.active {
+    @apply bg-white text-primary;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ---------- Native select chevron (RTL: chevron on the LEFT) ---------- */
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a7a8c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 16px center;
+    padding-left: 40px;
+  }
+
+  /* ---------- Phone country-code prefix ---------- */
+  .phone-cc {
+    @apply bg-white border border-app-border rounded-[11px] font-semibold text-ink whitespace-nowrap;
+    padding: 14px 14px;
+    font-size: 14.5px;
+  }
+
+  /* ---------- Smooth scroll on opt-in containers ---------- */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ---------- Stagger entrance helpers ----------
+     Apply `.stagger` to a parent that already animates its children
+     with `animate-fade-up` (or another entry animation). Each child
+     gets a slightly delayed start so the group "cascades" in. Up to
+     12 children covered; beyond that the delay caps. */
+  .stagger > * { animation-delay: 0ms; }
+  .stagger > *:nth-child(1)  { animation-delay: 40ms; }
+  .stagger > *:nth-child(2)  { animation-delay: 80ms; }
+  .stagger > *:nth-child(3)  { animation-delay: 120ms; }
+  .stagger > *:nth-child(4)  { animation-delay: 160ms; }
+  .stagger > *:nth-child(5)  { animation-delay: 200ms; }
+  .stagger > *:nth-child(6)  { animation-delay: 240ms; }
+  .stagger > *:nth-child(7)  { animation-delay: 280ms; }
+  .stagger > *:nth-child(8)  { animation-delay: 320ms; }
+  .stagger > *:nth-child(9)  { animation-delay: 360ms; }
+  .stagger > *:nth-child(10) { animation-delay: 400ms; }
+  .stagger > *:nth-child(n+11) { animation-delay: 440ms; }
+
+  /* Shimmer skeleton — softer than animate-pulse, used on the
+     RequireArenaAccess loading state and other long placeholders. */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      #efece4 0%,
+      #f7f5ee 50%,
+      #efece4 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}

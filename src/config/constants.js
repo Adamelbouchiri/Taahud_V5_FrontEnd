@@ -1,0 +1,181 @@
+import { UserRound, HardHat, Truck, Building2, Compass } from 'lucide-react';
+
+/* ============================================================
+ *  ACCOUNT TYPES vs UI CATEGORIES
+ *  ----------------------------------------------------------------
+ *  This file separates two related but DIFFERENT concepts:
+ *
+ *  1. ACCOUNT_TYPES — the values stored in the database
+ *     `account_type` column. There are FIVE of them:
+ *
+ *       individual          عميل
+ *       entrepreneur        مقاول       (called "contractor" in English)
+ *       engineering         مكتب هندسي
+ *       supplier            مورّد
+ *       developer           مطوّر عقاري
+ *
+ *  2. ACCOUNT_CATEGORIES — the four cards shown in the
+ *     registration UI. "Service provider" is a UI grouping that
+ *     contains TWO database account types (entrepreneur + engineering
+ *     office), revealed via sub-role buttons after the user picks
+ *     the "مقدم خدمة" card.
+ *
+ *  Helpers like `isServiceProvider(accountType)` make role checks
+ *  read naturally without scattering OR conditions everywhere.
+ * ============================================================ */
+
+
+/* ============================================================
+ *  Database `account_type` values — match the backend enum:
+ *    individual, entrepreneur, engineering, supplier, developer
+ * ============================================================ */
+export const ACCOUNT_TYPE = {
+  INDIVIDUAL: 'individual',
+  ENTREPRENEUR: 'entrepreneur',
+  ENGINEERING: 'engineering',
+  SUPPLIER: 'supplier',
+  DEVELOPER: 'developer',
+};
+
+/* Pretty labels for any account_type — useful in the user menu,
+   profile page, applications list, etc. */
+export const ACCOUNT_TYPE_LABELS = {
+  individual: 'عميل',
+  entrepreneur: 'مقاول',
+  engineering: 'مكتب هندسي',
+  supplier: 'مورّد',
+  developer: 'مطور عقاري',
+};
+
+
+/* ============================================================
+ *  UI categories — the four cards shown in registration.
+ *  "service_provider" is NOT a database value — it's a UI
+ *  grouping. Picking it reveals the sub-role buttons.
+ * ============================================================ */
+export const ACCOUNT_CATEGORIES = [
+  {
+    value: 'individual',
+    label: 'عميل',
+    desc: 'باحث عن خدمة أو مواد',
+    icon: UserRound,
+  },
+  {
+    value: 'service_provider', // UI-only grouping
+    label: 'مقدم خدمة',
+    desc: 'مقاول أو مكتب هندسي',
+    icon: HardHat,
+  },
+  {
+    value: 'supplier',
+    label: 'مورّد',
+    desc: 'مورّد منتجات ومواد',
+    icon: Truck,
+  },
+  {
+    value: 'developer',
+    label: 'مطور عقاري',
+    desc: 'مشاريع ومجمعات',
+    icon: Building2,
+  },
+];
+
+
+/* ============================================================
+ *  Service provider sub-roles — shown as buttons when the
+ *  category is "service_provider". Each role's `value` IS the
+ *  database account_type.
+ * ============================================================ */
+export const SERVICE_PROVIDER_ROLES = [
+  {
+    value: 'entrepreneur', // saved to DB as account_type
+    label: 'مقاول',
+    desc: 'تنفيذ المشاريع والأعمال',
+    icon: HardHat,
+  },
+  {
+    value: 'engineering', // saved to DB as account_type
+    label: 'مكتب هندسي',
+    desc: 'تصميم واستشارات وإشراف',
+    icon: Compass,
+  },
+];
+
+
+/* ============================================================
+ *  Specialty options — only for supplier and developer.
+ *  individual / entrepreneur / engineering don't use this.
+ * ============================================================ */
+export const SUPPLIER_SPECIALTIES = [
+  'مواد بناء',
+  'مواد كهربائية',
+  'سباكة وأدوات صحية',
+  'دهانات',
+  'أدوات ومعدات',
+  'حديد وأسمنت',
+  'أخشاب',
+  'بلاط وسيراميك',
+  'ألمنيوم وزجاج',
+  'أنظمة تكييف',
+];
+
+export const DEVELOPER_SPECIALTIES = [
+  'تطوير سكني',
+  'تطوير تجاري',
+  'تطوير مختلط الاستخدام',
+  'مجمعات سكنية',
+  'أبراج تجارية',
+  'فلل ومنازل',
+  'شقق ومجمعات',
+  'تطوير صناعي',
+];
+
+export const CITIES = [
+  'الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة',
+  'الدمام', 'الخبر', 'الطائف', 'تبوك',
+  'بريدة', 'أبها', 'حائل', 'جازان',
+];
+
+
+/* ============================================================
+ *  Helpers
+ *  ----------------------------------------------------------------
+ *  These take a database `account_type` and return UI-relevant
+ *  flags or strings. Use them everywhere in place of raw
+ *  equality checks (=== 'entrepreneur') so the grouping logic
+ *  stays in one place.
+ * ============================================================ */
+
+/* True for entrepreneur OR engineering — the two account
+   types that bid on individual / developer projects. Use this in any check
+   that previously read `account_type === 'service_provider'`. */
+export function isServiceProvider(accountType) {
+  return (
+    accountType === 'entrepreneur' ||
+    accountType === 'engineering'
+  );
+}
+
+/* Pretty label for a stored account_type value. */
+export function accountTypeLabel(accountType) {
+  return ACCOUNT_TYPE_LABELS[accountType] || accountType || '';
+}
+
+/* True if this account_type uses the supplier/developer specialty
+   dropdown. Service-provider roles do NOT — their "specialty" is
+   the account_type itself (entrepreneur vs engineering). */
+export function hasSpecialty(accountType) {
+  return accountType === 'supplier' || accountType === 'developer';
+}
+
+export function getSpecialties(accountType) {
+  if (accountType === 'supplier') return SUPPLIER_SPECIALTIES;
+  if (accountType === 'developer') return DEVELOPER_SPECIALTIES;
+  return [];
+}
+
+export function specialtyLabel(accountType) {
+  if (accountType === 'supplier') return 'نوع المنتجات';
+  if (accountType === 'developer') return 'نوع المشاريع';
+  return 'التخصص';
+}
