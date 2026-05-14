@@ -2,6 +2,8 @@ import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import BrandPanel from './BrandPanel';
 import Logo from '../Logo';
+import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function AuthShell({
   kicker,
@@ -10,24 +12,39 @@ export default function AuthShell({
   onBack,
   children,
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen">
       <BrandPanel />
 
       <main className="flex-1 flex items-center justify-center px-6 py-8 lg:px-12 relative">
-        {/* Mobile-only logo (lg-and-up users see it in the BrandPanel) */}
-        <div className="lg:hidden absolute top-6 end-6 animate-fade-up">
-          <Logo height={42} />
+        {/* Top-end controls: language/theme switcher + mobile logo */}
+        <div className="absolute top-6 end-6 flex items-center gap-2 animate-fade-up">
+          <LanguageThemeSwitcher compact />
+          <span className="lg:hidden">
+            <Logo height={42} />
+          </span>
         </div>
 
         <div className="w-full max-w-[460px] mt-8 animate-fade-up">
           {onBack && (
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 mb-5 rounded-full bg-white border border-app-border text-ink-soft text-[13px] font-medium hover:border-muted transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 mb-5 rounded-full text-[13px] font-medium transition-colors"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = 'var(--border-strong)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = 'var(--border-default)')
+              }
             >
               <ChevronLeft size={16} className="rotate-180" />
-              <span>رجوع</span>
+              <span>{t('auth.shell.back')}</span>
             </button>
           )}
 
@@ -47,14 +64,26 @@ export default function AuthShell({
           )}
 
           <h2
-            className="font-display text-ink m-0 mb-2.5"
-            style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.15 }}
+            className="font-display m-0 mb-2.5"
+            style={{
+              fontSize: 34,
+              fontWeight: 700,
+              lineHeight: 1.15,
+              color: 'var(--text-ink)',
+            }}
           >
             {title}
           </h2>
 
           {subtitle && (
-            <p className="text-muted m-0 mb-8" style={{ fontSize: 15, lineHeight: 1.6 }}>
+            <p
+              className="m-0 mb-8"
+              style={{
+                fontSize: 15,
+                lineHeight: 1.6,
+                color: 'var(--text-muted)',
+              }}
+            >
               {subtitle}
             </p>
           )}

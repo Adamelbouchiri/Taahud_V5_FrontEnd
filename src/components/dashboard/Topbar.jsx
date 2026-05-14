@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, ChevronDown, UserCircle, LogOut, Settings } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
-import { accountTypeLabel } from '../../config/constants';
+import { useTranslation } from '../../i18n/LanguageContext';
+import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 
 /* ============================================================
  *  Topbar — sits above the main content area.
  *  - On mobile, hosts the sidebar toggle.
  *  - Always shows the user avatar with a small dropdown.
+ *  - Also hosts the language + theme switcher pair so dashboard
+ *    users can change locale / dark mode anywhere in the app.
  *
  *  Props:
  *    onMenuToggle  → opens the mobile sidebar
@@ -15,10 +18,14 @@ import { accountTypeLabel } from '../../config/constants';
  * ============================================================ */
 
 export default function Topbar({ onMenuToggle, title }) {
+  const { t } = useTranslation();
   return (
     <header
-      className="sticky top-0 z-30 bg-white"
-      style={{ borderBottom: '1px solid #e5e3dc' }}
+      className="sticky top-0 z-30"
+      style={{
+        background: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-default)',
+      }}
     >
       <div className="flex items-center justify-between h-[96px] px-5 lg:px-8">
         <div className="flex items-center gap-3 min-w-0">
@@ -26,15 +33,15 @@ export default function Topbar({ onMenuToggle, title }) {
           <button
             type="button"
             onClick={onMenuToggle}
-            aria-label="فتح القائمة"
+            aria-label={t('nav.openMenu')}
             className="lg:hidden flex items-center justify-center"
             style={{
               width: 38,
               height: 38,
               borderRadius: 10,
-              background: '#fafaf6',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: 'pointer',
               flexShrink: 0,
             }}
@@ -48,7 +55,7 @@ export default function Topbar({ onMenuToggle, title }) {
               style={{
                 fontSize: 17,
                 fontWeight: 700,
-                color: '#0f1129',
+                color: 'var(--text-ink)',
                 lineHeight: 1.3,
               }}
             >
@@ -58,6 +65,7 @@ export default function Topbar({ onMenuToggle, title }) {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageThemeSwitcher compact />
           <UserMenu />
         </div>
       </div>
@@ -71,6 +79,7 @@ export default function Topbar({ onMenuToggle, title }) {
 function UserMenu() {
   const navigate = useNavigate();
   const { user, logout } = useUser();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -92,8 +101,10 @@ function UserMenu() {
     }
   };
 
-  const initial = (user?.name || 'م').trim().charAt(0);
-  const roleLabel = accountTypeLabel(user?.account_type);
+  const initial = (user?.name || '·').trim().charAt(0);
+  const roleLabel = user?.account_type
+    ? t(`accountType.${user.account_type}`)
+    : '';
 
   return (
     <div className="relative" ref={ref}>
@@ -106,13 +117,13 @@ function UserMenu() {
         style={{
           padding: '6px 10px 6px 6px',
           borderRadius: 999,
-          background: open ? '#fafaf6' : 'transparent',
-          border: '1px solid #e5e3dc',
+          background: open ? 'var(--bg-canvas)' : 'transparent',
+          border: '1px solid var(--border-default)',
           cursor: 'pointer',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf6')}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-canvas)')}
         onMouseLeave={(e) =>
-          (e.currentTarget.style.background = open ? '#fafaf6' : 'transparent')
+          (e.currentTarget.style.background = open ? 'var(--bg-canvas)' : 'transparent')
         }
       >
         <div
@@ -130,11 +141,15 @@ function UserMenu() {
         </div>
         <span
           className="hidden sm:inline font-semibold truncate"
-          style={{ fontSize: 13, color: '#0f1129', maxWidth: 140 }}
+          style={{ fontSize: 13, color: 'var(--text-ink)', maxWidth: 140 }}
         >
-          {user?.name || 'مستخدم'}
+          {user?.name || t('nav.profile')}
         </span>
-        <ChevronDown size={14} className="text-muted hidden sm:inline" />
+        <ChevronDown
+          size={14}
+          className="hidden sm:inline"
+          style={{ color: 'var(--text-muted)' }}
+        />
       </button>
 
       {open && (
@@ -145,25 +160,28 @@ function UserMenu() {
             top: 'calc(100% + 8px)',
             insetInlineEnd: 0,
             width: 240,
-            background: 'white',
+            background: 'var(--bg-surface)',
             borderRadius: 12,
-            border: '1px solid #e5e3dc',
-            boxShadow: '0 16px 36px rgba(15,17,41,0.10)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-elevated)',
             overflow: 'hidden',
           }}
         >
           {/* Profile summary */}
-          <div className="px-4 py-3.5" style={{ borderBottom: '1px solid #efece4' }}>
+          <div
+            className="px-4 py-3.5"
+            style={{ borderBottom: '1px solid var(--border-soft)' }}
+          >
             <div
               className="font-bold truncate"
-              style={{ fontSize: 13.5, color: '#0f1129' }}
+              style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
             >
-              {user?.name || 'مستخدم'}
+              {user?.name || t('nav.profile')}
             </div>
             {roleLabel && (
               <div
                 className="font-medium mt-0.5"
-                style={{ fontSize: 12, color: '#7a7a8c' }}
+                style={{ fontSize: 12, color: 'var(--text-muted)' }}
               >
                 {roleLabel}
               </div>
@@ -173,7 +191,7 @@ function UserMenu() {
           <div className="py-1">
             <MenuItem
               icon={UserCircle}
-              label="الملف الشخصي"
+              label={t('dashboard.userMenu.profile')}
               onClick={() => {
                 setOpen(false);
                 navigate('/dashboard/profile');
@@ -181,7 +199,7 @@ function UserMenu() {
             />
             <MenuItem
               icon={Settings}
-              label="الإعدادات"
+              label={t('dashboard.userMenu.settings')}
               onClick={() => {
                 setOpen(false);
                 navigate('/dashboard/profile');
@@ -189,10 +207,13 @@ function UserMenu() {
             />
           </div>
 
-          <div className="py-1" style={{ borderTop: '1px solid #efece4' }}>
+          <div
+            className="py-1"
+            style={{ borderTop: '1px solid var(--border-soft)' }}
+          >
             <MenuItem
               icon={LogOut}
-              label="تسجيل الخروج"
+              label={t('dashboard.userMenu.logout')}
               onClick={handleLogout}
               danger
             />
@@ -209,7 +230,7 @@ function MenuItem({ icon: Icon, label, onClick, danger }) {
       type="button"
       onClick={onClick}
       role="menuitem"
-      className="w-full flex items-center gap-2.5 transition-colors text-right"
+      className="w-full flex items-center gap-2.5 transition-colors text-start"
       style={{
         padding: '10px 16px',
         background: 'transparent',
@@ -217,13 +238,13 @@ function MenuItem({ icon: Icon, label, onClick, danger }) {
         cursor: 'pointer',
         fontSize: 13.5,
         fontWeight: 500,
-        color: danger ? '#b91c1c' : '#3a3a52',
+        color: danger ? 'var(--accent-danger)' : 'var(--text-ink-soft)',
         fontFamily: 'inherit',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = danger
-          ? 'rgba(185,28,28,0.04)'
-          : '#fafaf6';
+          ? 'rgba(185,28,28,0.06)'
+          : 'var(--bg-canvas)';
       }}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >

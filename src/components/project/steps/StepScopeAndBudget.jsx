@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Calendar,
-  Clock,
-  Award,
-} from 'lucide-react';
+import { Calendar, Clock, Award } from 'lucide-react';
 import Field from '../../form/Field';
 import SelectField from '../../form/SelectField';
 import TextareaField from '../../form/TextareaField';
@@ -11,31 +7,33 @@ import {
   PROJECT_DURATIONS,
   EXPERIENCE_LEVELS,
 } from '../../../config/projectConstants';
+import { useTranslation } from '../../../i18n/LanguageContext';
 
 export default function StepScopeAndBudget({ form, update, errors }) {
+  const { t } = useTranslation();
+  const k = 'projects.create.steps.scopeBudget';
+
   return (
     <div className="flex flex-col gap-7">
-      {/* Scope */}
       <TextareaField
-        label="نطاق العمل"
+        label={t(`${k}.scopeLabel`)}
         rows={5}
-        placeholder="حدّد بالتفصيل نطاق العمل المطلوب، المراحل، والنتائج المتوقعة..."
+        placeholder={t(`${k}.scopePlaceholder`)}
         value={form.scope}
         onChange={(e) => update('scope', e.target.value)}
         error={errors.scope}
-        hint="كلّما كان النطاق أوضح، كانت العروض أدقّ."
+        hint={t(`${k}.scopeHint`)}
       />
 
-      {/* Timeline section */}
       <div>
         <SectionHeader
-          title="الجدول الزمني"
-          subtitle="حدّد تواريخ البداية والنهاية أو المدة المتوقعة"
+          title={t(`${k}.timelineTitle`)}
+          subtitle={t(`${k}.timelineSubtitle`)}
         />
 
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <Field
-            label="تاريخ البداية"
+            label={t(`${k}.startDate`)}
             icon={Calendar}
             type="date"
             value={form.start_date}
@@ -43,7 +41,7 @@ export default function StepScopeAndBudget({ form, update, errors }) {
             error={errors.start_date}
           />
           <Field
-            label="تاريخ الانتهاء"
+            label={t(`${k}.endDate`)}
             icon={Calendar}
             type="date"
             value={form.end_date}
@@ -53,20 +51,19 @@ export default function StepScopeAndBudget({ form, update, errors }) {
         </div>
 
         <SelectField
-          label="المدة المتوقعة"
+          label={t(`${k}.durationLabel`)}
           icon={Clock}
           options={PROJECT_DURATIONS}
           value={form.expected_duration}
           onChange={(e) => update('expected_duration', e.target.value)}
-          placeholder="اختر المدة"
+          placeholder={t(`${k}.durationPlaceholder`)}
         />
       </div>
 
-      {/* Budget & requirements section */}
       <div>
         <SectionHeader
-          title="الميزانية والمتطلبات"
-          subtitle="بياناتٌ تساعد الشركاء على تقديم عروض دقيقة"
+          title={t(`${k}.budgetReqsTitle`)}
+          subtitle={t(`${k}.budgetReqsSubtitle`)}
         />
 
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
@@ -74,15 +71,17 @@ export default function StepScopeAndBudget({ form, update, errors }) {
             value={form.budget}
             onChange={(e) => update('budget', e.target.value)}
             error={errors.budget}
+            t={t}
+            kBase={k}
           />
 
           <SelectField
-            label="الخبرة المطلوبة"
+            label={t(`${k}.experienceLabel`)}
             icon={Award}
             options={EXPERIENCE_LEVELS}
             value={form.experience}
             onChange={(e) => update('experience', e.target.value)}
-            placeholder="اختر مستوى الخبرة"
+            placeholder={t(`${k}.experiencePlaceholder`)}
           />
         </div>
       </div>
@@ -90,23 +89,24 @@ export default function StepScopeAndBudget({ form, update, errors }) {
   );
 }
 
-/* ---------- Local helpers ---------- */
-
 function SectionHeader({ title, subtitle }) {
   return (
     <div
       className="flex items-end justify-between mb-4 pb-3"
-      style={{ borderBottom: '1px solid #efece4' }}
+      style={{ borderBottom: '1px solid var(--border-soft)' }}
     >
       <div>
         <h3
-          className="font-display text-ink m-0"
-          style={{ fontSize: 16, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h3>
         {subtitle && (
-          <p className="text-muted m-0 mt-1" style={{ fontSize: 12.5 }}>
+          <p
+            className="m-0 mt-1"
+            style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
+          >
             {subtitle}
           </p>
         )}
@@ -115,18 +115,18 @@ function SectionHeader({ title, subtitle }) {
   );
 }
 
-function BudgetField({ value, onChange, error }) {
+function BudgetField({ value, onChange, error, t, kBase }) {
   return (
     <div className="animate-fade-up">
-      <label className="field-label">الميزانية المتوقعة</label>
+      <label className="field-label">{t(`${kBase}.budgetLabel`)}</label>
       <div className="flex gap-2">
-        <span className="phone-cc">ر.س</span>
+        <span className="phone-cc">{t('common.currency')}</span>
         <input
           type="number"
           inputMode="decimal"
           step="0.01"
           min="0"
-          placeholder="100000"
+          placeholder={t(`${kBase}.budgetPlaceholder`)}
           value={value}
           onChange={onChange}
           className={`field field-no-icon ${error ? 'error' : ''}`}
@@ -134,11 +134,7 @@ function BudgetField({ value, onChange, error }) {
         />
       </div>
       {error && <p className="field-err">{error}</p>}
-      {!error && (
-        <p className="field-hint">
-          إجمالي الميزانية المخصّصة للمشروع.
-        </p>
-      )}
+      {!error && <p className="field-hint">{t(`${kBase}.budgetHint`)}</p>}
     </div>
   );
 }

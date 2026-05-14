@@ -2,27 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { ShieldOff, Sparkles } from 'lucide-react';
 import { auth } from '../services';
 import { arenaConfig, canViewArena } from '../config/projectConstants';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  RequireArenaAccess
  *  ----------------------------------------------------------------
- *  Wraps a per-arena route (/projects/:arena). Loads the user via
- *  auth.me() and ONLY renders children once access is confirmed.
+ *  Wraps /projects/:arena. Resolves the user, then renders one of:
+ *    - allowed   → children
+ *    - blocked   → role isn't in viewableBy
+ *    - upgrade   → arena is paywalled and user hasn't paid
  *
- *  Three resolved states:
- *    - allowed   → render children
- *    - blocked   → role isn't in viewableBy → "غير متاحة لحسابك"
- *    - upgrade   → arena is paywalled (إسناد) and user hasn't paid
- *                  → upgrade pitch panel
- *
- *  While we wait for auth.me() we render a quiet placeholder. This
- *  removes the brief flash of arena content (or sidebar tabs) that
- *  used to happen on refresh before the role landed — the gate
- *  blocks render until the answer is known.
+ *  While waiting we render a placeholder so we don't flash arena
+ *  content before the gate confirms.
  * ============================================================ */
 export default function RequireArenaAccess({ arena, children }) {
   const cfg = arenaConfig(arena);
-  // 'loading' | 'allowed' | 'blocked' | 'upgrade'
   const [state, setState] = useState('loading');
   const [accountType, setAccountType] = useState(null);
 
@@ -40,8 +34,6 @@ export default function RequireArenaAccess({ arena, children }) {
           setState('allowed');
           return;
         }
-        // إسناد case: role is eligible but hasn't paid → show
-        // upgrade pitch instead of "not allowed".
         if (
           cfg.isUpgrade &&
           !paid &&
@@ -53,42 +45,49 @@ export default function RequireArenaAccess({ arena, children }) {
         setState('blocked');
       })
       .catch(() => {
-        // Couldn't resolve the user. Treat as blocked so we don't
-        // accidentally render a gated arena to an anonymous client.
         if (!cancelled) setState('blocked');
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [arena, cfg.isUpgrade, cfg.viewableBy]);
 
   if (state === 'loading') return <ArenaSkeleton />;
   if (state === 'allowed') return children;
-  if (state === 'upgrade') return <UpgradePanel arena={cfg} />;
-  return <BlockedPanel arena={cfg} accountType={accountType} />;
+  if (state === 'upgrade') return <UpgradePanel arena={cfg} arenaSlug={arena} />;
+  return <BlockedPanel arena={cfg} arenaSlug={arena} accountType={accountType} />;
 }
 
 function ArenaSkeleton() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       <div
-        className="sticky top-0 z-30 bg-white"
-        style={{ borderBottom: '1px solid #e5e3dc', height: 96 }}
+        className="sticky top-0 z-30"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-default)',
+          height: 96,
+        }}
       />
       <main className="flex-1 py-8 lg:py-12">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
           <div
             className="animate-pulse rounded-[20px] mb-8"
-            style={{ height: 180, background: '#efece4' }}
+            style={{ height: 180, background: 'var(--border-soft)' }}
           />
           <div
             className="animate-pulse rounded-[14px] mb-6"
-            style={{ height: 54, background: '#efece4' }}
+            style={{ height: 54, background: 'var(--border-soft)' }}
           />
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 className="animate-pulse rounded-[16px]"
-                style={{ height: 270, background: '#efece4' }}
+                style={{ height: 270, background: 'var(--border-soft)' }}
               />
             ))}
           </div>
@@ -100,15 +99,25 @@ function ArenaSkeleton() {
 
 function Centered({ icon: Icon, title, subtitle, color }) {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       <div
-        className="sticky top-0 z-30 bg-white"
-        style={{ borderBottom: '1px solid #e5e3dc', height: 96 }}
+        className="sticky top-0 z-30"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-default)',
+          height: 96,
+        }}
       />
       <main className="flex-1 flex items-center justify-center py-12 px-6">
         <div
           className="flex flex-col items-center text-center py-16 px-8 rounded-[20px] animate-fade-up max-w-md w-full"
-          style={{ background: 'white', border: '1px dashed #e5e3dc' }}
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px dashed var(--border-default)',
+          }}
         >
           <div
             className="flex items-center justify-center mb-5"
@@ -116,21 +125,29 @@ function Centered({ icon: Icon, title, subtitle, color }) {
               width: 72,
               height: 72,
               borderRadius: 18,
-              background: color ? `${color}15` : '#f4f1e9',
-              color: color || '#7a7a8c',
+              background: color ? `${color}15` : 'var(--bg-cream)',
+              color: color || 'var(--text-muted)',
             }}
           >
             <Icon size={30} strokeWidth={1.6} />
           </div>
           <h3
-            className="font-display text-ink m-0 mb-2"
-            style={{ fontSize: 22, fontWeight: 700 }}
+            className="font-display m-0 mb-2"
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: 'var(--text-ink)',
+            }}
           >
             {title}
           </h3>
           <p
-            className="text-muted m-0"
-            style={{ fontSize: 14, lineHeight: 1.75 }}
+            className="m-0"
+            style={{
+              fontSize: 14,
+              lineHeight: 1.75,
+              color: 'var(--text-muted)',
+            }}
           >
             {subtitle}
           </p>
@@ -140,35 +157,37 @@ function Centered({ icon: Icon, title, subtitle, color }) {
   );
 }
 
-function BlockedPanel({ arena, accountType }) {
+function BlockedPanel({ arena, arenaSlug, accountType }) {
+  const { t } = useTranslation();
+  const arenaLabel = t(`arena.${arenaSlug}.label`);
+  const role = accountType
+    ? t(`accountType.${accountType}`)
+    : t('accountType.unknown');
   return (
     <Centered
       icon={ShieldOff}
-      title="غير متاحة لحسابك"
-      subtitle={`ساحة "${arena.label}" غير متاحة لنوع حسابك (${accountTypeLabel(accountType)}).`}
+      title={t('projects.list.blocked')}
+      subtitle={t('projects.list.blockedAccount', { role }).replace(
+        '{arena}',
+        arenaLabel
+      )}
     />
   );
 }
 
-function UpgradePanel({ arena }) {
+function UpgradePanel({ arena, arenaSlug }) {
+  const { t } = useTranslation();
+  const arenaLabel = t(`arena.${arenaSlug}.label`);
+  const price = t(`arena.${arenaSlug}.upgradePrice`);
   return (
     <Centered
       icon={Sparkles}
       color={arena.color}
-      title={`${arena.label} — ترقية اختياريّة`}
-      subtitle={`وصول حصري إلى المشاريع الكبرى والفرص التمويليّة (${arena.upgradePrice}). فعّل الترقية من صفحة الباقات لعرض هذه الساحة.`}
+      title={t('projects.list.blockedIsnadTitle', { arena: arenaLabel })}
+      subtitle={t('projects.list.blockedIsnadSubtitle', {
+        arena: arenaLabel,
+        price,
+      })}
     />
   );
-}
-
-function accountTypeLabel(t) {
-  switch (t) {
-    case 'individual': return 'عميل';
-    case 'developer': return 'مطوّر عقاري';
-    case 'entrepreneur': return 'مقاول';
-    case 'engineering': return 'مكتب هندسي';
-    case 'supplier': return 'مورّد';
-    case 'financier': return 'جهة تمويليّة';
-    default: return 'غير محدّد';
-  }
 }

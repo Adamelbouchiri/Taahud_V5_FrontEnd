@@ -42,14 +42,14 @@ export default function RequireNonSupplier({ children }) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ background: '#fafaf6' }}
+        style={{ background: 'var(--bg-canvas)' }}
       >
         <div
           className="animate-pulse rounded-[12px]"
           style={{
             width: 240,
             height: 14,
-            background: '#efece4',
+            background: 'var(--border-soft)',
           }}
         />
       </div>

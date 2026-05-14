@@ -12,40 +12,34 @@ import {
   CITIES,
   getSpecialties,
   hasSpecialty,
-  specialtyLabel,
 } from '../config/constants';
 import { auth } from '../services';
+import { useTranslation } from '../i18n/LanguageContext';
 
-/* ============================================================
- *  RegisterPage
- *  ----------------------------------------------------------------
- *  The form distinguishes two pieces of state:
- *
- *    categoryChoice  the UI card the user clicked (one of the four
- *                    cards: individual / service_provider / supplier
- *                    / developer). "service_provider" is a UI-only
- *                    grouping — see config/constants.js.
- *
- *    accountType     the value sent to the backend in the
- *                    `account_type` field. For most categories this
- *                    equals categoryChoice. For "service_provider",
- *                    it remains empty until the user picks a sub-role
- *                    (entrepreneur or engineering), at which point
- *                    it becomes that role's value.
- *
- *  This split keeps the DB happy (which never sees the fake
- *  "service_provider" value) without making the UI awkward.
- * ============================================================ */
+// constants.js stores `service_provider` with an underscore but our
+// translation keys are camelCased. Same idea for the sub-roles —
+// they map 1:1 to existing `accountType.*` keys.
+const ACCOUNT_TYPE_KEY = {
+  individual: 'individual',
+  service_provider: 'serviceProvider',
+  supplier: 'supplier',
+  developer: 'developer',
+  entrepreneur: 'entrepreneur',
+  engineering: 'engineering',
+};
+
+function specialtyKey(accountType) {
+  if (accountType === 'supplier') return 'specialty.supplierLabel';
+  if (accountType === 'developer') return 'specialty.developerLabel';
+  return 'specialty.defaultLabel';
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  // UI grouping (what card was clicked)
   const [categoryChoice, setCategoryChoice] = useState('');
-
-  // The actual value sent to the backend
   const [accountType, setAccountType] = useState('');
-
   const [specialty, setSpecialty] = useState('');
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
@@ -64,43 +58,31 @@ export default function RegisterPage() {
   const validate = () => {
     const e = {};
     if (!categoryChoice) {
-      e.accountType = 'الرجاء اختيار نوع الحساب';
+      e.accountType = t('auth.register.errors.accountTypeMissing');
     } else if (isServiceProviderCategory && !accountType) {
-      // They picked "service provider" but didn't pick a sub-role yet
-      e.role = 'الرجاء اختيار تخصصك';
+      e.role = t('auth.register.errors.roleMissing');
     }
     if (showSpecialtyDropdown && !specialty) {
-      e.specialty = 'الرجاء اختيار التخصص';
+      e.specialty = t('auth.register.errors.specialtyMissing');
     }
-    if (!name) e.name = 'الاسم مطلوب';
-    if (!city) e.city = 'المدينة مطلوبة';
-    if (!phone) e.phone = 'رقم الهاتف مطلوب';
-    if (!email) e.email = 'البريد الإلكتروني مطلوب';
+    if (!name) e.name = t('auth.register.errors.nameMissing');
+    if (!city) e.city = t('auth.register.errors.cityMissing');
+    if (!phone) e.phone = t('auth.register.errors.phoneMissing');
+    if (!email) e.email = t('auth.register.errors.emailMissing');
     if (!password || password.length < 8)
-      e.password = 'كلمة المرور يجب أن لا تقل عن ٨ أحرف';
-    if (password !== confirm) e.confirm = 'كلمتا المرور غير متطابقتين';
-    if (!agreed) e.agreed = 'يجب الموافقة على الشروط';
+      e.password = t('auth.register.errors.passwordShort');
+    if (password !== confirm) e.confirm = t('auth.register.errors.passwordMismatch');
+    if (!agreed) e.agreed = t('auth.register.errors.notAgreed');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // POST /api/auth/register
-  // Backend validates account_type ∈ {individual, entrepreneur,
-  // engineering, supplier, developer} and phone matching the
-  // pattern +9665XXXXXXXX. Auth service adds password_confirmation
-  // and device_name to the body. On success the response includes
-  // a token (already stored by the service) AND the backend has
-  // auto-sent an OTP to the phone — so we just navigate to /otp.
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const handleSubmit = async (ev) => {
     ev.preventDefault();
     if (!validate()) return;
     setSubmitError('');
     setSubmitting(true);
     try {
-      // Normalize phone to +9665XXXXXXXX
       const digits = phone.replace(/\D/g, '').replace(/^0+/, '');
       const normalizedPhone = `+966${digits}`;
 
@@ -115,29 +97,22 @@ export default function RegisterPage() {
       });
       navigate('/otp');
     } catch (err) {
-      setSubmitError(err.message || 'تعذّر إنشاء الحساب. حاول مرة أخرى.');
+      setSubmitError(err.message || t('auth.register.errorGeneric'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* When the user clicks a category card:
-     - For non-service-provider categories, the category IS the
-       account_type, so we set both to the same value.
-     - For "service_provider", we set categoryChoice but clear
-       accountType — the user has to pick a sub-role next. */
   const handleCategoryChange = (categoryValue) => {
     setCategoryChoice(categoryValue);
     if (categoryValue === 'service_provider') {
-      setAccountType(''); // wait for sub-role choice
+      setAccountType('');
     } else {
       setAccountType(categoryValue);
     }
-    // Reset specialty when changing category
     if (!hasSpecialty(categoryValue)) setSpecialty('');
   };
 
-  /* Sub-role picker: writes directly to accountType. */
   const handleRoleChange = (roleValue) => {
     setAccountType(roleValue);
     if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
@@ -145,9 +120,9 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      kicker="ابدأ معنا"
-      title="أنشئ حسابك في تعاهد"
-      subtitle="نحتاج بضع معلومات لإعداد حسابك."
+      kicker={t('auth.register.kicker')}
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {submitError && (
@@ -156,20 +131,22 @@ export default function RegisterPage() {
             style={{
               background: 'rgba(185,28,28,0.06)',
               border: '1px solid rgba(185,28,28,0.18)',
-              color: '#b91c1c',
+              color: 'var(--accent-danger)',
               fontSize: 13.5,
             }}
           >
             {submitError}
           </div>
         )}
+
         {/* Account category cards */}
         <div className="animate-fade-up">
-          <label className="field-label">نوع الحساب</label>
+          <label className="field-label">{t('auth.register.accountTypeLabel')}</label>
           <div className="grid grid-cols-2 gap-2.5">
             {ACCOUNT_CATEGORIES.map((c) => {
               const Icon = c.icon;
               const active = categoryChoice === c.value;
+              const k = ACCOUNT_TYPE_KEY[c.value] || c.value;
               return (
                 <button
                   type="button"
@@ -181,8 +158,12 @@ export default function RegisterPage() {
                     <Icon size={20} strokeWidth={1.7} />
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-ink">{c.label}</div>
-                    <div className="text-[11.5px] text-muted mt-0.5">{c.desc}</div>
+                    <div className="font-semibold text-sm text-ink">
+                      {t(`accountType.${k}`)}
+                    </div>
+                    <div className="text-[11.5px] text-muted mt-0.5">
+                      {t(`accountType.${k}Desc`)}
+                    </div>
                   </div>
                 </button>
               );
@@ -191,95 +172,89 @@ export default function RegisterPage() {
           {errors.accountType && <p className="field-err">{errors.accountType}</p>}
         </div>
 
-        {/* Sub-role buttons — only when "service provider" category
-            is picked. The chosen role IS the account_type sent to
-            the backend (entrepreneur or engineering). */}
         {isServiceProviderCategory && (
           <ServiceProviderRoles
             value={accountType}
             onChange={handleRoleChange}
             error={errors.role}
+            t={t}
           />
         )}
 
-        {/* Specialty dropdown — only for supplier and developer.
-            Service providers don't have a separate specialty;
-            their account_type IS their specialty. */}
         {showSpecialtyDropdown && (
           <SelectField
-            label={specialtyLabel(accountType)}
+            label={t(specialtyKey(accountType))}
             icon={Briefcase}
             options={getSpecialties(accountType)}
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
             error={errors.specialty}
-            placeholder="اختر التخصص"
+            placeholder={t('auth.register.specialtyPlaceholder')}
           />
         )}
 
-        {/* Name + City */}
         <div className="grid grid-cols-2 gap-3.5">
           <Field
-            label="الاسم الكامل"
+            label={t('auth.register.name')}
             icon={User}
-            placeholder="مثال: أحمد محمد"
+            placeholder={t('auth.register.namePlaceholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}
           />
           <SelectField
-            label="المدينة"
+            label={t('auth.register.city')}
             icon={MapPin}
             options={CITIES}
             value={city}
             onChange={(e) => setCity(e.target.value)}
             error={errors.city}
-            placeholder="اختر المدينة"
+            placeholder={t('auth.register.cityPlaceholder')}
           />
         </div>
 
-        {/* Phone */}
         <PhoneField
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           error={errors.phone}
-          hint="سنرسل رمز تحقق لتأكيد الرقم."
+          hint={t('auth.register.phoneHint')}
         />
 
-        {/* Email */}
         <Field
-          label="البريد الإلكتروني"
+          label={t('auth.register.email')}
           icon={Mail}
           type="email"
-          placeholder="name@example.com"
+          placeholder={t('auth.register.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
         />
 
-        {/* Passwords */}
         <div className="grid grid-cols-2 gap-3.5">
           <PasswordField
-            label="كلمة المرور"
-            placeholder="٨ أحرف على الأقل"
+            label={t('auth.register.password')}
+            placeholder={t('auth.register.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
           />
           <PasswordField
-            label="تأكيد كلمة المرور"
-            placeholder="••••••••"
+            label={t('auth.register.passwordConfirm')}
+            placeholder={t('auth.register.passwordConfirmPlaceholder')}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             error={errors.confirm}
           />
         </div>
 
-        {/* Terms */}
         <label
-          className={`flex gap-2.5 items-start text-[13px] text-ink-soft cursor-pointer p-3.5 bg-cream rounded-[11px] border ${
+          className={`flex gap-2.5 items-start text-[13px] cursor-pointer p-3.5 rounded-[11px] border ${
             errors.agreed ? 'border-danger' : 'border-transparent'
           }`}
+          style={{
+            color: 'var(--text-ink-soft)',
+            background: 'var(--bg-cream)',
+          }}
         >
           <input
             type="checkbox"
@@ -289,20 +264,41 @@ export default function RegisterPage() {
             style={{ accentColor: '#2c2f7c' }}
           />
           <span className="leading-relaxed">
-            أوافق على <a className="link">شروط الاستخدام</a> و
-            <a className="link"> سياسة الخصوصية</a>، وأقر بأن المعلومات المُدخلة صحيحة.
+            {t('auth.register.termsText', {
+              terms: `__TERMS__`,
+              privacy: `__PRIVACY__`,
+            })
+              .split(/(__TERMS__|__PRIVACY__)/)
+              .map((part, i) => {
+                if (part === '__TERMS__')
+                  return (
+                    <a key={i} className="link">
+                      {t('auth.register.terms')}
+                    </a>
+                  );
+                if (part === '__PRIVACY__')
+                  return (
+                    <a key={i} className="link">
+                      {t('auth.register.privacy')}
+                    </a>
+                  );
+                return <React.Fragment key={i}>{part}</React.Fragment>;
+              })}
           </span>
         </label>
 
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'جارٍ الإرسال...' : 'متابعة وإرسال رمز التحقق'}
+          {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
           {!submitting && <ArrowLeft size={17} />}
         </button>
 
-        <p className="text-center text-sm text-muted m-0 mt-1">
-          لديك حساب بالفعل؟{' '}
+        <p
+          className="text-center text-sm m-0 mt-1"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {t('auth.register.haveAccount')}{' '}
           <a className="link" onClick={() => navigate('/login')}>
-            سجّل الدخول
+            {t('auth.register.signIn')}
           </a>
         </p>
       </form>
@@ -310,21 +306,15 @@ export default function RegisterPage() {
   );
 }
 
-/* ============================================================
- *  ServiceProviderRoles — sub-role chooser shown when the user
- *  picks "مقدم خدمة". Two buttons styled to match the account-type
- *  cards above. The chosen value IS the database account_type
- *  (entrepreneur or engineering) — these are real user-table
- *  values, not a UI grouping.
- * ============================================================ */
-function ServiceProviderRoles({ value, onChange, error }) {
+function ServiceProviderRoles({ value, onChange, error, t }) {
   return (
     <div className="animate-fade-up">
-      <label className="field-label">تخصصك</label>
+      <label className="field-label">{t('auth.register.serviceRoleLabel')}</label>
       <div className="grid grid-cols-2 gap-2.5">
         {SERVICE_PROVIDER_ROLES.map((role) => {
           const Icon = role.icon;
           const active = value === role.value;
+          const k = ACCOUNT_TYPE_KEY[role.value] || role.value;
           return (
             <button
               type="button"
@@ -336,8 +326,12 @@ function ServiceProviderRoles({ value, onChange, error }) {
                 <Icon size={20} strokeWidth={1.7} />
               </div>
               <div>
-                <div className="font-semibold text-sm text-ink">{role.label}</div>
-                <div className="text-[11.5px] text-muted mt-0.5">{role.desc}</div>
+                <div className="font-semibold text-sm text-ink">
+                  {t(`accountType.${k}`)}
+                </div>
+                <div className="text-[11.5px] text-muted mt-0.5">
+                  {t(`accountType.${k}Desc`)}
+                </div>
               </div>
             </button>
           );

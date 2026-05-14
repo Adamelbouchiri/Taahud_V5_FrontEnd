@@ -20,6 +20,7 @@ import {
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
 import { ARENAS, canViewArena, canPostAnyArena } from '../../config/projectConstants';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  Sidebar
@@ -39,14 +40,14 @@ const ALL_TYPES = ['individual', 'entrepreneur', 'engineering', 'supplier', 'dev
 const NAV_ITEMS = [
   {
     to: '/dashboard',
-    label: 'الرئيسية',
+    labelKey: 'dashboard.sidebar.items.home',
     icon: Home,
     accountTypes: ALL_TYPES,
     end: true,
   },
   {
     to: '/dashboard/profile',
-    label: 'الملف الشخصي',
+    labelKey: 'dashboard.sidebar.items.profile',
     icon: UserCircle,
     accountTypes: ALL_TYPES,
   },
@@ -55,31 +56,31 @@ const NAV_ITEMS = [
 const SOON_ITEMS = [
   {
     to: '/dashboard/ai-analysis',
-    label: 'تحليلات الذكاء الاصطناعي',
+    labelKey: 'dashboard.sidebar.items.ai',
     icon: Sparkles,
     accountTypes: ALL_TYPES,
   },
   {
     to: '/dashboard/analytics',
-    label: 'الإحصائيات',
+    labelKey: 'dashboard.sidebar.items.analytics',
     icon: TrendingUp,
     accountTypes: ALL_TYPES,
   },
   {
     to: '/dashboard/reports',
-    label: 'التقارير',
+    labelKey: 'dashboard.sidebar.items.reports',
     icon: BarChart3,
     accountTypes: ALL_TYPES,
   },
   {
     to: '/dashboard/messages',
-    label: 'الرسائل',
+    labelKey: 'dashboard.sidebar.items.messages',
     icon: MessageCircle,
     accountTypes: ALL_TYPES,
   },
   {
     to: '/dashboard/notifications',
-    label: 'الإشعارات',
+    labelKey: 'dashboard.sidebar.items.notifications',
     icon: Bell,
     accountTypes: ALL_TYPES,
   },
@@ -97,6 +98,7 @@ const ARENA_ICONS = {
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading, logout } = useUser();
   const accountType = user?.account_type;
   // إسناد is paywalled — only show its sidebar link to users who
@@ -180,7 +182,7 @@ export default function Sidebar({ open, onClose }) {
                 onClose?.();
               }}
               className="bg-transparent border-0 p-0 cursor-pointer"
-              aria-label="الرئيسية"
+              aria-label={t('nav.backHome')}
             >
               <Logo height={68} />
             </button>
@@ -189,15 +191,15 @@ export default function Sidebar({ open, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              aria-label="إغلاق القائمة"
+              aria-label={t('nav.closeMenu')}
               className="lg:hidden flex items-center justify-center"
               style={{
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: '#fafaf6',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 cursor: 'pointer',
               }}
             >
@@ -234,7 +236,7 @@ export default function Sidebar({ open, onClose }) {
                 }}
               >
                 <UploadCloud size={15} strokeWidth={2.2} />
-                مشروع جديد
+                {t('dashboard.sidebar.newProject')}
               </button>
             </div>
           )}
@@ -246,10 +248,10 @@ export default function Sidebar({ open, onClose }) {
               style={{
                 fontSize: 10.5,
                 letterSpacing: '0.12em',
-                color: '#7a7a8c',
+                color: 'var(--text-muted)',
               }}
             >
-              التنقّل
+              {t('dashboard.sidebar.navigation')}
             </div>
             <ul className="m-0 p-0 flex flex-col gap-0.5">
               {items.map((item) => (
@@ -263,7 +265,7 @@ export default function Sidebar({ open, onClose }) {
                     }
                   >
                     <item.icon size={17} strokeWidth={1.75} />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </NavLink>
                 </li>
               ))}
@@ -280,10 +282,10 @@ export default function Sidebar({ open, onClose }) {
                   style={{
                     fontSize: 10.5,
                     letterSpacing: '0.12em',
-                    color: '#7a7a8c',
+                    color: 'var(--text-muted)',
                   }}
                 >
-                  الساحات
+                  {t('dashboard.sidebar.arenas')}
                 </div>
                 <ul className="m-0 p-0 flex flex-col gap-0.5">
                   {arenaLinks.map((a) => {
@@ -315,7 +317,9 @@ export default function Sidebar({ open, onClose }) {
                               }}
                             />
                           )}
-                          <span className="flex-1 truncate">{a.label}</span>
+                          <span className="flex-1 truncate">
+                            {t(`arena.${a.value}.label`)}
+                          </span>
                         </NavLink>
                       </li>
                     );
@@ -333,10 +337,10 @@ export default function Sidebar({ open, onClose }) {
                   style={{
                     fontSize: 10.5,
                     letterSpacing: '0.12em',
-                    color: '#7a7a8c',
+                    color: 'var(--text-muted)',
                   }}
                 >
-                  قريباً
+                  {t('dashboard.sidebar.soon')}
                 </div>
                 <ul className="m-0 p-0 flex flex-col gap-0.5">
                   {soonItems.map((item) => (
@@ -349,8 +353,8 @@ export default function Sidebar({ open, onClose }) {
                         }
                       >
                         <item.icon size={17} strokeWidth={1.75} />
-                        <span className="flex-1 truncate">{item.label}</span>
-                        <span className="soon-pill">قريباً</span>
+                        <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                        <span className="soon-pill">{t('dashboard.sidebar.soon')}</span>
                       </NavLink>
                     </li>
                   ))}
@@ -362,15 +366,15 @@ export default function Sidebar({ open, onClose }) {
           {/* Footer / logout */}
           <div
             className="px-3 py-4 flex-shrink-0"
-            style={{ borderTop: '1px solid #efece4' }}
+            style={{ borderTop: '1px solid var(--border-soft)' }}
           >
             <button
               onClick={handleLogout}
-              className="nav-link w-full text-right"
-              style={{ color: '#b91c1c' }}
+              className="nav-link w-full text-start"
+              style={{ color: 'var(--accent-danger)' }}
             >
               <LogOut size={17} strokeWidth={1.75} />
-              <span>تسجيل الخروج</span>
+              <span>{t('dashboard.sidebar.logout')}</span>
             </button>
           </div>
         </div>
@@ -385,8 +389,8 @@ export default function Sidebar({ open, onClose }) {
         <style>{`
           .taahud-sidebar {
             width: 268px;
-            background: white;
-            border-inline-end: 1px solid #e5e3dc;
+            background: var(--bg-surface);
+            border-inline-end: 1px solid var(--border-default);
             display: flex;
             flex-direction: column;
           }
@@ -424,7 +428,7 @@ export default function Sidebar({ open, onClose }) {
             border-radius: 10px;
             font-size: 13.5px;
             font-weight: 500;
-            color: #3a3a52;
+            color: var(--text-ink-soft);
             background: transparent;
             border: none;
             cursor: pointer;
@@ -433,12 +437,12 @@ export default function Sidebar({ open, onClose }) {
             font-family: inherit;
           }
           .nav-link:hover {
-            background: #fafaf6;
-            color: #2c2f7c;
+            background: var(--bg-canvas);
+            color: var(--accent-primary);
           }
           .nav-link-active {
             background: rgba(44,47,124,0.08);
-            color: #2c2f7c;
+            color: var(--accent-primary);
             font-weight: 600;
           }
           .nav-link-active:hover {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X, ListChecks } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /**
  * Editable list of requirement strings.
@@ -11,13 +12,13 @@ export default function RequirementsList({
   onChange,
   suggestions = [],
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState('');
 
   const add = (value) => {
     const v = (value ?? draft).trim();
     if (!v) return;
     if (items.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      // already exists — clear draft silently
       setDraft('');
       return;
     }
@@ -42,7 +43,6 @@ export default function RequirementsList({
 
   return (
     <div>
-      {/* Existing items */}
       {items.length > 0 && (
         <ul className="m-0 p-0 mb-3 flex flex-col gap-2">
           {items.map((item, i) => (
@@ -70,14 +70,18 @@ export default function RequirementsList({
               </span>
               <span
                 className="flex-1 break-words"
-                style={{ fontSize: 13.5, color: '#0f1129', lineHeight: 1.5 }}
+                style={{
+                  fontSize: 13.5,
+                  color: 'var(--text-ink)',
+                  lineHeight: 1.5,
+                }}
               >
                 {item}
               </span>
               <button
                 type="button"
                 onClick={() => remove(i)}
-                aria-label={`إزالة ${item}`}
+                aria-label={t('projects.requirements.removeAria', { item })}
                 className="flex items-center justify-center transition-colors"
                 style={{
                   width: 28,
@@ -85,17 +89,17 @@ export default function RequirementsList({
                   borderRadius: 8,
                   background: 'transparent',
                   border: 'none',
-                  color: '#7a7a8c',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'white';
-                  e.currentTarget.style.color = '#b91c1c';
+                  e.currentTarget.style.background = 'var(--bg-surface)';
+                  e.currentTarget.style.color = 'var(--accent-danger)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#7a7a8c';
+                  e.currentTarget.style.color = 'var(--text-muted)';
                 }}
               >
                 <X size={14} />
@@ -105,14 +109,13 @@ export default function RequirementsList({
         </ul>
       )}
 
-      {/* Add row */}
       <div className="flex gap-2">
         <input
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="مثال: رخصة بناء سارية"
+          placeholder={t('projects.requirements.placeholder')}
           className="field field-no-icon"
           style={{ flex: 1 }}
         />
@@ -123,26 +126,25 @@ export default function RequirementsList({
           className="inline-flex items-center justify-center gap-1.5 px-4 rounded-[11px] font-semibold transition-all"
           style={{
             fontSize: 13.5,
-            background: draft.trim() ? '#2c2f7c' : '#efece4',
-            color: draft.trim() ? 'white' : '#7a7a8c',
-            border: `1px solid ${draft.trim() ? '#2c2f7c' : '#efece4'}`,
+            background: draft.trim() ? '#2c2f7c' : 'var(--border-soft)',
+            color: draft.trim() ? 'white' : 'var(--text-muted)',
+            border: `1px solid ${draft.trim() ? '#2c2f7c' : 'var(--border-soft)'}`,
             cursor: draft.trim() ? 'pointer' : 'not-allowed',
             whiteSpace: 'nowrap',
           }}
         >
           <Plus size={15} strokeWidth={2} />
-          إضافة
+          {t('projects.requirements.addCta')}
         </button>
       </div>
 
       {items.length === 0 && (
         <p className="field-hint mt-2 flex items-center gap-1.5">
           <ListChecks size={12} />
-          اضغط Enter بعد كل متطلب لإضافته للقائمة.
+          {t('projects.requirements.hint')}
         </p>
       )}
 
-      {/* Suggestion chips */}
       {unusedSuggestions.length > 0 && (
         <div className="mt-4">
           <div
@@ -150,10 +152,10 @@ export default function RequirementsList({
             style={{
               fontSize: 10.5,
               letterSpacing: '0.1em',
-              color: '#7a7a8c',
+              color: 'var(--text-muted)',
             }}
           >
-            اقتراحات
+            {t('projects.requirements.suggestionsTitle')}
           </div>
           <div className="flex flex-wrap gap-2">
             {unusedSuggestions.map((s) => (
@@ -165,9 +167,9 @@ export default function RequirementsList({
                 style={{
                   fontSize: 12.5,
                   fontWeight: 500,
-                  background: 'white',
-                  border: '1px solid #e5e3dc',
-                  color: '#3a3a52',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
+                  color: 'var(--text-ink-soft)',
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
@@ -176,9 +178,9 @@ export default function RequirementsList({
                   e.currentTarget.style.color = '#0d5538';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e5e3dc';
-                  e.currentTarget.style.background = 'white';
-                  e.currentTarget.style.color = '#3a3a52';
+                  e.currentTarget.style.borderColor = 'var(--border-default)';
+                  e.currentTarget.style.background = 'var(--bg-surface)';
+                  e.currentTarget.style.color = 'var(--text-ink-soft)';
                 }}
               >
                 <Plus size={12} strokeWidth={2} />

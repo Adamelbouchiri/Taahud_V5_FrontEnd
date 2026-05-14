@@ -9,15 +9,18 @@ import {
   LogOut,
 } from 'lucide-react';
 import Logo from '../Logo';
+import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 import { auth } from '../../services';
-import { accountTypeLabel } from '../../config/constants';
+import { useTranslation } from '../../i18n/LanguageContext';
 
-const NAV_LINKS = [
-  { label: 'الخدمات', href: '#services' },
-  { label: 'الإشادات', href: '#testimonials' },
-  { label: 'الساحات', href: '#arenas' },
-  { label: 'الباقات', href: '#plans' },
-];
+function navLinksFor(t) {
+  return [
+    { key: 'services', label: t('nav.services'), href: '#services' },
+    { key: 'testimonials', label: t('nav.testimonials'), href: '#testimonials' },
+    { key: 'arenas', label: t('nav.arenas'), href: '#arenas' },
+    { key: 'plans', label: t('nav.plans'), href: '#plans' },
+  ];
+}
 
 /* ============================================================
  *  Auth detection on the landing page.
@@ -65,10 +68,12 @@ function useLandingAuth() {
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { user, status } = useLandingAuth();
   const isAuthed = status === 'authed';
+  const NAV_LINKS = navLinksFor(t);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -87,10 +92,12 @@ export default function Navbar() {
     <header
       className="fixed top-0 inset-x-0 z-50 transition-all"
       style={{
-        background: scrolled ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)',
+        background: scrolled
+          ? 'rgb(var(--rgb-surface) / 0.85)'
+          : 'rgb(var(--rgb-surface) / 0.6)',
         backdropFilter: 'saturate(180%) blur(14px)',
         WebkitBackdropFilter: 'saturate(180%) blur(14px)',
-        borderBottom: scrolled ? '1px solid #e5e3dc' : '1px solid transparent',
+        borderBottom: scrolled ? '1px solid var(--border-default)' : '1px solid transparent',
       }}
     >
       <nav className="max-w-[1280px] mx-auto px-6 lg:px-12 h-[96px] flex items-center justify-between">
@@ -108,7 +115,8 @@ export default function Navbar() {
             <li key={l.href} className="list-none">
               <a
                 onClick={() => goToSection(l.href)}
-                className="text-[14px] font-medium text-ink-soft hover:text-primary transition-colors cursor-pointer"
+                className="text-[14px] font-medium hover:text-primary transition-colors cursor-pointer"
+                style={{ color: 'var(--text-ink-soft)' }}
               >
                 {l.label}
               </a>
@@ -116,8 +124,9 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Right side: CTAs OR user menu */}
+        {/* Right side: switcher + CTAs OR user menu */}
         <div className="hidden lg:flex items-center gap-2">
+          <LanguageThemeSwitcher compact />
           {status === 'loading' ? (
             <AuthSkeleton />
           ) : isAuthed ? (
@@ -139,7 +148,7 @@ export default function Navbar() {
                 }}
               >
                 <LayoutDashboard size={15} strokeWidth={1.9} />
-                لوحة التحكّم
+                {t('nav.dashboard')}
               </button>
               <UserChip user={user} />
             </>
@@ -147,9 +156,10 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => navigate('/login')}
-                className="px-4 py-2 text-[14px] font-semibold text-ink-soft hover:text-primary transition-colors"
+                className="px-4 py-2 text-[14px] font-semibold hover:text-primary transition-colors"
+                style={{ color: 'var(--text-ink-soft)' }}
               >
-                تسجيل الدخول
+                {t('nav.login')}
               </button>
               <button
                 onClick={() => navigate('/register')}
@@ -167,31 +177,45 @@ export default function Navbar() {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                ابدأ الآن
+                {t('landing.hero.ctaPrimary')}
               </button>
             </>
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="lg:hidden p-2 text-ink-soft"
-          onClick={() => setOpen(!open)}
-          aria-label="القائمة"
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile right cluster: switcher + menu toggle */}
+        <div className="lg:hidden flex items-center gap-2">
+          <LanguageThemeSwitcher compact />
+          <button
+            className="p-2"
+            style={{ color: 'var(--text-ink-soft)' }}
+            onClick={() => setOpen(!open)}
+            aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}
       {open && (
-        <div className="lg:hidden border-t border-app-border bg-white animate-fade-up">
+        <div
+          className="lg:hidden border-t animate-fade-up"
+          style={{
+            background: 'var(--bg-surface)',
+            borderColor: 'var(--border-default)',
+          }}
+        >
           <div className="px-6 py-5 flex flex-col gap-1">
             {NAV_LINKS.map((l) => (
               <a
                 key={l.href}
                 onClick={() => goToSection(l.href)}
-                className="py-3 text-[15px] font-medium text-ink-soft cursor-pointer border-b border-app-border last:border-0"
+                className="py-3 text-[15px] font-medium cursor-pointer border-b last:border-0"
+                style={{
+                  color: 'var(--text-ink-soft)',
+                  borderColor: 'var(--border-default)',
+                }}
               >
                 {l.label}
               </a>
@@ -203,7 +227,7 @@ export default function Navbar() {
                   className="flex-1 rounded-[10px] animate-pulse"
                   style={{
                     height: 46,
-                    background: '#efece4',
+                    background: 'var(--border-soft)',
                   }}
                 />
               ) : isAuthed ? (
@@ -212,7 +236,7 @@ export default function Navbar() {
                   className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-[10px] bg-primary text-white text-[14px] font-semibold"
                 >
                   <LayoutDashboard size={15} strokeWidth={1.9} />
-                  لوحة التحكّم
+                  {t('nav.dashboard')}
                   {user?.name && (
                     <span className="opacity-80" style={{ fontSize: 12 }}>
                       · {user.name.split(' ')[0]}
@@ -223,15 +247,19 @@ export default function Navbar() {
                 <>
                   <button
                     onClick={() => navigate('/login')}
-                    className="flex-1 py-3 rounded-[10px] border border-app-border text-[14px] font-semibold"
+                    className="flex-1 py-3 rounded-[10px] border text-[14px] font-semibold"
+                    style={{
+                      borderColor: 'var(--border-default)',
+                      color: 'var(--text-ink-soft)',
+                    }}
                   >
-                    تسجيل الدخول
+                    {t('nav.login')}
                   </button>
                   <button
                     onClick={() => navigate('/register')}
                     className="flex-1 py-3 rounded-[10px] bg-primary text-white text-[14px] font-semibold"
                   >
-                    ابدأ الآن
+                    {t('landing.hero.ctaPrimary')}
                   </button>
                 </>
               )}
@@ -253,11 +281,11 @@ function AuthSkeleton() {
     <div className="flex items-center gap-2">
       <div
         className="animate-pulse rounded-[10px]"
-        style={{ width: 130, height: 40, background: '#efece4' }}
+        style={{ width: 130, height: 40, background: 'var(--border-soft)' }}
       />
       <div
         className="animate-pulse rounded-full"
-        style={{ width: 40, height: 40, background: '#efece4' }}
+        style={{ width: 40, height: 40, background: 'var(--border-soft)' }}
       />
     </div>
   );
@@ -268,6 +296,7 @@ function AuthSkeleton() {
  * ============================================================ */
 function UserChip({ user }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -285,13 +314,14 @@ function UserChip({ user }) {
     try {
       await auth.logout();
     } finally {
-      // Hard reload so every page (incl. this navbar) re-reads auth.
       window.location.assign('/');
     }
   };
 
-  const initial = (user?.name || 'م').trim().charAt(0);
-  const roleLabel = accountTypeLabel(user?.account_type);
+  const initial = (user?.name || '·').trim().charAt(0);
+  const roleLabel = user?.account_type
+    ? t(`accountType.${user.account_type}`)
+    : '';
 
   return (
     <div className="relative" ref={ref}>
@@ -304,13 +334,13 @@ function UserChip({ user }) {
         style={{
           padding: '4px 10px 4px 4px',
           borderRadius: 999,
-          background: open ? 'rgba(255,255,255,0.7)' : 'transparent',
-          border: '1px solid #e5e3dc',
+          background: open ? 'var(--bg-surface)' : 'transparent',
+          border: '1px solid var(--border-default)',
           cursor: 'pointer',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
         onMouseLeave={(e) =>
-          (e.currentTarget.style.background = open ? 'rgba(255,255,255,0.7)' : 'transparent')
+          (e.currentTarget.style.background = open ? 'var(--bg-surface)' : 'transparent')
         }
       >
         <div
@@ -326,7 +356,7 @@ function UserChip({ user }) {
         >
           {initial}
         </div>
-        <ChevronDown size={14} className="text-muted" />
+        <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
       </button>
 
       {open && (
@@ -337,24 +367,24 @@ function UserChip({ user }) {
             top: 'calc(100% + 10px)',
             insetInlineEnd: 0,
             width: 240,
-            background: 'white',
+            background: 'var(--bg-surface)',
             borderRadius: 12,
-            border: '1px solid #e5e3dc',
-            boxShadow: '0 16px 36px rgba(15,17,41,0.12)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-elevated)',
             overflow: 'hidden',
           }}
         >
-          <div className="px-4 py-3.5" style={{ borderBottom: '1px solid #efece4' }}>
+          <div className="px-4 py-3.5" style={{ borderBottom: '1px solid var(--border-soft)' }}>
             <div
               className="font-bold truncate"
-              style={{ fontSize: 13.5, color: '#0f1129' }}
+              style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
             >
-              {user?.name || 'مستخدم'}
+              {user?.name || t('nav.profile')}
             </div>
             {roleLabel && (
               <div
                 className="font-medium mt-0.5"
-                style={{ fontSize: 12, color: '#7a7a8c' }}
+                style={{ fontSize: 12, color: 'var(--text-muted)' }}
               >
                 {roleLabel}
               </div>
@@ -364,7 +394,7 @@ function UserChip({ user }) {
           <div className="py-1">
             <MenuItem
               icon={LayoutDashboard}
-              label="لوحة التحكّم"
+              label={t('nav.dashboard')}
               onClick={() => {
                 setOpen(false);
                 navigate('/dashboard');
@@ -372,7 +402,7 @@ function UserChip({ user }) {
             />
             <MenuItem
               icon={UserCircle}
-              label="الملف الشخصي"
+              label={t('nav.profile')}
               onClick={() => {
                 setOpen(false);
                 navigate('/dashboard/profile');
@@ -380,10 +410,10 @@ function UserChip({ user }) {
             />
           </div>
 
-          <div className="py-1" style={{ borderTop: '1px solid #efece4' }}>
+          <div className="py-1" style={{ borderTop: '1px solid var(--border-soft)' }}>
             <MenuItem
               icon={LogOut}
-              label="تسجيل الخروج"
+              label={t('nav.logout')}
               onClick={handleLogout}
               danger
             />
@@ -400,7 +430,7 @@ function MenuItem({ icon: Icon, label, onClick, danger }) {
       type="button"
       onClick={onClick}
       role="menuitem"
-      className="w-full flex items-center gap-2.5 transition-colors text-right"
+      className="w-full flex items-center gap-2.5 transition-colors text-start"
       style={{
         padding: '10px 16px',
         background: 'transparent',
@@ -408,13 +438,13 @@ function MenuItem({ icon: Icon, label, onClick, danger }) {
         cursor: 'pointer',
         fontSize: 13.5,
         fontWeight: 500,
-        color: danger ? '#b91c1c' : '#3a3a52',
+        color: danger ? 'var(--accent-danger)' : 'var(--text-ink-soft)',
         fontFamily: 'inherit',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = danger
-          ? 'rgba(185,28,28,0.04)'
-          : '#fafaf6';
+          ? 'rgba(185,28,28,0.06)'
+          : 'var(--bg-surface-soft)';
       }}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >

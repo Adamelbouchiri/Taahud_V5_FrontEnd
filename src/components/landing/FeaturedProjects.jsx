@@ -9,6 +9,7 @@ import {
   Award,
 } from 'lucide-react';
 import Illustration from './ProjectIllustrations';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  FeaturedProjects — showcase three highlighted projects
@@ -21,85 +22,70 @@ import Illustration from './ProjectIllustrations';
  *      commercial     cream/yellow
  *      infrastructure mint
  *
- *  Card header is a tall pastel band with the type icon centered
- *  and a "مميز" pill in the corner. Footer is a white area with
- *  tags, title, meta, price, and a "التفاصيل" CTA.
- *
  *  Projects are hardcoded marketing examples — replace once the
- *  BE has a /projects/featured endpoint.
+ *  BE has a /projects/featured endpoint. Card copy is pulled from
+ *  the i18n dictionary at render-time so language switching works
+ *  without restructuring the static data.
  * ============================================================ */
 
 const PROJECTS = [
   {
     id: 'residential',
-    type: 'سكني',
+    key: 'residential',
     typeColor: '#b8276a',
-    status: 'مرحلة تنفيذ',
     statusColor: '#136d4a',
-    title: 'مجمع سكني فاخر — حي الياسمين، الرياض',
-    city: 'الرياض',
-    duration: '18 شهر',
-    role: 'مقاول عام',
     price: '12.5M',
     illustration: 'villa',
     bandBg: '#f8dde5',
+    roleIcon: HardHat,
   },
   {
     id: 'commercial',
-    type: 'تجاري',
+    key: 'commercial',
     typeColor: '#a17827',
-    status: 'مفتوح للمناقصة',
     statusColor: '#136d4a',
-    title: 'برج مكاتب إداري — جدة الكورنيش',
-    city: 'جدة',
-    duration: '24 شهر',
-    role: 'درجة أولى',
     price: '38M',
     illustration: 'tower',
     bandBg: '#fbeec1',
+    roleIcon: Award,
   },
   {
     id: 'infrastructure',
-    type: 'بنية تحتية',
+    key: 'infrastructure',
     typeColor: '#0d5538',
-    status: 'مفتوح',
     statusColor: '#136d4a',
-    title: 'مشروع طرق وتشجير — الدمام',
-    city: 'الدمام',
-    duration: '12 شهر',
-    role: 'مقاول معتمد',
     price: '8.2M',
     illustration: 'highway',
     bandBg: '#d4ecda',
+    roleIcon: HardHat,
   },
 ];
 
 export default function FeaturedProjects() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <section
       id="featured-projects"
       className="relative py-24 lg:py-32 scroll-mt-20"
-      style={{ background: '#fafaf6' }}
+      style={{ background: 'var(--bg-canvas)' }}
     >
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
-        {/* Header row: eyebrow + headline on the right, link on the left.
-            On mobile the link wraps below for a cleaner stack. */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12 lg:mb-14">
-          <div className="text-right">
+          <div className="text-start">
             <div
               className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full animate-fade-up"
               style={{
-                background: 'white',
-                border: '1px solid #e5e3dc',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
                 fontSize: 11.5,
                 fontWeight: 700,
                 letterSpacing: '0.05em',
-                color: '#3a3a52',
+                color: 'var(--text-ink-soft)',
               }}
             >
-              المشاريع المميزة
+              {t('landing.featuredProjects.eyebrow')}
             </div>
             <h2
               className="font-display m-0 animate-fade-up"
@@ -108,10 +94,10 @@ export default function FeaturedProjects() {
                 fontWeight: 700,
                 lineHeight: 1.15,
                 letterSpacing: '-0.015em',
-                color: '#0f1147',
+                color: 'var(--text-ink)',
               }}
             >
-              فرص حقيقية للمقاولين والمطوّرين
+              {t('landing.featuredProjects.title')}
             </h2>
           </div>
 
@@ -121,9 +107,9 @@ export default function FeaturedProjects() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] font-semibold transition-all animate-fade-up"
             style={{
               fontSize: 13,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: 'pointer',
               alignSelf: 'flex-start',
             }}
@@ -132,19 +118,18 @@ export default function FeaturedProjects() {
               e.currentTarget.style.color = '#0f1147';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.color = '#3a3a52';
+              e.currentTarget.style.borderColor = 'var(--border-default)';
+              e.currentTarget.style.color = 'var(--text-ink-soft)';
             }}
           >
-            شاهد جميع المشاريع
+            {t('landing.featuredProjects.seeAll')}
             <ArrowLeft size={14} strokeWidth={2} />
           </button>
         </div>
 
-        {/* Grid */}
         <div className="grid md:grid-cols-3 gap-5 items-stretch">
           {PROJECTS.map((p, i) => (
-            <ProjectCard key={p.id} project={p} delay={i * 0.06} />
+            <ProjectCard key={p.id} project={p} delay={i * 0.06} t={t} />
           ))}
         </div>
       </div>
@@ -152,18 +137,20 @@ export default function FeaturedProjects() {
   );
 }
 
-function ProjectCard({ project, delay }) {
+function ProjectCard({ project, delay, t }) {
+  const k = `landing.featuredProjects.cards.${project.key}`;
+  const RoleIcon = project.roleIcon;
+
   return (
     <article
       className="relative rounded-[18px] overflow-hidden flex flex-col transition-all animate-fade-up hover:-translate-y-1"
       style={{
-        background: 'white',
-        border: '1px solid #e8e6dd',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
         animationDelay: `${delay}s`,
-        boxShadow: '0 4px 14px rgba(15,17,71,0.04)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
-      {/* Pastel band with the scene illustration and "مميز" pill */}
       <div
         className="relative overflow-hidden"
         style={{
@@ -171,7 +158,6 @@ function ProjectCard({ project, delay }) {
           height: 178,
         }}
       >
-        {/* "مميز" pill — top-start corner, above the illustration */}
         <span
           className="absolute inline-flex items-center gap-1 font-bold rounded-full"
           style={{
@@ -186,23 +172,20 @@ function ProjectCard({ project, delay }) {
           }}
         >
           <Star size={11} strokeWidth={2.2} fill="currentColor" />
-          مميز
+          {t('common.featured')}
         </span>
 
-        {/* Illustration fills the band */}
         <div className="absolute inset-0 flex items-center justify-center">
           <Illustration name={project.illustration} />
         </div>
       </div>
 
-      {/* Body */}
       <div className="px-6 pt-5 pb-5 flex flex-col flex-1">
-        {/* Type · status tags */}
         <div
           className="flex items-center gap-2 mb-2"
           style={{ fontSize: 12, fontWeight: 600 }}
         >
-          <span style={{ color: project.typeColor }}>{project.type}</span>
+          <span style={{ color: project.typeColor }}>{t(`${k}.type`)}</span>
           <span
             aria-hidden
             style={{
@@ -213,56 +196,49 @@ function ProjectCard({ project, delay }) {
             }}
           />
           <span style={{ color: project.statusColor }}>
-            {project.status}
+            {t(`${k}.status`)}
           </span>
         </div>
 
-        {/* Title */}
         <h3
           className="font-display m-0 mb-3"
           style={{
             fontSize: 17,
             fontWeight: 700,
-            color: '#0f1147',
+            color: 'var(--text-ink)',
             lineHeight: 1.35,
           }}
         >
-          {project.title}
+          {t(`${k}.title`)}
         </h3>
 
-        {/* Meta row: city · duration · role */}
         <div
           className="flex items-center flex-wrap gap-x-3 gap-y-1.5 mb-5"
-          style={{ fontSize: 12.5, color: '#5a5b78' }}
+          style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
         >
           <span className="inline-flex items-center gap-1">
             <MapPin size={12} strokeWidth={1.8} />
-            {project.city}
+            {t(`${k}.city`)}
           </span>
           <span className="inline-flex items-center gap-1">
             <Calendar size={12} strokeWidth={1.8} />
-            {project.duration}
+            {t(`${k}.duration`)}
           </span>
           <span className="inline-flex items-center gap-1">
-            {project.id === 'commercial' ? (
-              <Award size={12} strokeWidth={1.8} />
-            ) : (
-              <HardHat size={12} strokeWidth={1.8} />
-            )}
-            {project.role}
+            <RoleIcon size={12} strokeWidth={1.8} />
+            {t(`${k}.role`)}
           </span>
         </div>
 
-        {/* Footer: details button + price, pushed to bottom */}
         <div className="mt-auto flex items-center justify-between gap-3">
           <button
             type="button"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] font-semibold transition-all"
             style={{
               fontSize: 12.5,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
@@ -270,21 +246,27 @@ function ProjectCard({ project, delay }) {
               e.currentTarget.style.color = '#0f1147';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.color = '#3a3a52';
+              e.currentTarget.style.borderColor = 'var(--border-default)';
+              e.currentTarget.style.color = 'var(--text-ink-soft)';
             }}
           >
-            التفاصيل
+            {t('common.details')}
             <ArrowLeft size={12} strokeWidth={2} />
           </button>
 
           <div
             className="font-display font-bold inline-flex items-baseline gap-1"
-            style={{ fontSize: 22, color: '#0f1147', lineHeight: 1 }}
+            style={{ fontSize: 22, color: 'var(--text-ink)', lineHeight: 1 }}
           >
             {project.price}
-            <span style={{ fontSize: 12, color: '#7a7a8c', fontWeight: 600 }}>
-              ر.س
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                fontWeight: 600,
+              }}
+            >
+              {t('common.currency')}
             </span>
           </div>
         </div>

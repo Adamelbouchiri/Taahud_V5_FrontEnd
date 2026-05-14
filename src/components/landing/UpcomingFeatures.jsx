@@ -6,71 +6,61 @@ import {
   Sparkles,
   Clock,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  UpcomingFeatures — coming-soon teasers above the footer
  *  ----------------------------------------------------------------
- *  Two large cards on a light band that breaks up the contrast
- *  between the dark CtaBanner and the footer.
+ *  Two cards on a light band that breaks up the contrast between
+ *  the dark CtaBanner and the footer.
  *
- *  - Taahud Academy (أكاديمية تعاهد): training and certifications
- *    for contractors, engineers, suppliers, developers.
- *  - Affiliate marketing (التسويق بالعمولة): partners earn a
- *    percentage on every deal they refer through the platform.
+ *  - Taahud Academy: training + certifications.
+ *  - Affiliate marketing: partners earn a percentage on every
+ *    referred deal.
  *
  *  Both buttons are intentionally disabled — clicking them does
- *  nothing yet. The "قريباً" pill on each card is the visual
+ *  nothing yet. The "coming soon" pill on each card is the visual
  *  hint that they aren't live.
  * ============================================================ */
 
 const FEATURES = [
   {
     id: 'academy',
-    label: 'أكاديمية تعاهد',
-    eyebrow: 'تعليم وتأهيل',
-    desc:
-      'دورات متخصّصة وشهادات معتمدة في إدارة المشاريع، العقود، الجودة، والسلامة — يقدّمها خبراء القطاع لرفع كفاءة المقاولين والمكاتب الهندسية والموردين.',
     icon: GraduationCap,
     accent: '#2c2f7c',
     accentSoft: 'rgba(44,47,124,0.10)',
-    cta: 'اكتشف الأكاديمية',
   },
   {
     id: 'affiliate',
-    label: 'التسويق بالعمولة',
-    eyebrow: 'برنامج الشركاء',
-    desc:
-      'برنامج شراكة يكافئك بنسبة من قيمة كل صفقة تأتي عبر دعوتك — أدوات تسويقيّة جاهزة، روابط تتبّع، ولوحة عمولات شفّافة في حسابك.',
     icon: Percent,
     accent: '#b8862a',
     accentSoft: 'rgba(184,134,42,0.12)',
-    cta: 'انضم للبرنامج',
   },
 ];
 
 export default function UpcomingFeatures() {
+  const { t } = useTranslation();
   return (
     <section
       id="upcoming"
       className="relative py-24 lg:py-28 scroll-mt-20"
-      style={{ background: '#fafaf6' }}
+      style={{ background: 'var(--bg-canvas)' }}
     >
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
-        {/* Header — centered, matches Hero/Arenas eyebrow pattern */}
         <div className="text-center max-w-[680px] mx-auto mb-12 lg:mb-14">
           <div
             className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full animate-fade-up"
             style={{
-              background: 'white',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               fontSize: 11.5,
               fontWeight: 700,
               letterSpacing: '0.05em',
-              color: '#3a3a52',
+              color: 'var(--text-ink-soft)',
             }}
           >
             <Sparkles size={12} strokeWidth={2} />
-            قريباً على تعاهد
+            {t('landing.upcoming.eyebrow')}
           </div>
           <h2
             className="font-display m-0 mb-3 animate-fade-up"
@@ -79,23 +69,26 @@ export default function UpcomingFeatures() {
               fontWeight: 700,
               lineHeight: 1.15,
               letterSpacing: '-0.015em',
-              color: '#0f1147',
+              color: 'var(--text-ink)',
             }}
           >
-            ميزات جديدة قيد التطوير
+            {t('landing.upcoming.title')}
           </h2>
           <p
             className="m-0 animate-fade-up"
-            style={{ fontSize: 14.5, lineHeight: 1.75, color: '#5a5b78' }}
+            style={{
+              fontSize: 14.5,
+              lineHeight: 1.75,
+              color: 'var(--text-muted)',
+            }}
           >
-            نعمل على توسيع تعاهد بميزات تُكمل تجربتك — تابعونا للإطلاق.
+            {t('landing.upcoming.subtitle')}
           </p>
         </div>
 
-        {/* Cards */}
         <div className="grid md:grid-cols-2 gap-5 items-stretch">
           {FEATURES.map((f, i) => (
-            <FeatureCard key={f.id} feature={f} delay={i * 0.06} />
+            <FeatureCard key={f.id} feature={f} delay={i * 0.06} t={t} />
           ))}
         </div>
       </div>
@@ -103,20 +96,20 @@ export default function UpcomingFeatures() {
   );
 }
 
-function FeatureCard({ feature, delay }) {
+function FeatureCard({ feature, delay, t }) {
   const Icon = feature.icon;
+  const k = `landing.upcoming.${feature.id}`;
 
   return (
     <article
       className="relative flex flex-col rounded-[18px] p-8 lg:p-10 transition-all animate-fade-up hover:-translate-y-1"
       style={{
-        background: 'white',
-        border: '1px solid #e8e6dd',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
         animationDelay: `${delay}s`,
-        boxShadow: '0 4px 14px rgba(15,17,71,0.04)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
-      {/* "قريباً" pill — top start corner */}
       <span
         className="absolute inline-flex items-center gap-1 font-bold rounded-full"
         style={{
@@ -131,10 +124,9 @@ function FeatureCard({ feature, delay }) {
         }}
       >
         <Clock size={11} strokeWidth={2.2} />
-        قريباً
+        {t('common.soon')}
       </span>
 
-      {/* Icon tile */}
       <div
         className="flex items-center justify-center mb-6"
         style={{
@@ -149,44 +141,40 @@ function FeatureCard({ feature, delay }) {
         <Icon size={26} strokeWidth={1.7} />
       </div>
 
-      {/* Eyebrow */}
       <div
-        className="font-semibold uppercase mb-2 text-right"
+        className="font-semibold uppercase mb-2 text-start"
         style={{
           fontSize: 11,
           letterSpacing: '0.08em',
           color: feature.accent,
         }}
       >
-        {feature.eyebrow}
+        {t(`${k}.eyebrow`)}
       </div>
 
-      {/* Title */}
       <h3
-        className="font-display m-0 mb-3 text-right"
+        className="font-display m-0 mb-3 text-start"
         style={{
           fontSize: 22,
           fontWeight: 700,
-          color: '#0f1147',
+          color: 'var(--text-ink)',
           lineHeight: 1.25,
         }}
       >
-        {feature.label}
+        {t(`${k}.label`)}
       </h3>
 
-      {/* Description */}
       <p
-        className="m-0 mb-7 text-right"
+        className="m-0 mb-7 text-start"
         style={{
           fontSize: 14,
           lineHeight: 1.85,
-          color: '#5a5b78',
+          color: 'var(--text-muted)',
         }}
       >
-        {feature.desc}
+        {t(`${k}.desc`)}
       </p>
 
-      {/* CTA — disabled, visually muted to read as "not active yet" */}
       <button
         type="button"
         disabled
@@ -203,7 +191,7 @@ function FeatureCard({ feature, delay }) {
           opacity: 0.95,
         }}
       >
-        {feature.cta}
+        {t(`${k}.cta`)}
         <ArrowLeft size={14} strokeWidth={2} />
       </button>
     </article>

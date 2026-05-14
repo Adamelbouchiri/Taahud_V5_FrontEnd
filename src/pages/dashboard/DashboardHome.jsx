@@ -17,32 +17,17 @@ import {
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { projects as projectsApi } from '../../services';
-import {
-  isServiceProvider,
-  accountTypeLabel,
-} from '../../config/constants';
+import { isServiceProvider } from '../../config/constants';
 import StatusBadge from '../../components/project/StatusBadge';
 import { arenaConfig, canPostAnyArena } from '../../config/projectConstants';
 import SupplierComingSoon from '../../components/SupplierComingSoon';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  DashboardHome — /dashboard
  *  ----------------------------------------------------------------
- *  Per the V5 spec, the dashboard is intentionally simple:
- *    - Friendly greeting
- *    - Quick-action shortcut cards (create project / browse / profile)
- *    - A short list of the user's most relevant projects:
- *        owners (individual / developer) → projects they posted
- *        service providers (entrepreneur / engineering) → projects
- *          they're associated with (own or partner), plus the
- *          entrepreneur's own solidarity-arena posts
- *
- *  Suppliers don't get the projects flow in V5 — they see the
- *  SupplierComingSoon embedded view instead.
- *
- *  Heavier project-management UX (accepting applications, etc.)
- *  lives on the project details page rather than here. The PDF is
- *  explicit: "we don't need a professional dashboard right now".
+ *  Per the V5 spec, the dashboard is intentionally simple. See
+ *  the README for the role × content matrix.
  * ============================================================ */
 
 export default function DashboardHome() {
@@ -50,29 +35,14 @@ export default function DashboardHome() {
 
   if (loading) return <DashboardSkeleton />;
 
-  // Suppliers see only the coming-soon placeholder until their
-  // dedicated flow ships.
   if (user?.account_type === 'supplier') {
     return <SupplierComingSoon embedded />;
   }
 
-  // Owner roles (individual + developer) post their own projects and
-  // see them in the recent list. Service-provider roles (entrepreneur,
-  // engineering) see their associated projects — owned or partnered.
-  // Entrepreneurs additionally see their own solidarity-arena posts.
-  //
-  // The "+ مشروع جديد" quick action is gated by canPostAnyArena:
-  //   individual    → posts in الخاصة (عهد)
-  //   entrepreneur  → posts in التضامن
-  //   developer     → posts in أرينا + إسناد
-  //   engineering / supplier → no posting privileges (CTA hidden)
   const accountType = user?.account_type;
   const isOwner = !accountType || accountType === 'individual' || accountType === 'developer';
   const isProvider = isServiceProvider(accountType);
   const canPostProject = canPostAnyArena(accountType);
-  // Individuals only post their own private projects — they don't browse
-  // arenas (no arena lists 'individual' in viewableBy). Hide the browse
-  // entry points for them so they don't land on a blocked /projects view.
   const canBrowseProjects = accountType !== 'individual';
 
   return (
@@ -97,11 +67,14 @@ export default function DashboardHome() {
  *  Greeting
  * ============================================================ */
 function Greeting({ user }) {
+  const { t } = useTranslation();
   const hour = new Date().getHours();
   const period =
-    hour < 12 ? 'صباح الخير' : hour < 18 ? 'مساء الخير' : 'مساء الخير';
+    hour < 12 ? t('dashboard.greeting.morning') : t('dashboard.greeting.evening');
   const firstName = user?.name?.split(' ')[0];
-  const role = accountTypeLabel(user?.account_type);
+  const role = user?.account_type
+    ? t(`accountType.${user.account_type}`)
+    : '';
 
   return (
     <div className="mb-9 animate-fade-up">
@@ -116,26 +89,30 @@ function Greeting({ user }) {
         }}
       >
         <Sparkles size={12} />
-        لوحة التحكّم
+        {t('dashboard.greeting.eyebrow')}
       </div>
       <h1
-        className="font-display text-ink m-0 mb-2"
+        className="font-display m-0 mb-2"
         style={{
           fontSize: 'clamp(26px, 3.4vw, 36px)',
           fontWeight: 700,
           lineHeight: 1.2,
           letterSpacing: '-0.01em',
+          color: 'var(--text-ink)',
         }}
       >
-        {period}{firstName ? `, ${firstName}` : ''}.
+        {period}
+        {firstName ? `, ${firstName}` : ''}.
       </h1>
       <p
-        className="text-muted m-0"
-        style={{ fontSize: 14.5, lineHeight: 1.7 }}
+        className="m-0"
+        style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-muted)' }}
       >
         {role
-          ? `أهلاً بك في حسابك ${role ? `كـ${role}` : ''} على تعاهد. ابدأ من الاختصارات أدناه.`
-          : 'أهلاً بك في تعاهد. ابدأ من الاختصارات أدناه.'}
+          ? t('dashboard.greeting.welcome', {
+              role: t('dashboard.greeting.asRole', { role }),
+            })
+          : t('dashboard.greeting.welcomeNoRole')}
       </p>
     </div>
   );
@@ -146,17 +123,15 @@ function Greeting({ user }) {
  * ============================================================ */
 function QuickActions({ canPostProject, canBrowseProjects }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  // Build the list of cards based on the user's role. Everyone
-  // except suppliers can create a project — the arena defaults
-  // come from defaultArenaFor(accountType) inside the wizard.
   const actions = [];
 
   if (canPostProject) {
     actions.push({
       icon: UploadCloud,
-      title: 'مشروع جديد',
-      desc: 'انشر مشروعك وابدأ باستقبال العروض من الشركاء.',
+      title: t('dashboard.actions.createProject'),
+      desc: t('dashboard.actions.createProjectDesc'),
       color: '#136d4a',
       onClick: () => navigate('/projects/new'),
     });
@@ -165,8 +140,8 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
   if (canBrowseProjects) {
     actions.push({
       icon: Compass,
-      title: 'تصفّح المشاريع',
-      desc: 'اعثر على مشاريع تناسبك في الساحات الثلاث.',
+      title: t('dashboard.actions.browseProjects'),
+      desc: t('dashboard.actions.browseProjectsDesc'),
       color: '#2c2f7c',
       onClick: () => navigate('/projects'),
     });
@@ -174,8 +149,8 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
 
   actions.push({
     icon: UserCircle,
-    title: 'الملف الشخصي',
-    desc: 'حدّث بياناتك وبيانات شركتك.',
+    title: t('dashboard.actions.profile'),
+    desc: t('dashboard.actions.profileDesc'),
     color: '#3a3d99',
     onClick: () => navigate('/dashboard/profile'),
   });
@@ -198,11 +173,11 @@ function ActionCard({ action, delay }) {
     <button
       type="button"
       onClick={action.onClick}
-      className="text-right group transition-all animate-fade-up"
+      className="text-start group transition-all animate-fade-up"
       style={{
         padding: '20px 22px',
-        background: 'white',
-        border: '1px solid #e5e3dc',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
         borderRadius: 14,
         cursor: 'pointer',
         animationDelay: `${delay}s`,
@@ -213,7 +188,7 @@ function ActionCard({ action, delay }) {
         e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,17,41,0.06)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#e5e3dc';
+        e.currentTarget.style.borderColor = 'var(--border-default)';
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
       }}
@@ -234,17 +209,19 @@ function ActionCard({ action, delay }) {
         </div>
         <ArrowLeft
           size={18}
-          className="text-muted transition-transform"
-          style={{ flexShrink: 0 }}
+          className="transition-transform"
+          style={{ flexShrink: 0, color: 'var(--text-muted)' }}
         />
       </div>
       <div
         className="font-display font-bold mb-1"
-        style={{ fontSize: 16, color: '#0f1129' }}
+        style={{ fontSize: 16, color: 'var(--text-ink)' }}
       >
         {action.title}
       </div>
-      <div style={{ fontSize: 13, color: '#7a7a8c', lineHeight: 1.6 }}>
+      <div
+        style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-muted)' }}
+      >
         {action.desc}
       </div>
     </button>
@@ -256,6 +233,7 @@ function ActionCard({ action, delay }) {
  * ============================================================ */
 function RecentProjects({ canBrowseProjects }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -266,7 +244,9 @@ function RecentProjects({ canBrowseProjects }) {
       .then((data) => !cancelled && setItems(data))
       .catch(() => !cancelled && setItems([]))
       .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const recent = useMemo(() => items.slice(0, 4), [items]);
@@ -274,7 +254,7 @@ function RecentProjects({ canBrowseProjects }) {
 
   return (
     <Section
-      title="مشاريعك الأخيرة"
+      title={t('dashboard.sections.recentProjects')}
       icon={FolderKanban}
       action={
         hasMore && canBrowseProjects && (
@@ -290,7 +270,7 @@ function RecentProjects({ canBrowseProjects }) {
               cursor: 'pointer',
             }}
           >
-            عرض الكل
+            {t('common.viewAll')}
             <ArrowLeft size={13} strokeWidth={2} />
           </button>
         )
@@ -300,9 +280,9 @@ function RecentProjects({ canBrowseProjects }) {
         <CardGridSkeleton />
       ) : recent.length === 0 ? (
         <Empty
-          title="لم تنشئ أيّ مشروع بعد."
-          subtitle="ابدأ مشروعك الأوّل واحصل على عروض من شركاء موثوقين."
-          ctaLabel="إنشاء مشروع جديد"
+          title={t('dashboard.empty.noProjects.title')}
+          subtitle={t('dashboard.empty.noProjects.subtitle')}
+          ctaLabel={t('dashboard.empty.noProjects.cta')}
           onCta={() => navigate('/projects/new')}
         />
       ) : (
@@ -322,6 +302,7 @@ function RecentProjects({ canBrowseProjects }) {
 }
 
 function DashboardProjectCard({ project, onClick, delay = 0 }) {
+  const { t, lang } = useTranslation();
   const arena = arenaConfig(project.arena);
   const showProgress =
     project.status === 'in_progress' || project.status === 'completed';
@@ -331,8 +312,8 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
       onClick={onClick}
       className="group relative flex flex-col cursor-pointer transition-all animate-fade-up"
       style={{
-        background: 'white',
-        border: '1px solid #e5e3dc',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
         borderRadius: 16,
         padding: '20px 22px',
         animationDelay: `${delay}s`,
@@ -343,12 +324,11 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         e.currentTarget.style.boxShadow = '0 14px 30px rgba(15,17,41,0.08)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#e5e3dc';
+        e.currentTarget.style.borderColor = 'var(--border-default)';
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Arena accent strip */}
       <span
         aria-hidden
         style={{
@@ -363,7 +343,6 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         }}
       />
 
-      {/* Header: status + arena + date */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <StatusBadge status={project.status} size="sm" />
         <span
@@ -375,23 +354,23 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
             padding: '3px 9px',
           }}
         >
-          {arena.label}
+          {t(`arena.${project.arena}.label`)}
         </span>
         <span
-          className="ms-auto text-muted"
-          style={{ fontSize: 11, fontWeight: 500 }}
+          className="ms-auto"
+          style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-muted)' }}
         >
-          {formatRelativeDate(project.created_at)}
+          {formatRelativeDate(project.created_at, t)}
         </span>
       </div>
 
-      {/* Title */}
       <h3
-        className="font-display text-ink m-0 mb-2"
+        className="font-display m-0 mb-2"
         style={{
           fontSize: 16.5,
           fontWeight: 700,
           lineHeight: 1.3,
+          color: 'var(--text-ink)',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -402,10 +381,9 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         {project.name}
       </h3>
 
-      {/* Meta */}
       <div
         className="flex items-center gap-2.5 flex-wrap mb-3"
-        style={{ fontSize: 12, color: '#7a7a8c' }}
+        style={{ fontSize: 12, color: 'var(--text-muted)' }}
       >
         <span className="inline-flex items-center gap-1">
           <Tag size={11.5} strokeWidth={1.7} />
@@ -418,13 +396,13 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         </span>
       </div>
 
-      {/* Description (clamped) */}
       {project.description && (
         <p
-          className="text-ink-soft m-0 mb-4"
+          className="m-0 mb-4"
           style={{
             fontSize: 13,
             lineHeight: 1.65,
+            color: 'var(--text-ink-soft)',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -435,20 +413,20 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         </p>
       )}
 
-      {/* Progress for active / completed */}
       {showProgress && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1.5">
             <span
               className="font-semibold uppercase"
-              style={{ fontSize: 10, letterSpacing: '0.08em', color: '#7a7a8c' }}
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                color: 'var(--text-muted)',
+              }}
             >
-              التقدّم
+              {t('projects.details.meta.progress')}
             </span>
-            <span
-              className="font-bold"
-              style={{ fontSize: 12, color: '#136d4a' }}
-            >
+            <span className="font-bold" style={{ fontSize: 12, color: '#136d4a' }}>
               {Math.round(project.progress)}%
             </span>
           </div>
@@ -457,7 +435,7 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
               width: '100%',
               height: 5,
               borderRadius: 3,
-              background: '#efece4',
+              background: 'var(--border-soft)',
               overflow: 'hidden',
             }}
           >
@@ -476,40 +454,45 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         </div>
       )}
 
-      {/* Footer: budget + arrow */}
       <div
         className="flex items-center justify-between pt-3 mt-auto"
-        style={{ borderTop: '1px solid #efece4' }}
+        style={{ borderTop: '1px solid var(--border-soft)' }}
       >
         <div className="min-w-0">
           {project.budget ? (
             <>
               <div
                 className="font-semibold uppercase mb-0.5"
-                style={{ fontSize: 9.5, letterSpacing: '0.08em', color: '#7a7a8c' }}
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                }}
               >
-                الميزانية
+                {t('projects.details.meta.budget')}
               </div>
               <div
                 className="font-bold inline-flex items-center gap-1"
-                style={{ fontSize: 13.5, color: '#0f1129' }}
+                style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
               >
                 <Wallet size={12.5} strokeWidth={1.7} className="text-secondary" />
-                {formatNumber(project.budget)}{' '}
-                <span style={{ fontSize: 10.5, color: '#7a7a8c' }}>ر.س</span>
+                {formatNumber(project.budget, lang)}{' '}
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+                  {t('common.currency')}
+                </span>
               </div>
             </>
           ) : project.start_date ? (
             <div
               className="font-medium inline-flex items-center gap-1"
-              style={{ fontSize: 12, color: '#3a3a52' }}
+              style={{ fontSize: 12, color: 'var(--text-ink-soft)' }}
             >
               <Calendar size={11.5} strokeWidth={1.7} />
-              {formatDate(project.start_date)}
+              {formatDate(project.start_date, lang)}
             </div>
           ) : (
-            <span style={{ fontSize: 11.5, color: '#7a7a8c' }}>
-              ميزانية غير محدّدة
+            <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+              {t('common.notSpecified')}
             </span>
           )}
         </div>
@@ -532,16 +515,22 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
   );
 }
 
-function formatNumber(n) {
-  const num = typeof n === 'string' ? Number(n) : n;
-  if (Number.isNaN(num)) return n;
-  return new Intl.NumberFormat('ar-SA').format(num);
+function localeFor(lang) {
+  if (lang === 'en') return 'en-US';
+  if (lang === 'zh') return 'zh-CN';
+  return 'ar-SA';
 }
 
-function formatDate(d) {
+function formatNumber(n, lang) {
+  const num = typeof n === 'string' ? Number(n) : n;
+  if (Number.isNaN(num)) return n;
+  return new Intl.NumberFormat(localeFor(lang)).format(num);
+}
+
+function formatDate(d, lang) {
   if (!d) return '';
   try {
-    return new Intl.DateTimeFormat('ar-SA', {
+    return new Intl.DateTimeFormat(localeFor(lang), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -551,31 +540,27 @@ function formatDate(d) {
   }
 }
 
-function formatRelativeDate(d) {
+function formatRelativeDate(d, t) {
   if (!d) return '';
   const date = new Date(d);
   const now = new Date();
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  if (diffDays < 1) return 'اليوم';
-  if (diffDays === 1) return 'أمس';
-  if (diffDays < 7) return `منذ ${diffDays} أيام`;
-  if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسابيع`;
-  if (diffDays < 365) return `منذ ${Math.floor(diffDays / 30)} أشهر`;
-  return `منذ ${Math.floor(diffDays / 365)} سنوات`;
+  if (diffDays < 1) return t('common.relative.today');
+  if (diffDays === 1) return t('common.relative.yesterday');
+  if (diffDays < 7) return t('common.relative.daysAgo', { value: diffDays });
+  if (diffDays < 30)
+    return t('common.relative.weeksAgo', { value: Math.floor(diffDays / 7) });
+  if (diffDays < 365)
+    return t('common.relative.monthsAgo', { value: Math.floor(diffDays / 30) });
+  return t('common.relative.yearsAgo', { value: Math.floor(diffDays / 365) });
 }
 
 /* ============================================================
  *  Recent associated projects (for service providers)
- *  ----------------------------------------------------------------
- *  Shows projects where the user is the owner or the partner —
- *  i.e. live engagements. Per the V5 Postman collection, the
- *  partner_id is set server-side when the (future) accept-
- *  application flow runs, so this will commonly be empty until
- *  that lands. The empty state nudges the user toward browsing
- *  open projects to find work.
  * ============================================================ */
 function RecentAssociatedProjects({ user }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -590,20 +575,22 @@ function RecentAssociatedProjects({ user }) {
       .then((data) => !cancelled && setItems(data))
       .catch(() => !cancelled && setItems([]))
       .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   const recent = useMemo(() => items.slice(0, 4), [items]);
 
   return (
-    <Section title="مشاريعك المرتبطة" icon={HardHat}>
+    <Section title={t('dashboard.sections.associatedProjects')} icon={HardHat}>
       {loading ? (
         <CardGridSkeleton />
       ) : recent.length === 0 ? (
         <Empty
-          title="لا توجد مشاريع مرتبطة حالياً."
-          subtitle="بمجرد أن يقبل عميل عرضك على أحد المشاريع، سيظهر هنا للمتابعة."
-          ctaLabel="تصفّح المشاريع المفتوحة"
+          title={t('dashboard.empty.noAssociated.title')}
+          subtitle={t('dashboard.empty.noAssociated.subtitle')}
+          ctaLabel={t('dashboard.empty.noAssociated.cta')}
           onCta={() => navigate('/projects')}
         />
       ) : (
@@ -624,16 +611,10 @@ function RecentAssociatedProjects({ user }) {
 
 /* ============================================================
  *  My solidarity-arena projects (entrepreneur only)
- *  ----------------------------------------------------------------
- *  Entrepreneur is the only account type allowed to post in
- *  ساحة التضامن (per the V5 posting matrix in the Postman collection).
- *  This widget surfaces their own solidarity posts so they can
- *  jump straight into managing bids on them. The whole section is
- *  hidden when they have no solidarity projects — there's nothing
- *  useful to render in that case.
  * ============================================================ */
 function MySolidarityProjects() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -644,7 +625,9 @@ function MySolidarityProjects() {
       .then((data) => !cancelled && setItems(data))
       .catch(() => !cancelled && setItems([]))
       .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading || items.length === 0) return null;
@@ -652,7 +635,7 @@ function MySolidarityProjects() {
   const recent = items.slice(0, 4);
 
   return (
-    <Section title="مشاريعك في ساحة التضامن" icon={Handshake}>
+    <Section title={t('dashboard.sections.solidarityProjects')} icon={Handshake}>
       <div className="grid gap-4 sm:grid-cols-2">
         {recent.map((p, i) => (
           <DashboardProjectCard
@@ -675,11 +658,15 @@ function Section({ title, icon: Icon, action, children }) {
     <section className="animate-fade-up">
       <div className="flex items-center gap-2 mb-4">
         {Icon && (
-          <Icon size={16} strokeWidth={1.7} className="text-muted" />
+          <Icon
+            size={16}
+            strokeWidth={1.7}
+            style={{ color: 'var(--text-muted)' }}
+          />
         )}
         <h2
-          className="font-display text-ink m-0"
-          style={{ fontSize: 17, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h2>
@@ -698,8 +685,8 @@ function CardGridSkeleton() {
           key={i}
           className="animate-pulse rounded-[16px]"
           style={{
-            background: 'white',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
             height: 220,
           }}
         />
@@ -712,17 +699,20 @@ function Empty({ title, subtitle, ctaLabel, onCta }) {
   return (
     <div
       className="flex flex-col items-center text-center py-12 px-6 rounded-[14px]"
-      style={{ background: 'white', border: '1px dashed #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px dashed var(--border-default)',
+      }}
     >
       <h3
-        className="font-display text-ink m-0 mb-2"
-        style={{ fontSize: 16, fontWeight: 700 }}
+        className="font-display m-0 mb-2"
+        style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-ink)' }}
       >
         {title}
       </h3>
       <p
-        className="text-muted m-0 max-w-md"
-        style={{ fontSize: 13.5, lineHeight: 1.7 }}
+        className="m-0 max-w-md"
+        style={{ fontSize: 13.5, lineHeight: 1.7, color: 'var(--text-muted)' }}
       >
         {subtitle}
       </p>
@@ -752,7 +742,7 @@ function DashboardSkeleton() {
         style={{
           height: 32,
           width: 240,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 8,
           marginBottom: 12,
         }}
@@ -761,7 +751,7 @@ function DashboardSkeleton() {
         style={{
           height: 14,
           width: 320,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 6,
           marginBottom: 32,
         }}
@@ -772,8 +762,8 @@ function DashboardSkeleton() {
             key={i}
             style={{
               height: 140,
-              background: 'white',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               borderRadius: 14,
             }}
           />
@@ -783,7 +773,7 @@ function DashboardSkeleton() {
         style={{
           height: 16,
           width: 200,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 6,
           marginBottom: 16,
         }}
@@ -794,8 +784,8 @@ function DashboardSkeleton() {
             key={i}
             style={{
               height: 78,
-              background: 'white',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               borderRadius: 12,
             }}
           />

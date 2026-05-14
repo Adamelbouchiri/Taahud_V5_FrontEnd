@@ -1,5 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, FileText, X, AlertCircle, Image, FileArchive, FileSpreadsheet } from 'lucide-react';
+import {
+  UploadCloud,
+  FileText,
+  X,
+  AlertCircle,
+  Image,
+  FileArchive,
+  FileSpreadsheet,
+} from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /**
  * Drag-and-drop file picker for the create-project flow.
@@ -14,6 +23,7 @@ const MAX_FILE_SIZE_MB = 10;
 const ACCEPTED = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.dwg,.zip';
 
 export default function FilesUpload({ files = [], onChange }) {
+  const { t } = useTranslation();
   const inputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
@@ -24,10 +34,9 @@ export default function FilesUpload({ files = [], onChange }) {
     const accepted = [];
     for (const f of list) {
       if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        setError(`الملف "${f.name}" يتجاوز الحد الأقصى (${MAX_FILE_SIZE_MB} ميغابايت).`);
+        setError(t('projects.files.sizeRejected', { name: f.name }));
         continue;
       }
-      // Avoid duplicates by name+size
       if (files.some((x) => x.name === f.name && x.size === f.size)) continue;
       accepted.push(f);
     }
@@ -50,7 +59,6 @@ export default function FilesUpload({ files = [], onChange }) {
 
   return (
     <div>
-      {/* Drop zone */}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -64,8 +72,8 @@ export default function FilesUpload({ files = [], onChange }) {
         style={{
           padding: '32px 24px',
           borderRadius: 14,
-          border: `2px dashed ${isDragging ? '#136d4a' : '#cfcdc4'}`,
-          background: isDragging ? 'rgba(19,109,74,0.04)' : '#fafaf6',
+          border: `2px dashed ${isDragging ? '#136d4a' : 'var(--border-strong)'}`,
+          background: isDragging ? 'rgba(19,109,74,0.04)' : 'var(--bg-canvas)',
           cursor: 'pointer',
         }}
       >
@@ -75,9 +83,9 @@ export default function FilesUpload({ files = [], onChange }) {
             width: 52,
             height: 52,
             borderRadius: 14,
-            background: 'white',
-            border: '1px solid #efece4',
-            color: isDragging ? '#136d4a' : '#7a7a8c',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-soft)',
+            color: isDragging ? '#136d4a' : 'var(--text-muted)',
             transition: 'color 0.2s',
           }}
         >
@@ -85,12 +93,13 @@ export default function FilesUpload({ files = [], onChange }) {
         </div>
         <div
           className="font-semibold mb-1"
-          style={{ fontSize: 14, color: '#0f1129' }}
+          style={{ fontSize: 14, color: 'var(--text-ink)' }}
         >
-          اسحب الملفات هنا أو اضغط للاختيار
+          {t('projects.files.dropTitle')} {t('projects.files.dropOr')}{' '}
+          {t('projects.files.browseCta')}
         </div>
-        <div style={{ fontSize: 12.5, color: '#7a7a8c' }}>
-          PDF · DOC · XLS · صور · DWG · ZIP — حتى {MAX_FILE_SIZE_MB} ميغابايت لكل ملف
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          {t('projects.files.hint')}
         </div>
 
         <input
@@ -100,20 +109,19 @@ export default function FilesUpload({ files = [], onChange }) {
           accept={ACCEPTED}
           onChange={(e) => {
             if (e.target.files?.length) addFiles(e.target.files);
-            e.target.value = ''; // allow re-selecting same file
+            e.target.value = '';
           }}
           style={{ display: 'none' }}
         />
       </button>
 
-      {/* Error */}
       {error && (
         <div
           className="flex items-center gap-2 mt-3 p-3 rounded-[10px]"
           style={{
             background: 'rgba(185,28,28,0.06)',
             border: '1px solid rgba(185,28,28,0.18)',
-            color: '#b91c1c',
+            color: 'var(--accent-danger)',
             fontSize: 13,
           }}
         >
@@ -122,62 +130,74 @@ export default function FilesUpload({ files = [], onChange }) {
         </div>
       )}
 
-      {/* File list */}
       {files.length > 0 && (
-        <ul className="m-0 p-0 mt-4 flex flex-col gap-2">
-          {files.map((file, i) => (
-            <li
-              key={`${file.name}-${i}`}
-              className="list-none flex items-center gap-3 px-4 py-3 rounded-[11px] animate-fade-up"
-              style={{ background: 'white', border: '1px solid #e5e3dc' }}
-            >
-              <FileTypeIcon name={file.name} />
-              <div className="min-w-0 flex-1">
-                <div
-                  className="font-semibold truncate"
-                  style={{ fontSize: 13.5, color: '#0f1129' }}
-                >
-                  {file.name}
-                </div>
-                <div style={{ fontSize: 12, color: '#7a7a8c' }}>
-                  {formatSize(file.size)}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                aria-label={`إزالة ${file.name}`}
-                className="flex items-center justify-center transition-colors"
+        <>
+          <div
+            className="mt-4 mb-2 font-semibold uppercase"
+            style={{
+              fontSize: 10.5,
+              letterSpacing: '0.1em',
+              color: 'var(--text-muted)',
+            }}
+          >
+            {t('projects.files.addedTitle', { count: files.length })}
+          </div>
+          <ul className="m-0 p-0 flex flex-col gap-2">
+            {files.map((file, i) => (
+              <li
+                key={`${file.name}-${i}`}
+                className="list-none flex items-center gap-3 px-4 py-3 rounded-[11px] animate-fade-up"
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  background: 'transparent',
-                  border: '1px solid #e5e3dc',
-                  color: '#7a7a8c',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(185,28,28,0.3)';
-                  e.currentTarget.style.color = '#b91c1c';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e5e3dc';
-                  e.currentTarget.style.color = '#7a7a8c';
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
                 }}
               >
-                <X size={15} />
-              </button>
-            </li>
-          ))}
-        </ul>
+                <FileTypeIcon name={file.name} />
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="font-semibold truncate"
+                    style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
+                  >
+                    {file.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {formatSize(file.size)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  aria-label={t('projects.files.removeAria')}
+                  className="flex items-center justify-center transition-colors"
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 9,
+                    background: 'transparent',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(185,28,28,0.3)';
+                    e.currentTarget.style.color = 'var(--accent-danger)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-default)';
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
 }
-
-/* ---------- Helpers ---------- */
 
 function FileTypeIcon({ name }) {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -210,7 +230,7 @@ function FileTypeIcon({ name }) {
         height: 38,
         borderRadius: 10,
         background: bg,
-        color: color,
+        color,
       }}
     >
       <Icon size={18} strokeWidth={1.7} />

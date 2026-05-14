@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Calendar,
   MapPin,
   Wallet,
   ArrowLeft,
@@ -9,6 +8,7 @@ import {
   Users,
   CheckCircle2,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /**
  * Card used in the browse feed. Always opens the project details
@@ -16,14 +16,24 @@ import {
  * the user has read the full project info.
  */
 export default function OpenProjectCard({ project, onView }) {
+  const { t, lang } = useTranslation();
   const applied = project.has_applied;
+
+  const ownerLabel = (() => {
+    const at = project.owner?.account_type;
+    if (at === 'developer') return t('accountType.developer');
+    if (at === 'individual') return t('accountType.individual');
+    return t('projects.list.ownerGeneric');
+  })();
 
   return (
     <article
       className="group relative flex flex-col p-6 rounded-[16px] h-full"
       style={{
-        background: 'white',
-        border: applied ? '1.5px solid rgba(19,109,74,0.35)' : '1px solid #e5e3dc',
+        background: 'var(--bg-surface)',
+        border: applied
+          ? '1.5px solid rgba(19,109,74,0.35)'
+          : '1px solid var(--border-default)',
         boxShadow: applied ? '0 4px 16px rgba(19,109,74,0.08)' : 'none',
         transition:
           'transform 280ms cubic-bezier(0.16, 1, 0.3, 1), ' +
@@ -40,13 +50,12 @@ export default function OpenProjectCard({ project, onView }) {
       }}
       onMouseLeave={(e) => {
         if (!applied) {
-          e.currentTarget.style.borderColor = '#e5e3dc';
+          e.currentTarget.style.borderColor = 'var(--border-default)';
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = 'none';
         }
       }}
     >
-      {/* Top row: owner + relative date */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
@@ -60,35 +69,35 @@ export default function OpenProjectCard({ project, onView }) {
               fontSize: 13,
             }}
           >
-            {project.owner?.name?.[0] || '؟'}
+            {project.owner?.name?.[0] || '·'}
           </div>
           <div className="min-w-0">
             <div
               className="font-semibold truncate"
-              style={{ fontSize: 12.5, color: '#0f1129' }}
+              style={{ fontSize: 12.5, color: 'var(--text-ink)' }}
             >
-              {project.owner?.name || 'عميل'}
+              {project.owner?.name || t('projects.list.ownerFallback')}
             </div>
-            <div style={{ fontSize: 11, color: '#7a7a8c' }}>
-              {ownerTypeLabel(project.owner?.account_type)}
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {ownerLabel}
             </div>
           </div>
         </div>
         <span
-          className="text-muted whitespace-nowrap"
-          style={{ fontSize: 11.5, fontWeight: 500 }}
+          className="whitespace-nowrap"
+          style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-muted)' }}
         >
-          {formatRelativeDate(project.created_at)}
+          {formatRelativeDate(project.created_at, t)}
         </span>
       </div>
 
-      {/* Title — clickable to view details */}
       <h3
-        className="font-display text-ink m-0 mb-2"
+        className="font-display m-0 mb-2"
         style={{
           fontSize: 17,
           fontWeight: 700,
           lineHeight: 1.3,
+          color: 'var(--text-ink)',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -99,7 +108,7 @@ export default function OpenProjectCard({ project, onView }) {
           <button
             type="button"
             onClick={() => onView(project)}
-            className="text-right p-0 m-0 transition-colors hover:text-primary"
+            className="text-start p-0 m-0 transition-colors hover:text-primary"
             style={{
               background: 'transparent',
               border: 'none',
@@ -118,10 +127,9 @@ export default function OpenProjectCard({ project, onView }) {
         )}
       </h3>
 
-      {/* Meta row */}
       <div
         className="flex items-center gap-3 flex-wrap mb-4"
-        style={{ fontSize: 12.5, color: '#7a7a8c' }}
+        style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
       >
         <span className="inline-flex items-center gap-1">
           <Tag size={12} strokeWidth={1.7} />
@@ -143,13 +151,13 @@ export default function OpenProjectCard({ project, onView }) {
         )}
       </div>
 
-      {/* Description */}
       {project.description && (
         <p
-          className="text-ink-soft m-0 mb-4"
+          className="m-0 mb-4"
           style={{
             fontSize: 13.5,
             lineHeight: 1.65,
+            color: 'var(--text-ink-soft)',
             display: '-webkit-box',
             WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
@@ -161,47 +169,55 @@ export default function OpenProjectCard({ project, onView }) {
         </p>
       )}
 
-      {/* Stats row: budget + applicants */}
       <div
         className="flex items-center justify-between gap-3 pt-4 mb-4"
-        style={{ borderTop: '1px solid #efece4' }}
+        style={{ borderTop: '1px solid var(--border-soft)' }}
       >
         <div className="min-w-0">
           {project.budget ? (
             <>
               <div
                 className="font-semibold uppercase mb-0.5"
-                style={{ fontSize: 10, letterSpacing: '0.08em', color: '#7a7a8c' }}
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                }}
               >
-                الميزانية
+                {t('projects.list.budgetLabel')}
               </div>
               <div
                 className="font-bold inline-flex items-center gap-1"
-                style={{ fontSize: 14, color: '#0f1129' }}
+                style={{ fontSize: 14, color: 'var(--text-ink)' }}
               >
                 <Wallet size={13} strokeWidth={1.7} className="text-secondary" />
-                {formatNumber(project.budget)}{' '}
-                <span style={{ fontSize: 11, color: '#7a7a8c' }}>ر.س</span>
+                {formatNumber(project.budget, lang)}{' '}
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {t('common.currency')}
+                </span>
               </div>
             </>
           ) : (
-            <span style={{ fontSize: 12, color: '#7a7a8c' }}>
-              ميزانية غير محدّدة
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {t('projects.list.budgetUnspecified')}
             </span>
           )}
         </div>
 
-        {/* Applications count */}
         <div className="text-end">
           <div
             className="font-semibold uppercase mb-0.5"
-            style={{ fontSize: 10, letterSpacing: '0.08em', color: '#7a7a8c' }}
+            style={{
+              fontSize: 10,
+              letterSpacing: '0.08em',
+              color: 'var(--text-muted)',
+            }}
           >
-            متقدّمون
+            {t('projects.list.applicants')}
           </div>
           <div
             className="font-bold inline-flex items-center gap-1"
-            style={{ fontSize: 13.5, color: '#3a3a52' }}
+            style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}
           >
             <Users size={12} strokeWidth={1.8} />
             {project.applications_count ?? 0}
@@ -209,9 +225,6 @@ export default function OpenProjectCard({ project, onView }) {
         </div>
       </div>
 
-      {/* CTA — always opens project details. The apply button
-          lives on the details page, after the user has reviewed
-          the project. */}
       <button
         type="button"
         onClick={() => onView?.(project)}
@@ -239,20 +252,18 @@ export default function OpenProjectCard({ project, onView }) {
         {applied ? (
           <>
             <CheckCircle2 size={15} />
-            تم تقديم طلبك — عرض التفاصيل
+            {t('projects.list.appliedAndView')}
           </>
         ) : (
           <>
             <ArrowLeft size={14} />
-            عرض التفاصيل
+            {t('projects.list.viewDetails')}
           </>
         )}
       </button>
     </article>
   );
 }
-
-/* ---------- Helpers ---------- */
 
 function Dot() {
   return (
@@ -267,27 +278,29 @@ function Dot() {
   );
 }
 
-function ownerTypeLabel(t) {
-  if (t === 'developer') return 'مطوّر عقاري';
-  if (t === 'individual') return 'عميل';
-  return 'صاحب المشروع';
+function localeFor(lang) {
+  if (lang === 'en') return 'en-US';
+  if (lang === 'zh') return 'zh-CN';
+  return 'ar-SA';
 }
 
-function formatNumber(n) {
+function formatNumber(n, lang) {
   const num = typeof n === 'string' ? Number(n) : n;
   if (Number.isNaN(num)) return n;
-  return new Intl.NumberFormat('ar-SA').format(num);
+  return new Intl.NumberFormat(localeFor(lang)).format(num);
 }
 
-function formatRelativeDate(d) {
+function formatRelativeDate(d, t) {
   if (!d) return '';
   const date = new Date(d);
   const now = new Date();
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  if (diffDays < 1) return 'اليوم';
-  if (diffDays === 1) return 'أمس';
-  if (diffDays < 7) return `منذ ${diffDays} أيام`;
-  if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسابيع`;
-  if (diffDays < 365) return `منذ ${Math.floor(diffDays / 30)} أشهر`;
-  return `منذ ${Math.floor(diffDays / 365)} سنوات`;
+  if (diffDays < 1) return t('common.relative.today');
+  if (diffDays === 1) return t('common.relative.yesterday');
+  if (diffDays < 7) return t('common.relative.daysAgo', { value: diffDays });
+  if (diffDays < 30)
+    return t('common.relative.weeksAgo', { value: Math.floor(diffDays / 7) });
+  if (diffDays < 365)
+    return t('common.relative.monthsAgo', { value: Math.floor(diffDays / 30) });
+  return t('common.relative.yearsAgo', { value: Math.floor(diffDays / 365) });
 }

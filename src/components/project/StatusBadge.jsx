@@ -1,8 +1,11 @@
 import React from 'react';
 import { PROJECT_STATUSES } from '../../config/projectConstants';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function StatusBadge({ status, size = 'md' }) {
+  const { t } = useTranslation();
   const config = PROJECT_STATUSES[status] || PROJECT_STATUSES.pending_review;
+  const key = PROJECT_STATUSES[status] ? status : 'pending_review';
 
   const sizes = {
     sm: { fontSize: 11, padding: '3px 9px', dot: 5 },
@@ -31,7 +34,7 @@ export default function StatusBadge({ status, size = 'md' }) {
             config.color === '#ffffff' ? 'rgba(255,255,255,0.85)' : config.color,
         }}
       />
-      {config.label}
+      {t(`status.project.${key}`)}
     </span>
   );
 }

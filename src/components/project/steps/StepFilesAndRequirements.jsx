@@ -3,16 +3,19 @@ import { Files, ListChecks, FileBadge, PlayCircle } from 'lucide-react';
 import RequirementsList from '../RequirementsList';
 import FilesUpload from '../FilesUpload';
 import TextareaField from '../../form/TextareaField';
+import { useTranslation } from '../../../i18n/LanguageContext';
 
-/* Suggested requirements based on what most projects need */
-const REQUIREMENT_SUGGESTIONS = [
-  'رخصة بناء سارية',
-  'مخططات معتمدة من البلدية',
-  'شهادة تأمين',
-  'سجل تجاري',
-  'شهادات سلامة',
-  'مخططات تنفيذية',
-  'عينات مواد',
+/* Suggested requirements baked into the dictionary so they
+ * translate alongside the rest of the wizard. Keys are stable
+ * across languages; the displayed string comes from t(). */
+const REQUIREMENT_SUGGESTION_KEYS = [
+  'permit',
+  'cityPlans',
+  'insurance',
+  'commercialReg',
+  'safety',
+  'execPlans',
+  'samples',
 ];
 
 /**
@@ -24,53 +27,55 @@ const REQUIREMENT_SUGGESTIONS = [
  *   - required_documents (string)   → free-form description of needed certificates
  *   - is_started_externally (bool)  → already in progress outside Taahud
  *
- * Everything in this step is optional. A customer can publish a project
- * with none of these and add them later from the detail page.
+ * Everything in this step is optional.
  */
 export default function StepFilesAndRequirements({ form, update }) {
+  const { t } = useTranslation();
+  const k = 'projects.create.steps.filesReqs';
+  const suggestions = REQUIREMENT_SUGGESTION_KEYS.map((key) =>
+    t(`projects.create.suggestions.${key}`)
+  );
+
   return (
     <div className="flex flex-col gap-7">
-      {/* Requirements */}
       <section>
         <SectionHeader
           icon={ListChecks}
-          title="متطلبات المشروع"
-          subtitle="أضف الوثائق والشهادات التي يجب على مقدّم الخدمة توفيرها."
+          title={t(`${k}.requirementsTitle`)}
+          subtitle={t(`${k}.requirementsSubtitle`)}
         />
         <RequirementsList
           items={form.requirements}
           onChange={(next) => update('requirements', next)}
-          suggestions={REQUIREMENT_SUGGESTIONS}
+          suggestions={suggestions}
         />
       </section>
 
-      <div style={{ borderTop: '1px solid #efece4' }} />
+      <div style={{ borderTop: '1px solid var(--border-soft)' }} />
 
-      {/* Required documents */}
       <section>
         <SectionHeader
           icon={FileBadge}
-          title="المستندات المطلوبة"
-          subtitle="وصف حرّ للوثائق الرسميّة المطلوبة (سجل تجاري، شهادة زكاة، ...) — اختياري."
+          title={t(`${k}.documentsLabel`)}
+          subtitle={t(`${k}.documentsHint`)}
         />
         <TextareaField
-          label="الوثائق المطلوبة"
+          label={t(`${k}.documentsLabel`)}
           rows={3}
-          placeholder="مثال: سجل تجاري سعودي ساري، شهادة هيئة الزكاة والضريبة، تأمين عمّال."
+          placeholder={t(`${k}.documentsPlaceholder`)}
           value={form.required_documents || ''}
           onChange={(e) => update('required_documents', e.target.value)}
-          hint="اختياري — اتركه فارغاً إن لم يكن لديك متطلبات إضافية."
+          hint={t(`${k}.documentsHint`)}
         />
       </section>
 
-      <div style={{ borderTop: '1px solid #efece4' }} />
+      <div style={{ borderTop: '1px solid var(--border-soft)' }} />
 
-      {/* Files */}
       <section>
         <SectionHeader
           icon={Files}
-          title="ملفات المشروع"
-          subtitle="ارفق المخططات أو الصور أو أيّ مستندات تساعد الشركاء على فهم المشروع."
+          title={t(`${k}.filesTitle`)}
+          subtitle={t(`${k}.filesSubtitle`)}
         />
         <FilesUpload
           files={form.files}
@@ -78,18 +83,17 @@ export default function StepFilesAndRequirements({ form, update }) {
         />
       </section>
 
-      <div style={{ borderTop: '1px solid #efece4' }} />
+      <div style={{ borderTop: '1px solid var(--border-soft)' }} />
 
-      {/* Already started externally */}
       <section>
         <SectionHeader
           icon={PlayCircle}
-          title="حالة المشروع"
-          subtitle="هل بدأ العمل في المشروع خارج منصّة تعاهد؟"
+          title={t(`${k}.startedExternallyTitle`)}
+          subtitle={t(`${k}.startedExternallyDesc`)}
         />
         <ToggleRow
-          label="المشروع بدأ بالفعل خارج المنصّة"
-          desc="فعّل هذا الخيار إذا كنت تبحث عن شريك لإكمال مشروع قائم."
+          label={t(`${k}.startedExternallyTitle`)}
+          desc={t(`${k}.startedExternallyDesc`)}
           checked={!!form.is_started_externally}
           onChange={(v) => update('is_started_externally', v)}
         />
@@ -115,13 +119,25 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
       </div>
       <div>
         <h3
-          className="font-display text-ink m-0"
-          style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}
+          className="font-display m-0"
+          style={{
+            fontSize: 17,
+            fontWeight: 700,
+            lineHeight: 1.3,
+            color: 'var(--text-ink)',
+          }}
         >
           {title}
         </h3>
         {subtitle && (
-          <p className="text-muted m-0 mt-1" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          <p
+            className="m-0 mt-1"
+            style={{
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: 'var(--text-muted)',
+            }}
+          >
             {subtitle}
           </p>
         )}
@@ -136,11 +152,11 @@ function ToggleRow({ label, desc, checked, onChange }) {
       type="button"
       onClick={() => onChange(!checked)}
       aria-pressed={checked}
-      className="w-full text-right transition-all"
+      className="w-full text-start transition-all"
       style={{
         padding: '14px 16px',
-        background: checked ? 'rgba(19,109,74,0.06)' : 'white',
-        border: `1.5px solid ${checked ? '#136d4a' : '#e5e3dc'}`,
+        background: checked ? 'rgba(19,109,74,0.06)' : 'var(--bg-surface)',
+        border: `1.5px solid ${checked ? '#136d4a' : 'var(--border-default)'}`,
         borderRadius: 12,
         cursor: 'pointer',
         display: 'flex',
@@ -177,13 +193,21 @@ function ToggleRow({ label, desc, checked, onChange }) {
       <span className="flex-1 min-w-0">
         <span
           className="font-display font-bold block"
-          style={{ fontSize: 14, color: checked ? '#0d5538' : '#0f1129' }}
+          style={{
+            fontSize: 14,
+            color: checked ? '#0d5538' : 'var(--text-ink)',
+          }}
         >
           {label}
         </span>
         <span
           className="block"
-          style={{ fontSize: 12.5, color: '#7a7a8c', lineHeight: 1.55, marginTop: 2 }}
+          style={{
+            fontSize: 12.5,
+            color: 'var(--text-muted)',
+            lineHeight: 1.55,
+            marginTop: 2,
+          }}
         >
           {desc}
         </span>

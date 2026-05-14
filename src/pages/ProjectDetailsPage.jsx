@@ -23,23 +23,16 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import Logo from '../components/Logo';
+import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
 import { projects as projectsApi } from '../services';
 import { isServiceProvider } from '../config/constants';
 import { arenaConfig } from '../config/projectConstants';
 import { UserProvider, useUser } from '../contexts/UserContext';
 import StatusBadge from '../components/project/StatusBadge';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  ProjectDetailsPage — /projects/:id
- *  ----------------------------------------------------------------
- *  Standalone page (not inside DashboardLayout). Has its own
- *  topbar and provides its own UserProvider so role-aware actions
- *  (edit / apply / etc.) still work.
- *
- *  Three view modes based on the viewer:
- *    - Owner:               edit button + applications received
- *    - Eligible applicant:  "تقديم طلب" CTA
- *    - Anyone else:         read-only details
  * ============================================================ */
 
 export default function ProjectDetailsPageRoute() {
@@ -54,6 +47,7 @@ function ProjectDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t } = useTranslation();
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,20 +63,31 @@ function ProjectDetailsPage() {
         if (!cancelled) setProject(p);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || 'تعذّر تحميل المشروع.');
+        if (!cancelled)
+          setError(err.message || t('projects.details.loadErrorTitle'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, t]);
 
-  if (loading) return <Shell><LoadingState /></Shell>;
-  if (error || !project) return <Shell><ErrorView message={error} onBack={() => navigate(-1)} /></Shell>;
+  if (loading)
+    return (
+      <Shell>
+        <LoadingState />
+      </Shell>
+    );
+  if (error || !project)
+    return (
+      <Shell>
+        <ErrorView message={error} onBack={() => navigate(-1)} />
+      </Shell>
+    );
 
   const isOwner = user && project.user_id === user.id;
-  // Service providers (entrepreneur + engineering) are the only
-  // bidders in V5. Suppliers ship later with their own flow.
   const isApplicant = user && isServiceProvider(user.account_type);
   const canApply =
     isApplicant && project.status === 'open_for_bids' && !project.has_applied && !isOwner;
@@ -90,15 +95,13 @@ function ProjectDetailsPage() {
   return (
     <Shell>
       <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1280px] mx-auto">
-        {/* Breadcrumb */}
         <Breadcrumb
           items={[
-            { label: 'تصفّح المشاريع', to: '/projects' },
+            { label: t('projects.details.breadcrumbBrowse'), to: '/projects' },
             { label: project.name },
           ]}
         />
 
-        {/* Header */}
         <Header
           project={project}
           isOwner={isOwner}
@@ -107,145 +110,172 @@ function ProjectDetailsPage() {
           onApply={() => navigate(`/projects/${project.id}/apply`)}
         />
 
-      {/* Two-column body */}
-      <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6 lg:gap-8 mt-8">
-        {/* Main content */}
-        <div className="space-y-6 min-w-0">
-          {project.description && (
-            <Section title="وصف المشروع">
-              <p
-                className="m-0"
-                style={{ fontSize: 14.5, color: '#3a3a52', lineHeight: 1.85 }}
-              >
-                {project.description}
-              </p>
-            </Section>
-          )}
+        <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6 lg:gap-8 mt-8">
+          <div className="space-y-6 min-w-0">
+            {project.description && (
+              <Section title={t('projects.details.descriptionSection')}>
+                <p
+                  className="m-0"
+                  style={{
+                    fontSize: 14.5,
+                    color: 'var(--text-ink-soft)',
+                    lineHeight: 1.85,
+                  }}
+                >
+                  {project.description}
+                </p>
+              </Section>
+            )}
 
-          {project.scope && (
-            <Section title="نطاق العمل">
-              <p
-                className="m-0"
-                style={{ fontSize: 14.5, color: '#3a3a52', lineHeight: 1.85 }}
-              >
-                {project.scope}
-              </p>
-            </Section>
-          )}
+            {project.scope && (
+              <Section title={t('projects.details.scopeSection')}>
+                <p
+                  className="m-0"
+                  style={{
+                    fontSize: 14.5,
+                    color: 'var(--text-ink-soft)',
+                    lineHeight: 1.85,
+                  }}
+                >
+                  {project.scope}
+                </p>
+              </Section>
+            )}
 
-          {project.requirements && project.requirements.length > 0 && (
-            <Section title="المتطلبات" icon={ListChecks}>
-              <ul className="m-0 p-0 space-y-2.5">
-                {project.requirements.map((r, i) => (
-                  <li
-                    key={i}
-                    className="list-none flex items-start gap-3"
-                    style={{ fontSize: 14, color: '#0f1129', lineHeight: 1.6 }}
-                  >
-                    <span
-                      className="flex items-center justify-center flex-shrink-0 mt-0.5"
+            {project.requirements && project.requirements.length > 0 && (
+              <Section
+                title={t('projects.details.requirementsSection')}
+                icon={ListChecks}
+              >
+                <ul className="m-0 p-0 space-y-2.5">
+                  {project.requirements.map((r, i) => (
+                    <li
+                      key={i}
+                      className="list-none flex items-start gap-3"
                       style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        background: 'rgba(19,109,74,0.1)',
-                        color: '#136d4a',
-                        fontSize: 11,
-                        fontWeight: 700,
+                        fontSize: 14,
+                        color: 'var(--text-ink)',
+                        lineHeight: 1.6,
                       }}
                     >
-                      ✓
-                    </span>
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
+                      <span
+                        className="flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          background: 'rgba(19,109,74,0.1)',
+                          color: '#136d4a',
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        ✓
+                      </span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-          {project.files && project.files.length > 0 && (
-            <Section title="الملفات المرفقة" icon={FileText}>
-              <ul className="m-0 p-0 space-y-2">
-                {project.files.map((f) => (
-                  <FileRow key={f.id} file={f} />
-                ))}
-              </ul>
-            </Section>
-          )}
-
-          {/* Owner-only: applications received */}
-          {isOwner && (
-            <Section title="الطلبات المستلمة" icon={Users}>
-              <div
-                className="p-6 rounded-[12px] text-center"
-                style={{
-                  background: '#fafaf6',
-                  border: '1px dashed #e5e3dc',
-                  color: '#7a7a8c',
-                  fontSize: 13.5,
-                }}
+            {project.files && project.files.length > 0 && (
+              <Section
+                title={t('projects.details.filesSection')}
+                icon={FileText}
               >
-                ستظهر هنا الطلبات المقدّمة على مشروعك. (صفحة كاملة قيد التطوير.)
-              </div>
-            </Section>
-          )}
-        </div>
+                <ul className="m-0 p-0 space-y-2">
+                  {project.files.map((f) => (
+                    <FileRow key={f.id} file={f} />
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-        {/* Sidebar */}
-        <aside className="space-y-5">
-          <FactsCard project={project} />
-          <OwnerCard owner={project.owner} />
-          {project.is_accepted === true && project.partner_id && (
-            <PartnerCard partnerId={project.partner_id} />
-          )}
-        </aside>
-      </div>
+            {isOwner && (
+              <Section
+                title={t('projects.details.applications.title')}
+                icon={Users}
+              >
+                <div
+                  className="p-6 rounded-[12px] text-center"
+                  style={{
+                    background: 'var(--bg-canvas)',
+                    border: '1px dashed var(--border-default)',
+                    color: 'var(--text-muted)',
+                    fontSize: 13.5,
+                  }}
+                >
+                  {t('projects.details.applicationsPlaceholder')}
+                </div>
+              </Section>
+            )}
+          </div>
+
+          <aside className="space-y-5">
+            <FactsCard project={project} />
+            <OwnerCard owner={project.owner} />
+            {project.is_accepted === true && project.partner_id && (
+              <PartnerCard partnerId={project.partner_id} />
+            )}
+          </aside>
+        </div>
       </div>
     </Shell>
   );
 }
 
 /* ============================================================
- *  Shell — topbar wrapper for the standalone details page
+ *  Shell
  * ============================================================ */
 function Shell({ children }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       <header
-        className="sticky top-0 z-30 bg-white"
-        style={{ borderBottom: '1px solid #e5e3dc' }}
+        className="sticky top-0 z-30"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-default)',
+        }}
       >
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 h-[96px] flex items-center justify-between">
           <button
             onClick={() => navigate('/')}
             className="bg-transparent border-0 p-0 cursor-pointer"
-            aria-label="الرئيسية"
+            aria-label={t('nav.backHome')}
           >
             <Logo height={68} />
           </button>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
-            style={{
-              fontSize: 13,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#cfcdc4';
-              e.currentTarget.style.background = '#fafaf6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.background = 'white';
-            }}
-          >
-            <LayoutDashboard size={15} strokeWidth={1.8} />
-            لوحة التحكّم
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageThemeSwitcher compact />
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
+              style={{
+                fontSize: 13,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+                e.currentTarget.style.background = 'var(--bg-canvas)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.background = 'var(--bg-surface)';
+              }}
+            >
+              <LayoutDashboard size={15} strokeWidth={1.8} />
+              {t('projects.details.dashboard')}
+            </button>
+          </div>
         </div>
       </header>
       <main className="flex-1">{children}</main>
@@ -254,18 +284,17 @@ function Shell({ children }) {
 }
 
 /* ============================================================
- *  Header — title, status, primary actions
+ *  Header
  * ============================================================ */
 function Header({ project, isOwner, canApply, onEdit, onApply }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-6 animate-fade-up">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-3">
             <StatusBadge status={project.status} />
-            {project.arena && (
-              <ArenaPill arena={project.arena} />
-            )}
+            {project.arena && <ArenaPill arena={project.arena} />}
             {project.is_accepted === true && (
               <span
                 className="inline-flex items-center gap-1 rounded-full font-semibold"
@@ -278,27 +307,27 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
                 }}
               >
                 <CheckCircle2 size={12} />
-                مقبول
+                {t('projects.details.acceptedBadge')}
               </span>
             )}
           </div>
 
           <h1
-            className="font-display text-ink m-0 mb-2"
+            className="font-display m-0 mb-2"
             style={{
               fontSize: 'clamp(24px, 3vw, 32px)',
               fontWeight: 700,
               lineHeight: 1.25,
               letterSpacing: '-0.01em',
+              color: 'var(--text-ink)',
             }}
           >
             {project.name}
           </h1>
 
-          {/* Quick meta strip */}
           <div
             className="flex items-center gap-3 flex-wrap"
-            style={{ fontSize: 13, color: '#7a7a8c' }}
+            style={{ fontSize: 13, color: 'var(--text-muted)' }}
           >
             <span className="inline-flex items-center gap-1.5">
               <Tag size={13} strokeWidth={1.7} />
@@ -314,14 +343,15 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
                 <Dot />
                 <span className="inline-flex items-center gap-1.5">
                   <Calendar size={13} strokeWidth={1.7} />
-                  نُشر {formatRelativeDate(project.created_at)}
+                  {t('projects.details.publishedAt', {
+                    value: formatRelativeDate(project.created_at, t),
+                  })}
                 </span>
               </>
             )}
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 flex-shrink-0">
           {isOwner && (
             <button
@@ -330,22 +360,22 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] font-semibold transition-all"
               style={{
                 fontSize: 13.5,
-                background: 'white',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#cfcdc4';
-                e.currentTarget.style.background = '#fafaf6';
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+                e.currentTarget.style.background = 'var(--bg-canvas)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#e5e3dc';
-                e.currentTarget.style.background = 'white';
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.background = 'var(--bg-surface)';
               }}
             >
               <Pencil size={14} strokeWidth={1.8} />
-              تعديل
+              {t('projects.details.editCta')}
             </button>
           )}
 
@@ -371,7 +401,7 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               }}
             >
               <Send size={14} strokeWidth={1.8} />
-              تقديم طلب
+              {t('projects.details.applyCta')}
             </button>
           )}
 
@@ -386,17 +416,19 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               }}
             >
               <CheckCircle2 size={14} />
-              قدّمت طلباً
+              {t('projects.details.appliedBadge')}
             </span>
           )}
         </div>
       </div>
 
-      {/* Progress bar (active/completed projects) */}
       {(project.status === 'in_progress' || project.status === 'completed') && (
         <div
           className="mt-6 p-5 rounded-[14px]"
-          style={{ background: 'white', border: '1px solid #e5e3dc' }}
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+          }}
         >
           <div className="flex items-center justify-between mb-2">
             <span
@@ -404,15 +436,12 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               style={{
                 fontSize: 11,
                 letterSpacing: '0.1em',
-                color: '#7a7a8c',
+                color: 'var(--text-muted)',
               }}
             >
-              تقدّم المشروع
+              {t('projects.details.progressLabel')}
             </span>
-            <span
-              className="font-bold"
-              style={{ fontSize: 14, color: '#136d4a' }}
-            >
+            <span className="font-bold" style={{ fontSize: 14, color: '#136d4a' }}>
               {Math.round(project.progress)}%
             </span>
           </div>
@@ -421,7 +450,7 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               width: '100%',
               height: 8,
               borderRadius: 4,
-              background: '#efece4',
+              background: 'var(--border-soft)',
               overflow: 'hidden',
             }}
           >
@@ -444,24 +473,31 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
 }
 
 /* ============================================================
- *  Section wrapper
+ *  Section
  * ============================================================ */
 function Section({ title, icon: Icon, children }) {
   return (
     <section
       className="rounded-[14px] animate-fade-up"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <div
         className="px-6 py-4 flex items-center gap-2"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         {Icon && (
-          <Icon size={16} strokeWidth={1.7} className="text-muted" />
+          <Icon
+            size={16}
+            strokeWidth={1.7}
+            style={{ color: 'var(--text-muted)' }}
+          />
         )}
         <h2
-          className="font-display text-ink m-0"
-          style={{ fontSize: 15, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h2>
@@ -476,32 +512,33 @@ function Section({ title, icon: Icon, children }) {
  * ============================================================ */
 
 function FactsCard({ project }) {
+  const { t, lang } = useTranslation();
   const facts = [
-    { icon: Tag, label: 'النوع', value: project.type },
-    { icon: MapPin, label: 'المدينة', value: project.city },
+    { icon: Tag, label: t('projects.details.meta.type'), value: project.type },
+    { icon: MapPin, label: t('projects.details.meta.city'), value: project.city },
     project.budget != null && {
       icon: Wallet,
-      label: 'الميزانية',
-      value: `${formatNumber(project.budget)} ر.س`,
+      label: t('projects.details.meta.budget'),
+      value: `${formatNumber(project.budget, lang)} ${t('common.currency')}`,
     },
     project.expected_duration && {
       icon: Clock,
-      label: 'المدة المتوقعة',
+      label: t('projects.details.meta.duration'),
       value: project.expected_duration,
     },
     project.start_date && {
       icon: Calendar,
-      label: 'تاريخ البداية',
-      value: formatDate(project.start_date),
+      label: t('projects.details.meta.startDate'),
+      value: formatDate(project.start_date, lang),
     },
     project.end_date && {
       icon: Calendar,
-      label: 'تاريخ الانتهاء',
-      value: formatDate(project.end_date),
+      label: t('projects.details.meta.endDate'),
+      value: formatDate(project.end_date, lang),
     },
     project.experience && {
       icon: Award,
-      label: 'الخبرة المطلوبة',
+      label: t('projects.details.meta.experience'),
       value: project.experience,
     },
   ].filter(Boolean);
@@ -509,17 +546,20 @@ function FactsCard({ project }) {
   return (
     <div
       className="rounded-[14px] overflow-hidden"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <div
         className="px-5 py-4"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         <h3
-          className="font-display text-ink m-0"
-          style={{ fontSize: 14, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-ink)' }}
         >
-          تفاصيل المشروع
+          {t('projects.details.factsTitle')}
         </h3>
       </div>
       <ul className="m-0 p-0 px-5 py-4 space-y-4">
@@ -528,7 +568,8 @@ function FactsCard({ project }) {
             <f.icon
               size={15}
               strokeWidth={1.7}
-              className="flex-shrink-0 mt-0.5 text-muted"
+              className="flex-shrink-0 mt-0.5"
+              style={{ color: 'var(--text-muted)' }}
             />
             <div className="min-w-0">
               <div
@@ -536,14 +577,14 @@ function FactsCard({ project }) {
                 style={{
                   fontSize: 10.5,
                   letterSpacing: '0.08em',
-                  color: '#7a7a8c',
+                  color: 'var(--text-muted)',
                 }}
               >
                 {f.label}
               </div>
               <div
                 className="font-semibold"
-                style={{ fontSize: 13.5, color: '#0f1129' }}
+                style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
               >
                 {f.value}
               </div>
@@ -556,21 +597,28 @@ function FactsCard({ project }) {
 }
 
 function OwnerCard({ owner }) {
+  const { t } = useTranslation();
   if (!owner) return null;
+  const role = owner.account_type
+    ? t(`accountType.${owner.account_type}`)
+    : t('projects.list.ownerGeneric');
   return (
     <div
       className="rounded-[14px] p-5"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <div
         className="font-semibold uppercase mb-3"
         style={{
           fontSize: 10.5,
           letterSpacing: '0.1em',
-          color: '#7a7a8c',
+          color: 'var(--text-muted)',
         }}
       >
-        صاحب المشروع
+        {t('projects.details.ownerSection')}
       </div>
       <div className="flex items-center gap-3">
         <div
@@ -584,21 +632,21 @@ function OwnerCard({ owner }) {
             fontSize: 18,
           }}
         >
-          {owner.name?.[0] || '؟'}
+          {owner.name?.[0] || '·'}
         </div>
         <div className="min-w-0">
           <div
             className="font-bold truncate"
-            style={{ fontSize: 14, color: '#0f1129' }}
+            style={{ fontSize: 14, color: 'var(--text-ink)' }}
           >
             {owner.name}
           </div>
           <div
             className="flex items-center gap-1 truncate"
-            style={{ fontSize: 12, color: '#7a7a8c' }}
+            style={{ fontSize: 12, color: 'var(--text-muted)' }}
           >
             <User size={11} strokeWidth={1.8} />
-            {ownerTypeLabel(owner.account_type)}
+            {role}
             {owner.city && (
               <>
                 <span>·</span>
@@ -613,6 +661,7 @@ function OwnerCard({ owner }) {
 }
 
 function PartnerCard({ partnerId }) {
+  const { t } = useTranslation();
   return (
     <div
       className="rounded-[14px] p-5"
@@ -630,26 +679,29 @@ function PartnerCard({ partnerId }) {
         }}
       >
         <CheckCircle2 size={12} />
-        شريك المشروع
+        {t('projects.details.partnerSection')}
       </div>
       <p
         className="m-0"
-        style={{ fontSize: 13, color: '#3a3a52', lineHeight: 1.6 }}
+        style={{
+          fontSize: 13,
+          color: 'var(--text-ink-soft)',
+          lineHeight: 1.6,
+        }}
       >
-        تم اختيار شريك للمشروع (#{partnerId}). تفاصيل الشريك ستظهر هنا قريباً.
+        {t('projects.details.partnerPlaceholder', { id: partnerId })}
       </p>
     </div>
   );
 }
 
 function FileRow({ file }) {
-  // BE returns `original_name` and `size_bytes`. Fall back to parsing
-  // file_path / url only if those are missing (older mock data).
+  const { t } = useTranslation();
   const name =
     file.original_name ||
     file.file_path?.split('/').pop() ||
     file.url?.split('/').pop() ||
-    `ملف #${file.id}`;
+    t('projects.details.fileFallback', { id: file.id });
   const ext = name.split('.').pop()?.toLowerCase();
   const href = file.url || file.file_path;
 
@@ -676,7 +728,10 @@ function FileRow({ file }) {
   return (
     <li
       className="list-none flex items-center gap-3 px-4 py-3 rounded-[11px]"
-      style={{ background: '#fafaf6', border: '1px solid #efece4' }}
+      style={{
+        background: 'var(--bg-canvas)',
+        border: '1px solid var(--border-soft)',
+      }}
     >
       <div
         className="flex items-center justify-center flex-shrink-0"
@@ -693,12 +748,14 @@ function FileRow({ file }) {
       <div className="min-w-0 flex-1">
         <div
           className="font-semibold truncate"
-          style={{ fontSize: 13, color: '#0f1129' }}
+          style={{ fontSize: 13, color: 'var(--text-ink)' }}
         >
           {name}
         </div>
         {file.size_bytes != null && (
-          <div style={{ fontSize: 11.5, color: '#7a7a8c', marginTop: 1 }}>
+          <div
+            style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}
+          >
             {formatSize(file.size_bytes)}
           </div>
         )}
@@ -713,12 +770,12 @@ function FileRow({ file }) {
             width: 32,
             height: 32,
             borderRadius: 9,
-            background: 'white',
-            border: '1px solid #e5e3dc',
-            color: '#3a3a52',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
             flexShrink: 0,
           }}
-          aria-label={`تنزيل ${name}`}
+          aria-label={t('projects.details.downloadAria', { name })}
         >
           <Download size={14} strokeWidth={1.8} />
         </a>
@@ -751,7 +808,7 @@ function Breadcrumb({ items }) {
               <Link
                 to={it.to}
                 className="link"
-                style={{ fontWeight: 500, color: '#7a7a8c' }}
+                style={{ fontWeight: 500, color: 'var(--text-muted)' }}
               >
                 {it.label}
               </Link>
@@ -759,7 +816,7 @@ function Breadcrumb({ items }) {
               <span
                 className="font-medium truncate"
                 style={{
-                  color: isLast ? '#0f1129' : '#7a7a8c',
+                  color: isLast ? 'var(--text-ink)' : 'var(--text-muted)',
                   maxWidth: 280,
                 }}
               >
@@ -770,8 +827,11 @@ function Breadcrumb({ items }) {
               <ArrowRight
                 size={12}
                 strokeWidth={1.7}
-                className="text-muted flex-shrink-0"
-                style={{ transform: 'rotate(180deg)' }}
+                className="flex-shrink-0"
+                style={{
+                  transform: 'rotate(180deg)',
+                  color: 'var(--text-muted)',
+                }}
               />
             )}
           </React.Fragment>
@@ -789,20 +849,49 @@ function LoadingState() {
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 animate-pulse">
       <div
-        style={{ height: 14, width: 240, background: '#efece4', borderRadius: 6, marginBottom: 24 }}
+        style={{
+          height: 14,
+          width: 240,
+          background: 'var(--border-soft)',
+          borderRadius: 6,
+          marginBottom: 24,
+        }}
       />
       <div
-        style={{ height: 28, width: '70%', maxWidth: 600, background: '#efece4', borderRadius: 8, marginBottom: 12 }}
+        style={{
+          height: 28,
+          width: '70%',
+          maxWidth: 600,
+          background: 'var(--border-soft)',
+          borderRadius: 8,
+          marginBottom: 12,
+        }}
       />
       <div
-        style={{ height: 14, width: 320, background: '#efece4', borderRadius: 6, marginBottom: 36 }}
+        style={{
+          height: 14,
+          width: 320,
+          background: 'var(--border-soft)',
+          borderRadius: 6,
+          marginBottom: 36,
+        }}
       />
       <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6">
         <div
-          style={{ height: 380, background: 'white', border: '1px solid #e5e3dc', borderRadius: 14 }}
+          style={{
+            height: 380,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 14,
+          }}
         />
         <div
-          style={{ height: 380, background: 'white', border: '1px solid #e5e3dc', borderRadius: 14 }}
+          style={{
+            height: 380,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 14,
+          }}
         />
       </div>
     </div>
@@ -810,6 +899,7 @@ function LoadingState() {
 }
 
 function ErrorView({ message, onBack }) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-md mx-auto py-20 px-6 text-center">
       <div
@@ -825,20 +915,23 @@ function ErrorView({ message, onBack }) {
         <AlertCircle size={28} strokeWidth={1.7} />
       </div>
       <h2
-        className="font-display text-ink m-0 mb-2"
-        style={{ fontSize: 22, fontWeight: 700 }}
+        className="font-display m-0 mb-2"
+        style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-ink)' }}
       >
-        تعذّر تحميل المشروع
+        {t('projects.details.loadErrorTitle')}
       </h2>
-      <p className="text-muted m-0 mb-7" style={{ fontSize: 14, lineHeight: 1.7 }}>
-        {message || 'المشروع غير موجود أو ليس لديك صلاحية الوصول إليه.'}
+      <p
+        className="m-0 mb-7"
+        style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-muted)' }}
+      >
+        {message || t('projects.details.loadErrorFallback')}
       </p>
       <button
         onClick={onBack}
         className="btn-primary"
         style={{ width: 'auto' }}
       >
-        رجوع
+        {t('projects.details.back')}
       </button>
     </div>
   );
@@ -861,11 +954,9 @@ function Dot() {
   );
 }
 
-/* Small pill showing which arena the project belongs to.
-   Color comes from the arena's config so it matches the browse
-   page tabs and the dashboard recent-list pill. */
 function ArenaPill({ arena }) {
   const cfg = arenaConfig(arena);
+  const { t } = useTranslation();
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full font-semibold"
@@ -885,27 +976,27 @@ function ArenaPill({ arena }) {
           background: cfg.color,
         }}
       />
-      {cfg.label}
+      {t(`arena.${arena}.label`)}
     </span>
   );
 }
 
-function ownerTypeLabel(t) {
-  if (t === 'developer') return 'مطوّر عقاري';
-  if (t === 'individual') return 'عميل';
-  return 'صاحب المشروع';
+function localeFor(lang) {
+  if (lang === 'en') return 'en-US';
+  if (lang === 'zh') return 'zh-CN';
+  return 'ar-SA';
 }
 
-function formatNumber(n) {
+function formatNumber(n, lang) {
   const num = typeof n === 'string' ? Number(n) : n;
   if (Number.isNaN(num)) return n;
-  return new Intl.NumberFormat('ar-SA').format(num);
+  return new Intl.NumberFormat(localeFor(lang)).format(num);
 }
 
-function formatDate(d) {
+function formatDate(d, lang) {
   if (!d) return '';
   try {
-    return new Intl.DateTimeFormat('ar-SA', {
+    return new Intl.DateTimeFormat(localeFor(lang), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -915,15 +1006,17 @@ function formatDate(d) {
   }
 }
 
-function formatRelativeDate(d) {
+function formatRelativeDate(d, t) {
   if (!d) return '';
   const date = new Date(d);
   const now = new Date();
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  if (diffDays < 1) return 'اليوم';
-  if (diffDays === 1) return 'أمس';
-  if (diffDays < 7) return `منذ ${diffDays} أيام`;
-  if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسابيع`;
-  if (diffDays < 365) return `منذ ${Math.floor(diffDays / 30)} أشهر`;
-  return `منذ ${Math.floor(diffDays / 365)} سنوات`;
+  if (diffDays < 1) return t('common.relative.today');
+  if (diffDays === 1) return t('common.relative.yesterday');
+  if (diffDays < 7) return t('common.relative.daysAgo', { value: diffDays });
+  if (diffDays < 30)
+    return t('common.relative.weeksAgo', { value: Math.floor(diffDays / 7) });
+  if (diffDays < 365)
+    return t('common.relative.monthsAgo', { value: Math.floor(diffDays / 30) });
+  return t('common.relative.yearsAgo', { value: Math.floor(diffDays / 365) });
 }

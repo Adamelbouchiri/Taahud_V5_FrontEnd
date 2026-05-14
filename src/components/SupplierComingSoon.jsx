@@ -2,23 +2,19 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, LayoutDashboard, Wrench } from 'lucide-react';
 import Logo from './Logo';
+import LanguageThemeSwitcher from './LanguageThemeSwitcher';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  SupplierComingSoon
  *  ----------------------------------------------------------------
- *  Friendly "we're working on it" view for suppliers who hit any
- *  project-related page. Suppliers don't get the projects flow in
- *  V5 — that ships later with their own dedicated supplier flow
- *  (storefront, product listings, order management, etc.).
- *
- *  This component renders as either:
- *    - A standalone full page (default — used for /projects routes
- *      that live outside the dashboard layout)
- *    - An inline section (when `embedded` is true — used inside
- *      the dashboard home for suppliers)
+ *  Friendly "we're working on it" view for suppliers. Renders as
+ *  a full standalone page OR as an embedded section inside the
+ *  dashboard home.
  * ============================================================ */
 export default function SupplierComingSoon({ embedded = false }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const content = (
     <div className="max-w-2xl mx-auto text-center animate-fade-up">
@@ -36,47 +32,56 @@ export default function SupplierComingSoon({ embedded = false }) {
       </div>
 
       <h1
-        className="font-display text-ink m-0 mb-3"
+        className="font-display m-0 mb-3"
         style={{
           fontSize: 'clamp(24px, 3vw, 32px)',
           fontWeight: 700,
           lineHeight: 1.2,
           letterSpacing: '-0.01em',
+          color: 'var(--text-ink)',
         }}
       >
-        تجربة المورّدين قيد التطوير
+        {t('dashboard.supplier.title')}
       </h1>
       <p
-        className="text-ink-soft m-0 mb-2"
-        style={{ fontSize: 15.5, lineHeight: 1.7 }}
+        className="m-0 mb-2"
+        style={{
+          fontSize: 15.5,
+          lineHeight: 1.7,
+          color: 'var(--text-ink-soft)',
+        }}
       >
-        نعمل حالياً على تجهيز تجربة مخصّصة للمورّدين على المنصّة.
+        {t('dashboard.supplier.subtitle')}
       </p>
       <p
-        className="text-muted m-0 mb-8 inline-flex items-center gap-2"
-        style={{ fontSize: 13 }}
+        className="m-0 mb-8 inline-flex items-center gap-2"
+        style={{ fontSize: 13, color: 'var(--text-muted)' }}
       >
         <Wrench size={14} strokeWidth={1.7} />
-        ستشمل عرض المنتجات في المتجر العام، إدارة المخزون، وطلبات التوريد.
+        {t('dashboard.supplier.scope')}
       </p>
 
       <div
-        className="p-6 rounded-[16px] mb-8 text-right"
+        className="p-6 rounded-[16px] mb-8 text-start"
         style={{
-          background: 'white',
-          border: '1px solid #e5e3dc',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-default)',
         }}
       >
         <h3
-          className="font-display text-ink m-0 mb-3"
-          style={{ fontSize: 16, fontWeight: 700 }}
+          className="font-display m-0 mb-3"
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            color: 'var(--text-ink)',
+          }}
         >
-          ما يمكنك فعله الآن
+          {t('dashboard.supplier.bulletsTitle')}
         </h3>
         <ul className="m-0 p-0 space-y-3">
-          <Bullet>تحديث ملفّك الشخصي وبيانات شركتك.</Bullet>
-          <Bullet>إكمال التحقّق من رقم هاتفك.</Bullet>
-          <Bullet>سنُعلمك بمجرّد جاهزية تجربة المورّدين.</Bullet>
+          <Bullet>{t('dashboard.supplier.bullets.b1')}</Bullet>
+          <Bullet>{t('dashboard.supplier.bullets.b2')}</Bullet>
+          <Bullet>{t('dashboard.supplier.bullets.b3')}</Bullet>
         </ul>
       </div>
 
@@ -101,7 +106,7 @@ export default function SupplierComingSoon({ embedded = false }) {
           }}
         >
           <LayoutDashboard size={15} strokeWidth={1.8} />
-          العودة إلى لوحة التحكّم
+          {t('dashboard.supplier.backToDashboard')}
         </button>
       )}
     </div>
@@ -111,44 +116,51 @@ export default function SupplierComingSoon({ embedded = false }) {
     return <div className="py-12">{content}</div>;
   }
 
-  // Standalone page — needs its own topbar since it's outside the
-  // dashboard layout.
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       <header
-        className="sticky top-0 z-30 bg-white"
-        style={{ borderBottom: '1px solid #e5e3dc' }}
+        className="sticky top-0 z-30"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-default)',
+        }}
       >
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 h-[96px] flex items-center justify-between">
           <button
             onClick={() => navigate('/')}
             className="bg-transparent border-0 p-0 cursor-pointer"
-            aria-label="الرئيسية"
+            aria-label={t('nav.backHome')}
           >
             <Logo height={68} />
           </button>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
-            style={{
-              fontSize: 13,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#cfcdc4';
-              e.currentTarget.style.background = '#fafaf6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.background = 'white';
-            }}
-          >
-            <LayoutDashboard size={15} strokeWidth={1.8} />
-            لوحة التحكّم
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageThemeSwitcher compact />
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
+              style={{
+                fontSize: 13,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+                e.currentTarget.style.background = 'var(--bg-canvas)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.background = 'var(--bg-surface)';
+              }}
+            >
+              <LayoutDashboard size={15} strokeWidth={1.8} />
+              {t('nav.dashboard')}
+            </button>
+          </div>
         </div>
       </header>
       <main className="flex-1 flex items-center px-6 py-12">{content}</main>
@@ -160,7 +172,11 @@ function Bullet({ children }) {
   return (
     <li
       className="list-none flex items-start gap-2.5"
-      style={{ fontSize: 13.5, color: '#3a3a52', lineHeight: 1.65 }}
+      style={{
+        fontSize: 13.5,
+        color: 'var(--text-ink-soft)',
+        lineHeight: 1.65,
+      }}
     >
       <span
         className="flex items-center justify-center flex-shrink-0 mt-0.5"

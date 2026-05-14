@@ -1,7 +1,10 @@
 import React from 'react';
 import Logo from '../Logo';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function BrandPanel() {
+  const { t } = useTranslation();
+  const statKeys = ['providers', 'cities', 'rating'];
   return (
     <aside
       className="hidden lg:flex relative overflow-hidden flex-col"
@@ -11,7 +14,6 @@ export default function BrandPanel() {
         background: 'linear-gradient(150deg, #2c2f7c 0%, #1f2258 100%)',
       }}
     >
-      {/* Dot grid pattern */}
       <svg
         className="absolute inset-0 opacity-10"
         width="100%"
@@ -33,7 +35,6 @@ export default function BrandPanel() {
         <rect width="100%" height="100%" fill="url(#taahud-dots)" />
       </svg>
 
-      {/* Faint giant character */}
       <div
         className="animate-float-slow font-display select-none"
         style={{
@@ -49,7 +50,6 @@ export default function BrandPanel() {
         ت
       </div>
 
-      {/* Concentric arcs accent */}
       <svg
         className="absolute opacity-20"
         style={{ top: -80, insetInlineEnd: -80 }}
@@ -63,18 +63,14 @@ export default function BrandPanel() {
         <circle cx="160" cy="160" r="140" fill="none" stroke="#1a8a5d" strokeWidth="1.5" />
       </svg>
 
-      {/* Inner-edge green accent line */}
       <div
         className="absolute top-0 bottom-0 bg-secondary"
         style={{ insetInlineStart: 0, width: 4 }}
       />
 
-      {/* Content */}
       <div className="relative z-10 flex flex-col justify-between text-white flex-1 p-14">
-        {/* Logo */}
         <Logo height={56} variant="white" />
 
-        {/* Hero */}
         <div className="animate-fade-up">
           <div className="flex items-center gap-3.5 mb-7">
             <div className="bg-secondary-light" style={{ width: 36, height: 2 }} />
@@ -86,7 +82,7 @@ export default function BrandPanel() {
                 letterSpacing: '0.22em',
               }}
             >
-              منصّة المقاولات والتوريد
+              {t('auth.brand.eyebrow')}
             </span>
           </div>
 
@@ -101,7 +97,7 @@ export default function BrandPanel() {
               letterSpacing: '-0.01em',
             }}
           >
-            تعاهد
+            {t('auth.brand.name')}
           </h1>
 
           <p
@@ -114,20 +110,14 @@ export default function BrandPanel() {
               fontWeight: 300,
             }}
           >
-            نلتقي على عهدٍ من الثقة. منصّةٌ تربط العملاء والمطوّرين بمقدّمي
-            الخدمات والموردين في رحلة إنجازٍ موثوقة وملتزمة.
+            {t('auth.brand.tagline')}
           </p>
 
-          {/* Stats */}
           <div className="flex gap-7 mt-10">
-            {[
-              { n: '٢٤٠٠+', l: 'مقدم خدمة موثوق' },
-              { n: '٤٨ مدينة', l: 'تغطية' },
-              { n: '٤٫٩', l: 'تقييم العملاء' },
-            ].map((s, i) => (
-              <div key={i}>
+            {statKeys.map((k) => (
+              <div key={k}>
                 <div className="font-display" style={{ fontSize: 22, fontWeight: 600 }}>
-                  {s.n}
+                  {t(`auth.brand.stats.${k}.n`)}
                 </div>
                 <div
                   style={{
@@ -136,14 +126,13 @@ export default function BrandPanel() {
                     marginTop: 4,
                   }}
                 >
-                  {s.l}
+                  {t(`auth.brand.stats.${k}.l`)}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
         <div
           className="flex justify-between items-center pt-6"
           style={{
@@ -152,11 +141,11 @@ export default function BrandPanel() {
             borderTop: '1px solid rgba(255,255,255,0.08)',
           }}
         >
-          <span>© ٢٠٢٦ تعاهد</span>
+          <span>{t('auth.brand.copyright')}</span>
           <div className="flex gap-6">
-            <span className="cursor-pointer">الخصوصية</span>
-            <span className="cursor-pointer">الشروط</span>
-            <span className="cursor-pointer">الدعم</span>
+            <span className="cursor-pointer">{t('auth.brand.footer.privacy')}</span>
+            <span className="cursor-pointer">{t('auth.brand.footer.terms')}</span>
+            <span className="cursor-pointer">{t('auth.brand.footer.support')}</span>
           </div>
         </div>
       </div>

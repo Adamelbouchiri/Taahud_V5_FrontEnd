@@ -1,12 +1,13 @@
 import React from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * تعاهد wordmark logo.
- * - variant="blue" (default): for light backgrounds
- * - variant="white": for dark backgrounds (e.g. footer, brand panel)
- *
- * Source: src/assets/logo.svg (kept as a reference asset).
- * Inlined here so we can swap colors per variant without two files.
+ * - variant="blue" (default): for light backgrounds. Auto-flips to a
+ *   light ink in dark mode so the wordmark stays visible against the
+ *   dark canvas.
+ * - variant="white": for dark identity surfaces (footer, brand panel).
+ *   Stays white regardless of theme.
  */
 export default function Logo({
   variant = 'blue',
@@ -14,10 +15,17 @@ export default function Logo({
   className = '',
   ...props
 }) {
-  const colors =
-    variant === 'white'
-      ? { accent: 'rgba(255,255,255,0.55)', main: '#ffffff' }
-      : { accent: '#CBCBCA', main: '#292E76' };
+  const { isDark } = useTheme();
+
+  let colors;
+  if (variant === 'white') {
+    colors = { accent: 'rgba(255,255,255,0.55)', main: '#ffffff' };
+  } else if (isDark) {
+    // Light wordmark on the dark canvas so it remains readable.
+    colors = { accent: 'rgba(255,255,255,0.45)', main: '#e7e8ff' };
+  } else {
+    colors = { accent: '#CBCBCA', main: '#292E76' };
+  }
 
   return (
     <svg

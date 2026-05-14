@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  // Class-strategy dark mode: ThemeContext adds/removes `dark` on
+  // <html>, then `dark:bg-...` / `dark:text-...` utilities light up.
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -25,18 +28,15 @@ export default {
         danger: '#b91c1c',
       },
       fontFamily: {
-        // Body / UI default (use `font-sans` or just inherit from <body>)
-        sans: ['"Thmanyah Sans"', 'system-ui', 'sans-serif'],
-
-        // Headings / display (use `font-display` or `className="font-display"`)
-        // To switch headings to the sans face instead, change this to
-        // match `sans` above. To use a body-serif look, swap in
-        // 'Thmanyah Serif Text'.
-        display: ['"Thmanyah Serif Display"', 'system-ui', 'serif'],
-
-        // Body serif — available via `font-serif` for paragraphs that
-        // benefit from a reading face (long-form descriptions, etc.).
-        serif: ['"Thmanyah Serif Text"', 'system-ui', 'serif'],
+        // Font families read from CSS custom properties so the active
+        // language (set on <html lang="...">) can swap the stack:
+        //   ar → Thmanyah (locally bundled)
+        //   en → Inter / DM Serif Display (Google Fonts)
+        //   zh → Noto Sans SC / Noto Serif SC (Google Fonts)
+        // The variable defaults live in src/styles/globals.css.
+        sans: ['var(--font-sans)'],
+        display: ['var(--font-display)'],
+        serif: ['var(--font-serif)'],
       },
       animation: {
         'fade-up': 'fadeUp 0.45s ease-out backwards',

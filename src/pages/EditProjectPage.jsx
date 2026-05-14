@@ -24,6 +24,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import Logo from '../components/Logo';
+import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
 import Field from '../components/form/Field';
 import SelectField from '../components/form/SelectField';
 import TextareaField from '../components/form/TextareaField';
@@ -33,39 +34,24 @@ import {
   PROJECT_TYPES,
   PROJECT_DURATIONS,
   EXPERIENCE_LEVELS,
-  arenaLabel,
 } from '../config/projectConstants';
 import { CITIES } from '../config/constants';
 import { projects as projectsApi } from '../services';
 import { UserProvider, useUser } from '../contexts/UserContext';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  EditProjectPage — /projects/:id/edit
- *  ----------------------------------------------------------------
- *  Single-page form. The owner edits data fields and requirements;
- *  status + progress are managed by the backend (accept-application,
- *  partner flows). Files are added/removed live via the file
- *  endpoints — uploads happen immediately so the user can see them
- *  in the existing-files list right away.
- *
- *  Backed by:
- *    GET    /api/projects/:id
- *    PATCH  /api/projects/:id
- *    POST   /api/projects/:id/files
- *    DELETE /api/projects/:id/files/:fileId
- *
- *  Provides its own UserProvider so isOwner can be checked without
- *  depending on the dashboard layout (this is a standalone route).
  * ============================================================ */
 
-const REQUIREMENT_SUGGESTIONS = [
-  'رخصة بناء سارية',
-  'مخططات معتمدة من البلدية',
-  'شهادة تأمين',
-  'سجل تجاري',
-  'شهادات سلامة',
-  'مخططات تنفيذية',
-  'عينات مواد',
+const REQUIREMENT_SUGGESTION_KEYS = [
+  'permit',
+  'cityPlans',
+  'insurance',
+  'commercialReg',
+  'safety',
+  'execPlans',
+  'samples',
 ];
 
 export default function EditProjectPageRoute() {
@@ -80,27 +66,22 @@ function EditProjectPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t } = useTranslation();
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
-  // Editable form state — initialized from the loaded project.
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Live file list (existing on the server). Separate from the form
-  // because uploads/deletes happen immediately.
   const [existingFiles, setExistingFiles] = useState([]);
-  const [pendingUploads, setPendingUploads] = useState([]); // File[]
+  const [pendingUploads, setPendingUploads] = useState([]);
   const [uploadingIdx, setUploadingIdx] = useState(null);
   const [fileError, setFileError] = useState('');
 
-  /* -------------------------------------------------------------
-   * Load the project once.
-   * ----------------------------------------------------------- */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -129,7 +110,7 @@ function EditProjectPage() {
         });
       })
       .catch((err) => {
-        if (!cancelled) setLoadError(err.message || 'تعذّر تحميل المشروع.');
+        if (!cancelled) setLoadError(err.message || t('projects.edit.loadError'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -137,7 +118,7 @@ function EditProjectPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, t]);
 
   if (loading) return <Shell><LoadingState /></Shell>;
   if (loadError || !project)
@@ -147,26 +128,18 @@ function EditProjectPage() {
       </Shell>
     );
 
-  // Only the owner can edit. The BE will 403 too, but we block in
-  // the UI to avoid showing a form they can't submit.
   const isOwner = user && project.user_id === user.id;
-  if (!user) {
-    // Still loading user — render nothing risky. The form is gated.
-  }
   if (user && !isOwner) {
     return (
       <Shell>
         <ErrorState
-          message="لا تملك صلاحية تعديل هذا المشروع."
+          message={t('projects.edit.notOwnerError')}
           onBack={() => navigate(`/projects/${id}`)}
         />
       </Shell>
     );
   }
 
-  /* -------------------------------------------------------------
-   * Field updates + validation
-   * ----------------------------------------------------------- */
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -174,24 +147,19 @@ function EditProjectPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = 'اسم المشروع مطلوب';
-    if (!form.type) e.type = 'النوع مطلوب';
-    if (!form.city) e.city = 'المدينة مطلوبة';
+    if (!form.name.trim()) e.name = t('projects.create.validate.name');
+    if (!form.type) e.type = t('projects.create.validate.type');
+    if (!form.city) e.city = t('projects.create.validate.city');
     if (form.start_date && form.end_date && form.end_date < form.start_date) {
-      e.end_date = 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية';
+      e.end_date = t('projects.create.validate.dateOrder');
     }
     if (form.budget !== '' && Number(form.budget) < 0) {
-      e.budget = 'الميزانية يجب أن تكون رقماً موجباً';
+      e.budget = t('projects.create.validate.budgetPositive');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  /* -------------------------------------------------------------
-   * Save — PATCH /api/projects/:id
-   * Send only the editable fields. BE manages user_id, status,
-   * progress, partner_id, timestamps.
-   * ----------------------------------------------------------- */
   const handleSave = async () => {
     if (!validate()) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -203,8 +171,6 @@ function EditProjectPage() {
       const payload = {
         name: form.name,
         type: form.type,
-        // arena stays editable in case the user wants to re-target.
-        // BE allows it but enforces postableBy on the server side.
         arena: form.arena,
         city: form.city,
         description: form.description || null,
@@ -221,15 +187,12 @@ function EditProjectPage() {
       await projectsApi.update(id, payload);
       navigate(`/projects/${id}`);
     } catch (err) {
-      setSubmitError(err.message || 'تعذّر حفظ التعديلات. حاول مرة أخرى.');
+      setSubmitError(err.message || t('projects.edit.saveError'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* -------------------------------------------------------------
-   * Files — upload + delete live
-   * ----------------------------------------------------------- */
   const handleUploadNew = async () => {
     if (pendingUploads.length === 0) return;
     setFileError('');
@@ -240,9 +203,9 @@ function EditProjectPage() {
         setExistingFiles((prev) => [...prev, uploaded]);
       } catch (err) {
         setFileError(
-          err.message || `تعذّر رفع الملف "${pendingUploads[i].name}".`
+          err.message ||
+            t('projects.edit.fileUploadError', { name: pendingUploads[i].name })
         );
-        // Stop the loop on error; the user can retry the rest.
         setUploadingIdx(null);
         return;
       }
@@ -254,40 +217,47 @@ function EditProjectPage() {
   const handleDeleteExisting = async (fileId) => {
     setFileError('');
     const snapshot = existingFiles;
-    // Optimistic removal.
     setExistingFiles(snapshot.filter((f) => f.id !== fileId));
     try {
       await projectsApi.removeFile(id, fileId);
     } catch (err) {
       setExistingFiles(snapshot);
-      setFileError(err.message || 'تعذّر حذف الملف.');
+      setFileError(err.message || t('projects.edit.fileDeleteError'));
     }
   };
 
-  if (!form) return null; // shouldn't happen after loading guard
+  if (!form) return null;
+
+  const suggestions = REQUIREMENT_SUGGESTION_KEYS.map((key) =>
+    t(`projects.create.suggestions.${key}`)
+  );
 
   return (
     <Shell>
       <header
-        className="sticky top-0 z-40 bg-white"
-        style={{ borderBottom: '1px solid #e5e3dc' }}
+        className="sticky top-0 z-40"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-default)',
+        }}
       >
         <div className="max-w-[860px] mx-auto px-6 lg:px-10 h-[96px] flex items-center justify-between">
           <Logo height={68} />
 
           <div className="flex items-center gap-2">
+            <LanguageThemeSwitcher compact />
             <button
               type="button"
               onClick={() => navigate(`/projects/${id}`)}
-              aria-label="إلغاء التعديل"
+              aria-label={t('projects.edit.cancelAria')}
               className="inline-flex items-center justify-center transition-colors"
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 10,
                 background: 'transparent',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 cursor: 'pointer',
               }}
             >
@@ -297,9 +267,11 @@ function EditProjectPage() {
         </div>
       </header>
 
-      <main className="py-8 lg:py-12" style={{ background: '#fafaf6' }}>
+      <main
+        className="py-8 lg:py-12"
+        style={{ background: 'var(--bg-canvas)' }}
+      >
         <div className="max-w-[860px] mx-auto px-6 lg:px-10">
-          {/* Title */}
           <div className="mb-8 animate-fade-up">
             <div
               className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full"
@@ -312,25 +284,33 @@ function EditProjectPage() {
               }}
             >
               <Save size={12} />
-              تعديل المشروع
+              {t('projects.edit.eyebrow')}
             </div>
             <h1
-              className="font-display text-ink m-0 mb-2"
+              className="font-display m-0 mb-2"
               style={{
                 fontSize: 'clamp(26px, 3.4vw, 36px)',
                 fontWeight: 700,
                 lineHeight: 1.2,
                 letterSpacing: '-0.01em',
+                color: 'var(--text-ink)',
               }}
             >
               {project.name}
             </h1>
             <p
-              className="text-muted m-0"
-              style={{ fontSize: 14, lineHeight: 1.7 }}
+              className="m-0"
+              style={{
+                fontSize: 14,
+                lineHeight: 1.7,
+                color: 'var(--text-muted)',
+              }}
             >
-              الحالة والتقدّم تُدار تلقائيّاً من الخادم — لا يمكن تعديلها من هنا.
-              الساحة الحالية: <strong>{arenaLabel(form.arena)}</strong>.
+              {t('projects.edit.subtitlePrefix')}
+              <strong style={{ color: 'var(--text-ink)' }}>
+                {t(`arena.${form.arena}.label`)}
+              </strong>
+              {t('projects.edit.subtitleSuffix')}
             </p>
           </div>
 
@@ -345,13 +325,12 @@ function EditProjectPage() {
             </Banner>
           )}
 
-          {/* ===== Section 1: details ===== */}
-          <Card title="تفاصيل المشروع">
+          <Card title={t('projects.edit.sections.details')}>
             <div className="flex flex-col gap-5">
               <Field
-                label="اسم المشروع"
+                label={t('projects.create.steps.details.nameLabel')}
                 icon={FileText}
-                placeholder="مثال: تجديد فيلا في حي النخيل"
+                placeholder={t('projects.create.steps.details.namePlaceholder')}
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
                 error={errors.name}
@@ -359,56 +338,55 @@ function EditProjectPage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <SelectField
-                  label="نوع المشروع"
+                  label={t('projects.create.steps.details.typeLabel')}
                   icon={Tag}
                   options={PROJECT_TYPES}
                   value={form.type}
                   onChange={(e) => update('type', e.target.value)}
                   error={errors.type}
-                  placeholder="اختر النوع"
+                  placeholder={t('projects.create.steps.details.typePlaceholder')}
                 />
                 <SelectField
-                  label="المدينة"
+                  label={t('projects.create.steps.details.cityLabel')}
                   icon={MapPin}
                   options={CITIES}
                   value={form.city}
                   onChange={(e) => update('city', e.target.value)}
                   error={errors.city}
-                  placeholder="اختر المدينة"
+                  placeholder={t('projects.create.steps.details.cityPlaceholder')}
                 />
               </div>
 
               <TextareaField
-                label="وصف المشروع"
+                label={t('projects.create.steps.details.descriptionLabel')}
                 rows={5}
-                placeholder="اكتب وصفاً مفصّلاً عن مشروعك..."
+                placeholder={t('projects.edit.descriptionPlaceholder')}
                 value={form.description}
                 onChange={(e) => update('description', e.target.value)}
               />
             </div>
           </Card>
 
-          {/* ===== Section 2: scope, dates, budget ===== */}
-          <Card title="النطاق والميزانية">
+          <Card title={t('projects.edit.sections.scopeBudget')}>
             <div className="flex flex-col gap-5">
               <TextareaField
-                label="نطاق العمل"
+                label={t('projects.create.steps.scopeBudget.scopeLabel')}
                 rows={4}
-                placeholder="ما الذي يشمله المشروع تحديداً؟"
+                placeholder={t('projects.edit.scopePlaceholder')}
                 value={form.scope}
                 onChange={(e) => update('scope', e.target.value)}
               />
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field
-                  label="تاريخ البداية"
+                  label={t('projects.create.steps.scopeBudget.startDate')}
                   icon={Calendar}
                   type="date"
                   value={form.start_date}
                   onChange={(e) => update('start_date', e.target.value)}
                 />
                 <Field
-                  label="تاريخ الانتهاء"
+                  label={t('projects.create.steps.scopeBudget.endDate')}
                   icon={Calendar}
                   type="date"
                   value={form.end_date}
@@ -419,21 +397,25 @@ function EditProjectPage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <SelectField
-                  label="المدّة المتوقّعة"
+                  label={t('projects.create.steps.scopeBudget.durationLabel')}
                   icon={Clock}
                   options={PROJECT_DURATIONS}
                   value={form.expected_duration}
                   onChange={(e) => update('expected_duration', e.target.value)}
-                  placeholder="اختر المدّة"
+                  placeholder={t(
+                    'projects.create.steps.scopeBudget.durationPlaceholder'
+                  )}
                 />
                 <Field
-                  label="الميزانية (ر.س)"
+                  label={t('projects.edit.budgetLabel', {
+                    currency: t('common.currency'),
+                  })}
                   icon={Wallet}
                   type="number"
                   inputMode="numeric"
                   min="0"
                   step="1"
-                  placeholder="مثال: 250000"
+                  placeholder={t('projects.edit.budgetPlaceholder')}
                   value={form.budget}
                   onChange={(e) => update('budget', e.target.value)}
                   error={errors.budget}
@@ -441,60 +423,61 @@ function EditProjectPage() {
               </div>
 
               <SelectField
-                label="الخبرة المطلوبة"
+                label={t('projects.create.steps.scopeBudget.experienceLabel')}
                 icon={Award}
                 options={EXPERIENCE_LEVELS}
                 value={form.experience}
                 onChange={(e) => update('experience', e.target.value)}
-                placeholder="اختر مستوى الخبرة"
+                placeholder={t(
+                  'projects.create.steps.scopeBudget.experiencePlaceholder'
+                )}
               />
             </div>
           </Card>
 
-          {/* ===== Section 3: requirements + docs + external flag ===== */}
-          <Card title="المتطلبات والوثائق">
+          <Card title={t('projects.edit.sections.requirements')}>
             <div className="flex flex-col gap-7">
               <section>
                 <SectionHeader
                   icon={ListChecks}
-                  title="متطلّبات المشروع"
-                  subtitle="الوثائق والشهادات المطلوبة من مقدّم الخدمة."
+                  title={t('projects.edit.requirementsBlock.title')}
+                  subtitle={t('projects.edit.requirementsBlock.subtitle')}
                 />
                 <RequirementsList
                   items={form.requirements}
                   onChange={(next) => update('requirements', next)}
-                  suggestions={REQUIREMENT_SUGGESTIONS}
+                  suggestions={suggestions}
                 />
               </section>
 
-              <div style={{ borderTop: '1px solid #efece4' }} />
+              <div style={{ borderTop: '1px solid var(--border-soft)' }} />
 
               <section>
                 <SectionHeader
                   icon={FileBadge}
-                  title="المستندات المطلوبة"
-                  subtitle="نص حرّ يصف الوثائق الرسميّة المطلوبة."
+                  title={t('projects.edit.documentsBlock.title')}
+                  subtitle={t('projects.edit.documentsBlock.subtitle')}
                 />
                 <TextareaField
-                  label="الوثائق المطلوبة"
+                  label={t('projects.edit.documentsBlock.title')}
                   rows={3}
-                  placeholder="مثال: سجل تجاري سعودي ساري، شهادة الزكاة، تأمين عمّال."
+                  placeholder={t('projects.edit.documentsBlock.placeholder')}
                   value={form.required_documents}
                   onChange={(e) => update('required_documents', e.target.value)}
                 />
               </section>
 
-              <div style={{ borderTop: '1px solid #efece4' }} />
+              <div style={{ borderTop: '1px solid var(--border-soft)' }} />
 
               <section>
                 <SectionHeader
                   icon={PlayCircle}
-                  title="حالة المشروع"
-                  subtitle="هل بدأ العمل بالفعل خارج منصّة تعاهد؟"
+                  title={t('projects.edit.statusBlock.title')}
+                  subtitle={t('projects.edit.statusBlock.subtitle')}
                 />
                 <ToggleRow
-                  label="المشروع بدأ بالفعل خارج المنصّة"
-                  desc="فعّل هذا الخيار إذا كنت تبحث عن شريك لإكمال مشروع قائم."
+                  label={t('projects.edit.statusBlock.toggleLabel')}
+                  desc={t('projects.edit.statusBlock.toggleDesc')}
                   checked={form.is_started_externally}
                   onChange={(v) => update('is_started_externally', v)}
                 />
@@ -502,12 +485,11 @@ function EditProjectPage() {
             </div>
           </Card>
 
-          {/* ===== Section 4: files ===== */}
-          <Card title="ملفات المشروع">
+          <Card title={t('projects.edit.sections.files')}>
             <SectionHeader
               icon={Files}
-              title="الملفات الحاليّة"
-              subtitle="الملفات الموجودة على المشروع. الحذف نهائي ولا يمكن التراجع عنه."
+              title={t('projects.edit.filesBlock.currentTitle')}
+              subtitle={t('projects.edit.filesBlock.currentSubtitle')}
             />
 
             {fileError && (
@@ -522,8 +504,11 @@ function EditProjectPage() {
             )}
 
             {existingFiles.length === 0 ? (
-              <p className="text-muted m-0 mb-5" style={{ fontSize: 13 }}>
-                لا توجد ملفات حالياً.
+              <p
+                className="m-0 mb-5"
+                style={{ fontSize: 13, color: 'var(--text-muted)' }}
+              >
+                {t('projects.edit.filesBlock.empty')}
               </p>
             ) : (
               <ul className="m-0 p-0 mb-6 flex flex-col gap-2">
@@ -537,11 +522,16 @@ function EditProjectPage() {
               </ul>
             )}
 
-            <div style={{ borderTop: '1px solid #efece4', paddingTop: 20 }}>
+            <div
+              style={{
+                borderTop: '1px solid var(--border-soft)',
+                paddingTop: 20,
+              }}
+            >
               <SectionHeader
                 icon={UploadCloud}
-                title="إضافة ملفات جديدة"
-                subtitle="اختر الملفات ثم اضغط على زر الرفع."
+                title={t('projects.edit.filesBlock.addTitle')}
+                subtitle={t('projects.edit.filesBlock.addSubtitle')}
               />
               <FilesUpload
                 files={pendingUploads}
@@ -565,17 +555,19 @@ function EditProjectPage() {
                 >
                   <UploadCloud size={15} strokeWidth={1.9} />
                   {uploadingIdx !== null
-                    ? `جارٍ الرفع... (${uploadingIdx + 1}/${pendingUploads.length})`
-                    : `رفع ${pendingUploads.length} ملف`}
+                    ? t('projects.edit.filesBlock.uploadingProgress', {
+                        current: uploadingIdx + 1,
+                        total: pendingUploads.length,
+                      })
+                    : t('projects.edit.filesBlock.uploadCta', {
+                        count: pendingUploads.length,
+                      })}
                 </button>
               )}
             </div>
           </Card>
 
-          {/* Bottom action bar */}
-          <div
-            className="flex justify-between items-center mt-6 flex-wrap gap-3"
-          >
+          <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
             <button
               type="button"
               onClick={() => navigate(`/projects/${id}`)}
@@ -583,14 +575,14 @@ function EditProjectPage() {
               className="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] font-semibold transition-all"
               style={{
                 fontSize: 14,
-                background: 'white',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 cursor: submitting ? 'not-allowed' : 'pointer',
               }}
             >
               <ArrowRight size={16} />
-              إلغاء
+              {t('projects.edit.cancelCta')}
             </button>
 
             <button
@@ -617,7 +609,9 @@ function EditProjectPage() {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              {submitting ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
+              {submitting
+                ? t('projects.edit.savingCta')
+                : t('projects.edit.saveCta')}
               {!submitting && <Save size={15} />}
             </button>
           </div>
@@ -628,36 +622,39 @@ function EditProjectPage() {
 }
 
 /* ============================================================
- *  Layout shell — handles its own background
+ *  Shell
  * ============================================================ */
 function Shell({ children }) {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       {children}
     </div>
   );
 }
 
 /* ============================================================
- *  Reusable section card
+ *  Card
  * ============================================================ */
 function Card({ title, children }) {
   return (
     <section
       className="rounded-[18px] mb-6 animate-fade-up"
       style={{
-        background: 'white',
-        border: '1px solid #e5e3dc',
-        boxShadow: '0 4px 14px rgba(15,17,41,0.04)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <div
         className="px-6 lg:px-8 py-5"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         <h2
-          className="font-display text-ink m-0"
-          style={{ fontSize: 16, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h2>
@@ -684,15 +681,24 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
       </div>
       <div>
         <h3
-          className="font-display text-ink m-0"
-          style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}
+          className="font-display m-0"
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            lineHeight: 1.3,
+            color: 'var(--text-ink)',
+          }}
         >
           {title}
         </h3>
         {subtitle && (
           <p
-            className="text-muted m-0 mt-1"
-            style={{ fontSize: 12.5, lineHeight: 1.6 }}
+            className="m-0 mt-1"
+            style={{
+              fontSize: 12.5,
+              lineHeight: 1.6,
+              color: 'var(--text-muted)',
+            }}
           >
             {subtitle}
           </p>
@@ -708,7 +714,7 @@ function Banner({ kind = 'error', children }) {
       ? {
           background: 'rgba(185,28,28,0.06)',
           border: '1px solid rgba(185,28,28,0.18)',
-          color: '#b91c1c',
+          color: 'var(--accent-danger)',
         }
       : {
           background: 'rgba(19,109,74,0.06)',
@@ -732,11 +738,11 @@ function ToggleRow({ label, desc, checked, onChange }) {
       type="button"
       onClick={() => onChange(!checked)}
       aria-pressed={checked}
-      className="w-full text-right transition-all"
+      className="w-full text-start transition-all"
       style={{
         padding: '14px 16px',
-        background: checked ? 'rgba(19,109,74,0.06)' : 'white',
-        border: `1.5px solid ${checked ? '#136d4a' : '#e5e3dc'}`,
+        background: checked ? 'rgba(19,109,74,0.06)' : 'var(--bg-surface)',
+        border: `1.5px solid ${checked ? '#136d4a' : 'var(--border-default)'}`,
         borderRadius: 12,
         cursor: 'pointer',
         display: 'flex',
@@ -773,13 +779,21 @@ function ToggleRow({ label, desc, checked, onChange }) {
       <span className="flex-1 min-w-0">
         <span
           className="font-display font-bold block"
-          style={{ fontSize: 14, color: checked ? '#0d5538' : '#0f1129' }}
+          style={{
+            fontSize: 14,
+            color: checked ? '#0d5538' : 'var(--text-ink)',
+          }}
         >
           {label}
         </span>
         <span
           className="block"
-          style={{ fontSize: 12.5, color: '#7a7a8c', lineHeight: 1.55, marginTop: 2 }}
+          style={{
+            fontSize: 12.5,
+            color: 'var(--text-muted)',
+            lineHeight: 1.55,
+            marginTop: 2,
+          }}
         >
           {desc}
         </span>
@@ -792,13 +806,14 @@ function ToggleRow({ label, desc, checked, onChange }) {
  *  Row for an existing (server-side) file
  * ============================================================ */
 function ExistingFileRow({ file, onDelete }) {
+  const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
 
   const name =
     file.original_name ||
     file.file_path?.split('/').pop() ||
     file.url?.split('/').pop() ||
-    `ملف #${file.id}`;
+    t('projects.edit.fileFallback', { id: file.id });
   const ext = name.split('.').pop()?.toLowerCase();
   const href = file.url || file.file_path;
 
@@ -825,7 +840,10 @@ function ExistingFileRow({ file, onDelete }) {
   return (
     <li
       className="list-none flex items-center gap-3 px-4 py-3 rounded-[11px]"
-      style={{ background: '#fafaf6', border: '1px solid #efece4' }}
+      style={{
+        background: 'var(--bg-canvas)',
+        border: '1px solid var(--border-soft)',
+      }}
     >
       <div
         className="flex items-center justify-center flex-shrink-0"
@@ -842,12 +860,14 @@ function ExistingFileRow({ file, onDelete }) {
       <div className="min-w-0 flex-1">
         <div
           className="font-semibold truncate"
-          style={{ fontSize: 13, color: '#0f1129' }}
+          style={{ fontSize: 13, color: 'var(--text-ink)' }}
         >
           {name}
         </div>
         {file.size_bytes != null && (
-          <div style={{ fontSize: 11.5, color: '#7a7a8c', marginTop: 1 }}>
+          <div
+            style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}
+          >
             {formatSize(file.size_bytes)}
           </div>
         )}
@@ -870,7 +890,7 @@ function ExistingFileRow({ file, onDelete }) {
             }}
           >
             <CheckCircle2 size={12} />
-            تأكيد
+            {t('projects.edit.filesBlock.confirmDelete')}
           </button>
           <button
             type="button"
@@ -878,13 +898,13 @@ function ExistingFileRow({ file, onDelete }) {
             className="inline-flex items-center px-3 py-1.5 rounded-[8px] font-semibold transition-colors"
             style={{
               fontSize: 12,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: 'pointer',
             }}
           >
-            تراجع
+            {t('projects.edit.filesBlock.cancelDelete')}
           </button>
         </div>
       ) : (
@@ -899,13 +919,13 @@ function ExistingFileRow({ file, onDelete }) {
                 width: 30,
                 height: 30,
                 borderRadius: 9,
-                background: 'white',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 flexShrink: 0,
                 textDecoration: 'none',
               }}
-              aria-label={`عرض ${name}`}
+              aria-label={t('projects.edit.filesBlock.viewAria', { name })}
             >
               <FileText size={14} strokeWidth={1.8} />
             </a>
@@ -913,25 +933,25 @@ function ExistingFileRow({ file, onDelete }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            aria-label={`حذف ${name}`}
+            aria-label={t('projects.edit.filesBlock.deleteAria', { name })}
             className="flex items-center justify-center transition-colors"
             style={{
               width: 30,
               height: 30,
               borderRadius: 9,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#7a7a8c',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-muted)',
               cursor: 'pointer',
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(185,28,28,0.3)';
-              e.currentTarget.style.color = '#b91c1c';
+              e.currentTarget.style.color = 'var(--accent-danger)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.color = '#7a7a8c';
+              e.currentTarget.style.borderColor = 'var(--border-default)';
+              e.currentTarget.style.color = 'var(--text-muted)';
             }}
           >
             <Trash2 size={14} strokeWidth={1.8} />
@@ -953,7 +973,7 @@ function LoadingState() {
         style={{
           height: 32,
           width: 240,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 8,
           marginBottom: 28,
         }}
@@ -963,10 +983,10 @@ function LoadingState() {
           key={i}
           style={{
             height: 220,
-            background: 'white',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
             borderRadius: 18,
-            marginBottom: 20,
+            marginBottom: 24,
           }}
         />
       ))}
@@ -975,6 +995,7 @@ function LoadingState() {
 }
 
 function ErrorState({ message, onBack }) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-md mx-auto py-20 px-6 text-center">
       <div
@@ -990,19 +1011,19 @@ function ErrorState({ message, onBack }) {
         <AlertCircle size={28} strokeWidth={1.7} />
       </div>
       <h2
-        className="font-display text-ink m-0 mb-2"
-        style={{ fontSize: 22, fontWeight: 700 }}
+        className="font-display m-0 mb-2"
+        style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-ink)' }}
       >
-        تعذّر فتح صفحة التعديل
+        {t('projects.details.loadErrorTitle')}
       </h2>
       <p
-        className="text-muted m-0 mb-7"
-        style={{ fontSize: 14, lineHeight: 1.7 }}
+        className="m-0 mb-7"
+        style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-muted)' }}
       >
-        {message || 'المشروع غير موجود أو ليس لديك صلاحية الوصول إليه.'}
+        {message || t('projects.details.loadErrorFallback')}
       </p>
       <button onClick={onBack} className="btn-primary" style={{ width: 'auto' }}>
-        رجوع
+        {t('projects.details.back')}
       </button>
     </div>
   );

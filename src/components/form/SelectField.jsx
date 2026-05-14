@@ -1,13 +1,16 @@
 import React from 'react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function SelectField({
   label,
   icon: Icon,
   options = [],
   error,
-  placeholder = 'اختر...',
+  placeholder,
   ...props
 }) {
+  const { t } = useTranslation();
+  const ph = placeholder ?? t('form.selectPlaceholder');
   return (
     <div className="animate-fade-up">
       <label className="field-label">{label}</label>
@@ -18,7 +21,7 @@ export default function SelectField({
           </div>
         )}
         <select className={`field ${error ? 'error' : ''}`} {...props}>
-          <option value="">{placeholder}</option>
+          <option value="">{ph}</option>
           {options.map((opt) =>
             typeof opt === 'string' ? (
               <option key={opt} value={opt}>

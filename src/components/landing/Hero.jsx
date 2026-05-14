@@ -1,36 +1,33 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Compass } from 'lucide-react';
+import { Sparkles, Compass } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  Hero — landing page first viewport
  *  ----------------------------------------------------------------
  *  Centered layout (per screenshots):
- *    - Pill: "منصة سعودية مرخصة" with green dot
+ *    - Pill with green dot (i18n key landing.hero.pill)
  *    - Massive two-line serif headline, second line in gold
  *    - Subtitle paragraph
  *    - Two CTAs side by side
- *    - Stats strip (24/7 / 92% / +450 / +1200) baked into the
- *      same viewport — no separate stats section
+ *    - Stats strip baked into the same viewport — no separate
+ *      stats section
  *
  *  Background: faint perpendicular grid lines for the technical /
  *  blueprint feel.
  * ============================================================ */
 
-const STATS = [
-  { value: '24/7', label: 'دعم متواصل' },
-  { value: '92%', label: 'رضا المستخدمين' },
-  { value: '+450', label: 'مشروع نشط' },
-  { value: '+1200', label: 'مقاول مسجّل' },
-];
+const STAT_KEYS = ['support', 'satisfaction', 'projects', 'contractors'];
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <section
       className="relative overflow-hidden"
-      style={{ background: '#fafaf6' }}
+      style={{ background: 'var(--bg-canvas)' }}
     >
       {/* Faint grid background — fades out near edges via radial mask */}
       <div
@@ -74,11 +71,11 @@ export default function Hero() {
           <div
             className="inline-flex items-center gap-2 mb-7 px-3.5 py-1.5 rounded-full animate-fade-up"
             style={{
-              background: 'white',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               fontSize: 12,
               fontWeight: 600,
-              color: '#3a3a52',
+              color: 'var(--text-ink-soft)',
               boxShadow: '0 2px 8px rgba(15,17,41,0.04)',
             }}
           >
@@ -91,7 +88,7 @@ export default function Hero() {
                 boxShadow: '0 0 0 3px rgba(19,109,74,0.15)',
               }}
             />
-            منصة سعودية مرخّصة
+            {t('landing.hero.pill')}
           </div>
 
           {/* Headline */}
@@ -102,12 +99,12 @@ export default function Hero() {
               fontWeight: 700,
               lineHeight: 1.05,
               letterSpacing: '-0.02em',
-              color: '#0f1147',
+              color: 'var(--text-ink)',
             }}
           >
-            مشاريع أكثر.
+            {t('landing.hero.titleLine1')}
             <br />
-            <span style={{ color: '#c9a35a' }}>مشاكل أقل.</span>
+            <span style={{ color: '#c9a35a' }}>{t('landing.hero.titleLine2')}</span>
           </h1>
 
           {/* Subtitle */}
@@ -116,11 +113,10 @@ export default function Hero() {
             style={{
               fontSize: 'clamp(15px, 1.4vw, 17.5px)',
               lineHeight: 1.75,
-              color: '#5a5b78',
+              color: 'var(--text-ink-soft)',
             }}
           >
-            منصة تعاهُد تربط المقاولين والموردين والمطوّرين العقاريين في سوق
-            رقمي ذكي — كل ما تحتاجه لإدارة مشاريعك في مكان واحد.
+            {t('landing.hero.subtitle')}
           </p>
 
           {/* CTAs */}
@@ -132,23 +128,23 @@ export default function Hero() {
               style={{
                 fontSize: 14.5,
                 padding: '13px 24px',
-                background: '#0f1147',
+                background: 'var(--bg-ink-deep)',
                 color: 'white',
-                border: '1px solid #0f1147',
+                border: '1px solid var(--bg-ink-deep)',
                 cursor: 'pointer',
                 boxShadow: '0 8px 20px rgba(15,17,71,0.20)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#1a1d5e';
+                e.currentTarget.style.background = 'var(--bg-ink-deep-hover)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#0f1147';
+                e.currentTarget.style.background = 'var(--bg-ink-deep)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               <Sparkles size={15} strokeWidth={2} />
-              ابدأ مجاناً الآن
+              {t('landing.hero.ctaPrimary')}
             </button>
 
             <button
@@ -161,50 +157,50 @@ export default function Hero() {
               style={{
                 fontSize: 14.5,
                 padding: '13px 24px',
-                background: 'white',
-                color: '#3a3a52',
-                border: '1px solid #d8d6cd',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-ink-soft)',
+                border: '1px solid var(--border-default)',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#0f1147';
-                e.currentTarget.style.color = '#0f1147';
+                e.currentTarget.style.borderColor = 'var(--bg-ink-deep)';
+                e.currentTarget.style.color = 'var(--bg-ink-deep)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#d8d6cd';
-                e.currentTarget.style.color = '#3a3a52';
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.color = 'var(--text-ink-soft)';
               }}
             >
               <Compass size={15} strokeWidth={1.8} />
-              استكشف الخدمات
+              {t('landing.hero.ctaSecondary')}
             </button>
           </div>
 
           {/* Stats strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 max-w-[800px] mx-auto animate-fade-up">
-            {STATS.map((s) => (
-              <div key={s.label} className="text-center">
+            {STAT_KEYS.map((k) => (
+              <div key={k} className="text-center">
                 <div
                   className="font-display"
                   style={{
                     fontSize: 'clamp(28px, 3.4vw, 40px)',
                     fontWeight: 700,
-                    color: '#0f1147',
+                    color: 'var(--text-ink)',
                     lineHeight: 1,
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {s.value}
+                  {t(`landing.hero.stats.${k}.value`)}
                 </div>
                 <div
                   className="mt-2"
                   style={{
                     fontSize: 12.5,
-                    color: '#7a7a8c',
+                    color: 'var(--text-muted)',
                     fontWeight: 500,
                   }}
                 >
-                  {s.label}
+                  {t(`landing.hero.stats.${k}.label`)}
                 </div>
               </div>
             ))}

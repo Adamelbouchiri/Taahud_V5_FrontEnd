@@ -11,109 +11,55 @@ import {
   ArrowLeft,
   BellRing,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
- *  ComingSoonPage — generic placeholder for dashboard features
- *  that are queued for a later release.
- *
- *  Used by routes:
- *    /dashboard/ai-analysis
- *    /dashboard/analytics
- *    /dashboard/reports
- *    /dashboard/messages
- *    /dashboard/notifications
- *
- *  Each route picks a `variant` whose preset supplies the title,
- *  description, icon, color, and feature bullets.
+ *  ComingSoonPage — generic placeholder for queued dashboard
+ *  features. The `variant` prop picks an icon + color + the
+ *  dictionary subtree that supplies title, description, eyebrow,
+ *  and bullet features.
  * ============================================================ */
 
 const VARIANTS = {
   ai: {
     icon: Sparkles,
-    eyebrow: 'الذكاء الاصطناعي',
-    title: 'تحليلات الذكاء الاصطناعي',
-    description:
-      'سيقدّم محرّك تعاهد الذكي توصيات مخصّصة على مشاريعك ومقترحات لاختيار أفضل الشركاء وفهم المخاطر مبكّراً.',
     color: '#2c2f7c',
     accent: 'rgba(44,47,124,0.10)',
-    features: [
-      'تحليل تلقائي لمتطلّبات المشروع واستخراج النطاق الفنّي.',
-      'توصيات بالشركاء الأنسب بناءً على الميزانية والخبرة.',
-      'تنبيهات استباقية للمخاطر والانحرافات الزمنية.',
-      'تلخيص المستندات والعقود بضغطة زر.',
-    ],
   },
   analytics: {
     icon: BarChart3,
-    eyebrow: 'الإحصائيات',
-    title: 'لوحة الإحصائيات',
-    description:
-      'عرض شامل لأداء مشاريعك: عدد المشاريع، نسب الإنجاز، توزيع الميزانية، ومتوسط مدّة كل مرحلة.',
     color: '#136d4a',
     accent: 'rgba(19,109,74,0.10)',
-    features: [
-      'مؤشرات أداء حيّة لكل مشروع نشط.',
-      'مقارنة الأداء بين الفترات الزمنية.',
-      'تحليل توزيع العروض المقدّمة على مشاريعك.',
-      'تتبّع متوسّط زمن قبول العروض.',
-    ],
   },
   reports: {
     icon: FileText,
-    eyebrow: 'التقارير',
-    title: 'تقارير المشاريع',
-    description:
-      'تقارير دوريّة قابلة للتصدير بصيغة PDF و Excel، تُلخّص كل ما تحتاجه عن سير العمل والميزانية والمراحل.',
     color: '#b8862a',
     accent: 'rgba(184,134,42,0.12)',
-    features: [
-      'تقارير شهرية تلقائية لكل مشروع.',
-      'تصدير بصيغة PDF و Excel جاهز للمشاركة.',
-      'تقارير مالية تشمل الميزانية والمصروفات.',
-      'جدولة إرسال التقارير عبر البريد الإلكتروني.',
-    ],
   },
   messages: {
     icon: MessageSquare,
-    eyebrow: 'الرسائل',
-    title: 'الرسائل والمحادثات',
-    description:
-      'مركز اتصال موحّد بينك وبين الشركاء داخل المنصّة — بلا حاجة لتبديل التطبيقات.',
     color: '#3a3d99',
     accent: 'rgba(58,61,153,0.10)',
-    features: [
-      'محادثات منظّمة لكل مشروع على حدة.',
-      'مشاركة الملفات والمستندات مباشرة.',
-      'إشعارات فوريّة للرسائل الجديدة.',
-      'سجلّ كامل قابل للبحث ومُؤرشف.',
-    ],
   },
   notifications: {
     icon: Bell,
-    eyebrow: 'الإشعارات',
-    title: 'مركز الإشعارات',
-    description:
-      'كل ما يحدث على مشاريعك في مكان واحد: عروض جديدة، تحديثات حالة، رسائل، تذكيرات، وإشعارات النظام.',
     color: '#b91c1c',
     accent: 'rgba(185,28,28,0.08)',
-    features: [
-      'تجميع كل الإشعارات في مكان واحد.',
-      'تصنيف حسب الأهميّة والمشروع.',
-      'تخصيص قنوات التنبيه (بريد، رسائل، تطبيق).',
-      'تذكيرات للمواعيد النهائيّة المقبلة.',
-    ],
   },
 };
 
 export default function ComingSoonPage({ variant = 'ai' }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const config = VARIANTS[variant] || VARIANTS.ai;
   const [notified, setNotified] = useState(false);
   const Icon = config.icon;
+  const k = `dashboard.comingSoon.${variant}`;
+
+  const featureKeys = [0, 1, 2, 3];
 
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1100px]">
-      {/* Eyebrow pill */}
       <div
         className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full animate-fade-up"
         style={{
@@ -125,10 +71,9 @@ export default function ComingSoonPage({ variant = 'ai' }) {
         }}
       >
         <Wrench size={12} strokeWidth={2} />
-        {config.eyebrow} · قريباً
+        {t(`${k}.eyebrow`)} · {t('dashboard.comingSoon.pill')}
       </div>
 
-      {/* Hero */}
       <div className="flex items-start gap-5 flex-wrap mb-8 animate-fade-up">
         <div
           className="flex items-center justify-center flex-shrink-0"
@@ -145,31 +90,36 @@ export default function ComingSoonPage({ variant = 'ai' }) {
         </div>
         <div className="min-w-0 flex-1">
           <h1
-            className="font-display text-ink m-0 mb-2"
+            className="font-display m-0 mb-2"
             style={{
               fontSize: 'clamp(24px, 3.2vw, 34px)',
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.01em',
+              color: 'var(--text-ink)',
             }}
           >
-            {config.title}
+            {t(`${k}.title`)}
           </h1>
           <p
-            className="text-ink-soft m-0"
-            style={{ fontSize: 15, lineHeight: 1.7, maxWidth: 620 }}
+            className="m-0"
+            style={{
+              fontSize: 15,
+              lineHeight: 1.7,
+              maxWidth: 620,
+              color: 'var(--text-ink-soft)',
+            }}
           >
-            {config.description}
+            {t(`${k}.description`)}
           </p>
         </div>
       </div>
 
-      {/* Mock preview card — shows we're building something */}
       <div
         className="relative overflow-hidden mb-8 animate-fade-up"
         style={{
-          background: 'white',
-          border: '1px solid #e5e3dc',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-default)',
           borderRadius: 18,
           padding: '28px 26px',
           animationDelay: '0.05s',
@@ -181,7 +131,8 @@ export default function ComingSoonPage({ variant = 'ai' }) {
           style={{
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(180deg, transparent 35%, white 95%)`,
+            background:
+              'linear-gradient(180deg, transparent 35%, var(--bg-surface) 95%)',
             pointerEvents: 'none',
           }}
         />
@@ -191,34 +142,33 @@ export default function ComingSoonPage({ variant = 'ai' }) {
             bottom: 18,
             insetInlineStart: '50%',
             transform: 'translateX(-50%)',
-            background: 'white',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
             padding: '6px 14px',
             borderRadius: 999,
             fontSize: 11.5,
             fontWeight: 700,
-            color: '#7a7a8c',
+            color: 'var(--text-muted)',
             boxShadow: '0 8px 18px rgba(15,17,41,0.06)',
             letterSpacing: '0.04em',
             whiteSpace: 'nowrap',
           }}
         >
-          معاينة أوّليّة — قيد التطوير
+          {t('dashboard.comingSoon.previewLabel')}
         </div>
       </div>
 
-      {/* Features */}
       <div
         className="grid gap-4 sm:grid-cols-2 mb-8 animate-fade-up"
         style={{ animationDelay: '0.1s' }}
       >
-        {config.features.map((f, i) => (
+        {featureKeys.map((i) => (
           <div
             key={i}
             className="flex items-start gap-3"
             style={{
-              background: 'white',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               borderRadius: 14,
               padding: '16px 18px',
             }}
@@ -239,17 +189,16 @@ export default function ComingSoonPage({ variant = 'ai' }) {
               style={{
                 fontSize: 13.5,
                 lineHeight: 1.6,
-                color: '#3a3a52',
+                color: 'var(--text-ink-soft)',
                 fontWeight: 500,
               }}
             >
-              {f}
+              {t(`${k}.features.${i}`)}
             </span>
           </div>
         ))}
       </div>
 
-      {/* CTA row */}
       <div
         className="flex items-center gap-3 flex-wrap animate-fade-up"
         style={{ animationDelay: '0.15s' }}
@@ -280,12 +229,12 @@ export default function ComingSoonPage({ variant = 'ai' }) {
           {notified ? (
             <>
               <Check size={15} strokeWidth={2.2} />
-              تم تفعيل التنبيه
+              {t('dashboard.comingSoon.notifyDone')}
             </>
           ) : (
             <>
               <BellRing size={15} strokeWidth={1.9} />
-              نبّهني عند الإطلاق
+              {t('dashboard.comingSoon.notify')}
             </>
           )}
         </button>
@@ -296,22 +245,22 @@ export default function ComingSoonPage({ variant = 'ai' }) {
           className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] font-semibold transition-all"
           style={{
             fontSize: 13.5,
-            background: 'white',
-            border: '1px solid #e5e3dc',
-            color: '#3a3a52',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#cfcdc4';
-            e.currentTarget.style.background = '#fafaf6';
+            e.currentTarget.style.borderColor = 'var(--border-strong)';
+            e.currentTarget.style.background = 'var(--bg-canvas)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#e5e3dc';
-            e.currentTarget.style.background = 'white';
+            e.currentTarget.style.borderColor = 'var(--border-default)';
+            e.currentTarget.style.background = 'var(--bg-surface)';
           }}
         >
           <ArrowLeft size={14} strokeWidth={1.9} />
-          العودة إلى لوحة التحكّم
+          {t('dashboard.comingSoon.backToDashboard')}
         </button>
       </div>
     </div>
@@ -319,8 +268,7 @@ export default function ComingSoonPage({ variant = 'ai' }) {
 }
 
 /* ============================================================
- *  PreviewMock — a lightweight visual hint of what the feature
- *  will look like. Pure CSS shapes, no real data.
+ *  PreviewMock — visual hint, pure CSS shapes, no copy.
  * ============================================================ */
 function PreviewMock({ variant, color, accent }) {
   if (variant === 'analytics' || variant === 'reports') {
@@ -351,9 +299,9 @@ function PreviewMock({ variant, color, accent }) {
       <div>
         <MockHeader color={color} accent={accent} />
         <div className="flex flex-col gap-2.5 mt-6">
-          <MockBubble width="58%" side="start" color={accent} text="#3a3a52" />
+          <MockBubble width="58%" side="start" color={accent} text="var(--text-ink-soft)" />
           <MockBubble width="42%" side="end" color={color} text="white" />
-          <MockBubble width="64%" side="start" color={accent} text="#3a3a52" />
+          <MockBubble width="64%" side="start" color={accent} text="var(--text-ink-soft)" />
           <MockBubble width="38%" side="end" color={color} text="white" />
         </div>
       </div>
@@ -371,8 +319,8 @@ function PreviewMock({ variant, color, accent }) {
               className="flex items-center gap-3"
               style={{
                 padding: '12px 14px',
-                background: '#fafaf6',
-                border: '1px solid #efece4',
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-soft)',
                 borderRadius: 10,
               }}
             >
@@ -386,8 +334,22 @@ function PreviewMock({ variant, color, accent }) {
                 }}
               />
               <div className="flex-1 flex flex-col gap-1.5">
-                <span style={{ height: 8, width: '60%', background: '#e5e3dc', borderRadius: 4 }} />
-                <span style={{ height: 6, width: '40%', background: '#efece4', borderRadius: 4 }} />
+                <span
+                  style={{
+                    height: 8,
+                    width: '60%',
+                    background: 'var(--border-default)',
+                    borderRadius: 4,
+                  }}
+                />
+                <span
+                  style={{
+                    height: 6,
+                    width: '40%',
+                    background: 'var(--border-soft)',
+                    borderRadius: 4,
+                  }}
+                />
               </div>
             </div>
           ))}
@@ -396,7 +358,6 @@ function PreviewMock({ variant, color, accent }) {
     );
   }
 
-  // AI default — concentric pulse + lines
   return (
     <div>
       <MockHeader color={color} accent={accent} />
@@ -433,7 +394,7 @@ function PreviewMock({ variant, color, accent }) {
               style={{
                 height: 9,
                 width: `${w}%`,
-                background: i === 0 ? color : '#e5e3dc',
+                background: i === 0 ? color : 'var(--border-default)',
                 opacity: i === 0 ? 0.5 : 1,
                 borderRadius: 5,
               }}
@@ -458,7 +419,14 @@ function MockHeader({ color, accent }) {
             opacity: 0.7,
           }}
         />
-        <span style={{ height: 10, width: 120, background: '#e5e3dc', borderRadius: 5 }} />
+        <span
+          style={{
+            height: 10,
+            width: 120,
+            background: 'var(--border-default)',
+            borderRadius: 5,
+          }}
+        />
       </div>
       <span
         style={{

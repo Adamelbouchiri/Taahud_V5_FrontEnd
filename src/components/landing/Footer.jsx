@@ -2,28 +2,31 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Mail, Globe, MapPin, Instagram } from 'lucide-react';
 import Logo from '../Logo';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  Footer — landing page footer
  *  ----------------------------------------------------------------
- *  Dark navy/black background, four columns:
+ *  Dark navy/black background — identity surface, stays dark in
+ *  both light and dark themes. Four columns:
  *    1. Brand block (logo + tagline + social icons)
- *    2. المنصة         — section nav (services / arenas / etc.)
- *    3. للمستخدمين      — user-type entry points
- *    4. تواصل معنا      — contact info (whatsapp / email / web / city)
+ *    2. Platform — section nav
+ *    3. For users — user-type entry points
+ *    4. Contact — whatsapp / email / web / city
  *
  *  Bottom bar shows the copyright line.
  * ============================================================ */
 
 const NAV_PLATFORM = [
-  { label: 'الخدمات', href: '#services' },
-  { label: 'الساحات', href: '#arenas' },
-  { label: 'الإشادات', href: '#testimonials' },
-  { label: 'الباقات', href: '#plans' },
+  { id: 'services', href: '#services' },
+  { id: 'arenas', href: '#arenas' },
+  { id: 'testimonials', href: '#testimonials' },
+  { id: 'plans', href: '#plans' },
 ];
 
 export default function Footer() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const goLogin = () => navigate('/login');
   const goRegister = () => navigate('/register');
@@ -35,8 +38,7 @@ export default function Footer() {
     >
       <div className="max-w-[1280px] mx-auto px-6 lg:px-12 py-16 lg:py-20">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-          {/* === Column 1: Brand ===
-              First in DOM order so RTL flow places it on the right. */}
+          {/* === Column 1: Brand === */}
           <div>
             <div className="mb-5">
               <Logo height={56} variant="white" />
@@ -49,8 +51,7 @@ export default function Footer() {
                 color: 'rgba(255,255,255,0.6)',
               }}
             >
-              منصة سعودية رائدة تربط المقاولين والموردين والمطوّرين العقاريين —
-              بناء قطاع مقاولات أكثر شفافية وكفاءة.
+              {t('landing.footer.tagline')}
             </p>
             <div className="flex items-center gap-2.5">
               <SocialBtn href="https://instagram.com/taahud_sa" Icon={Instagram} label="Instagram" />
@@ -59,27 +60,35 @@ export default function Footer() {
           </div>
 
           {/* === Column 2: Platform === */}
-          <FooterColumn title="المنصة">
+          <FooterColumn title={t('landing.footer.columns.platform')}>
             {NAV_PLATFORM.map((l) => (
-              <FooterLink key={l.label} href={l.href}>
-                {l.label}
+              <FooterLink key={l.id} href={l.href}>
+                {t(`nav.${l.id}`)}
               </FooterLink>
             ))}
           </FooterColumn>
 
           {/* === Column 3: For users === */}
-          <FooterColumn title="للمستخدمين">
-            <FooterLink onClick={goRegister}>للمقاولين</FooterLink>
-            <FooterLink onClick={goRegister}>للموردين</FooterLink>
-            <FooterLink onClick={goRegister}>للمطوّرين</FooterLink>
-            <FooterLink onClick={goLogin}>تسجيل الدخول</FooterLink>
+          <FooterColumn title={t('landing.footer.columns.users')}>
+            <FooterLink onClick={goRegister}>
+              {t('landing.footer.audience.contractors')}
+            </FooterLink>
+            <FooterLink onClick={goRegister}>
+              {t('landing.footer.audience.suppliers')}
+            </FooterLink>
+            <FooterLink onClick={goRegister}>
+              {t('landing.footer.audience.developers')}
+            </FooterLink>
+            <FooterLink onClick={goLogin}>
+              {t('landing.footer.audience.login')}
+            </FooterLink>
           </FooterColumn>
 
           {/* === Column 4: Contact === */}
-          <FooterColumn title="تواصل معنا">
+          <FooterColumn title={t('landing.footer.columns.contact')}>
             <ContactRow Icon={MessageCircle}>
               <span style={{ direction: 'ltr', display: 'inline-block' }}>
-                واتساب: 0537372053
+                {t('landing.footer.contactRows.whatsapp')}
               </span>
             </ContactRow>
             <ContactRow Icon={Mail}>
@@ -102,7 +111,9 @@ export default function Footer() {
                 taahud.sa
               </a>
             </ContactRow>
-            <ContactRow Icon={MapPin}>الرياض، السعودية</ContactRow>
+            <ContactRow Icon={MapPin}>
+              {t('landing.footer.contactRows.addressValue')}
+            </ContactRow>
           </FooterColumn>
         </div>
       </div>
@@ -121,8 +132,7 @@ export default function Footer() {
               lineHeight: 1.7,
             }}
           >
-            © 2026 <strong style={{ color: 'rgba(255,255,255,0.85)' }}>تعاهُد</strong>{' '}
-            — جميع الحقوق محفوظة. مشاريع أكثر، مشاكل أقل.
+            {t('landing.footer.copyright', { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>
@@ -179,7 +189,7 @@ function FooterLink({ href, onClick, children }) {
         <button
           type="button"
           onClick={onClick}
-          className={`${className} bg-transparent border-0 p-0 text-right w-full`}
+          className={`${className} bg-transparent border-0 p-0 text-start w-full`}
           style={{ ...style, fontFamily: 'inherit' }}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'white')}
           onMouseLeave={(e) =>

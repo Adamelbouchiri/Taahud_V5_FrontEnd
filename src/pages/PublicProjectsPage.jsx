@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Logo from '../components/Logo';
+import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
 import OpenProjectCard from '../components/project/OpenProjectCard';
 import { CITIES } from '../config/constants';
 import {
@@ -19,6 +20,7 @@ import {
   canViewArena,
 } from '../config/projectConstants';
 import { projects as projectsApi, auth } from '../services';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  PublicProjectsPage — /projects (hub) and /projects/:arena
@@ -28,22 +30,20 @@ import { projects as projectsApi, auth } from '../services';
  *    - Locked (arenaSlug set): one arena, hero header, access gate.
  *
  *  Lives OUTSIDE the dashboard so it has its own topbar and can
- *  load the user's account_type via auth.me() directly (the
- *  UserContext only wraps the dashboard layout).
+ *  load the user's account_type via auth.me() directly.
  * ============================================================ */
 
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'الأحدث' },
-  { value: 'budget_high', label: 'أعلى ميزانية' },
-  { value: 'budget_low', label: 'أقل ميزانية' },
-];
+const SORT_KEYS = ['newest', 'budget_high', 'budget_low'];
+const SORT_VALUE_TO_KEY = {
+  newest: 'newest',
+  budget_high: 'budgetHigh',
+  budget_low: 'budgetLow',
+};
 
 export default function PublicProjectsPage({ arenaSlug = null }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [accountType, setAccountType] = useState(null);
-  // إسناد is gated by a paid upgrade flag on the user record.
-  // Without it, canViewArena hides إسناد from tabs and blocks
-  // the /projects/isnad route.
   const [hasIsnadUpgrade, setHasIsnadUpgrade] = useState(false);
   const [accountLoaded, setAccountLoaded] = useState(false);
 
@@ -51,16 +51,12 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Hub mode picks the first viewable arena once the user is loaded.
-  // Locked mode (arenaSlug) just uses the slug as-is.
   const [arena, setArena] = useState(arenaSlug || 'public');
   const [city, setCity] = useState('all');
   const [type, setType] = useState('all');
   const [sort, setSort] = useState('newest');
   const [search, setSearch] = useState('');
 
-  // Load the user's account_type so we can filter the arena tabs
-  // and enforce viewableBy on the locked single-arena view.
   useEffect(() => {
     let cancelled = false;
     auth
@@ -75,27 +71,25 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
         if (cancelled) return;
         setAccountLoaded(true);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Hub mode: when account type lands, switch to the first arena
-  // the user can actually view. Avoids a flash of "no projects" on
-  // a tab they're not allowed to see.
   useEffect(() => {
-    if (arenaSlug) return; // locked mode
+    if (arenaSlug) return;
     if (!accountLoaded) return;
     if (canViewArena(arena, accountType, hasIsnadUpgrade)) return;
-    const first = ARENAS.find((a) => canViewArena(a.value, accountType, hasIsnadUpgrade));
+    const first = ARENAS.find((a) =>
+      canViewArena(a.value, accountType, hasIsnadUpgrade)
+    );
     if (first) setArena(first.value);
   }, [accountLoaded, accountType, hasIsnadUpgrade, arena, arenaSlug]);
 
-  // Sync arena to slug when the route changes (e.g. user clicks
-  // between sidebar arena links).
   useEffect(() => {
     if (arenaSlug) setArena(arenaSlug);
   }, [arenaSlug]);
 
-  // Locked mode access gate. Block the fetch when not allowed.
   const blocked =
     arenaSlug != null &&
     accountLoaded &&
@@ -110,9 +104,13 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
     projectsApi
       .browse({ arena, city, type, sort })
       .then((data) => !cancelled && setItems(data))
-      .catch((err) => !cancelled && setError(err.message || 'تعذّر تحميل المشاريع.'))
+      .catch(
+        (err) => !cancelled && setError(err.message || t('projects.list.loadError'))
+      )
       .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [arena, city, type, sort, blocked]);
 
   const visible = useMemo(() => {
@@ -134,25 +132,25 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
   };
 
   const currentArena = arenaConfig(arena);
-  const viewableArenas = ARENAS.filter((a) => canViewArena(a.value, accountType, hasIsnadUpgrade));
+  const viewableArenas = ARENAS.filter((a) =>
+    canViewArena(a.value, accountType, hasIsnadUpgrade)
+  );
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fafaf6' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg-canvas)' }}
+    >
       <Topbar onLogo={() => navigate('/')} onDashboard={() => navigate('/dashboard')} />
 
       <main className="flex-1 py-8 lg:py-12">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
           {arenaSlug ? (
-            <ArenaHero arena={currentArena} />
+            <ArenaHero arena={currentArena} arenaSlug={arena} />
           ) : (
-            <HubHeader desc={currentArena.desc} />
+            <HubHeader desc={t(`arena.${arena}.desc`)} />
           )}
 
-          {/* Tabs only on the hub. Locked mode shows one arena.
-              Wait for the user to load before rendering tabs —
-              otherwise we'd briefly show ALL arenas (canViewArena
-              returns true while accountType is null) before
-              filtering kicks in. Show a placeholder strip instead. */}
           {!arenaSlug && !accountLoaded && <TabsSkeleton />}
           {!arenaSlug && accountLoaded && (
             <ArenaTabs
@@ -165,11 +163,17 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
           {blocked ? (
             <ArenaBlocked
               arena={currentArena}
+              arenaSlug={arena}
               accountType={accountType}
               hasIsnadUpgrade={hasIsnadUpgrade}
             />
           ) : viewableArenas.length === 0 && !arenaSlug ? (
-            <ArenaBlocked arena={null} accountType={accountType} hasIsnadUpgrade={hasIsnadUpgrade} />
+            <ArenaBlocked
+              arena={null}
+              arenaSlug={null}
+              accountType={accountType}
+              hasIsnadUpgrade={hasIsnadUpgrade}
+            />
           ) : (
             <>
               <Toolbar
@@ -188,7 +192,11 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
               {loading ? (
                 <SkeletonGrid />
               ) : error ? (
-                <Centered icon={AlertCircle} title="حدث خطأ" subtitle={error} />
+                <Centered
+                  icon={AlertCircle}
+                  title={t('projects.list.errorTitle')}
+                  subtitle={error}
+                />
               ) : visible.length === 0 ? (
                 <EmptyState search={search} onClear={clearFilters} />
               ) : (
@@ -218,46 +226,58 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
  *  Topbar
  * ============================================================ */
 function Topbar({ onLogo, onDashboard }) {
+  const { t } = useTranslation();
   return (
     <header
-      className="sticky top-0 z-30 bg-white"
-      style={{ borderBottom: '1px solid #e5e3dc' }}
+      className="sticky top-0 z-30"
+      style={{
+        background: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-default)',
+      }}
     >
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10 h-[96px] flex items-center justify-between">
-        <button onClick={onLogo} className="bg-transparent border-0 p-0 cursor-pointer" aria-label="الرئيسية">
+        <button
+          onClick={onLogo}
+          className="bg-transparent border-0 p-0 cursor-pointer"
+          aria-label={t('nav.backHome')}
+        >
           <Logo height={68} />
         </button>
-        <button
-          onClick={onDashboard}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
-          style={{
-            fontSize: 13,
-            background: 'white',
-            border: '1px solid #e5e3dc',
-            color: '#3a3a52',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#cfcdc4';
-            e.currentTarget.style.background = '#fafaf6';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#e5e3dc';
-            e.currentTarget.style.background = 'white';
-          }}
-        >
-          <LayoutDashboard size={15} strokeWidth={1.8} />
-          لوحة التحكّم
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageThemeSwitcher compact />
+          <button
+            onClick={onDashboard}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
+            style={{
+              fontSize: 13,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-strong)';
+              e.currentTarget.style.background = 'var(--bg-canvas)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-default)';
+              e.currentTarget.style.background = 'var(--bg-surface)';
+            }}
+          >
+            <LayoutDashboard size={15} strokeWidth={1.8} />
+            {t('nav.dashboard')}
+          </button>
+        </div>
       </div>
     </header>
   );
 }
 
 /* ============================================================
- *  HubHeader — used at /projects
+ *  HubHeader — /projects
  * ============================================================ */
 function HubHeader({ desc }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-7 lg:mb-9 animate-fade-up">
       <div
@@ -271,22 +291,28 @@ function HubHeader({ desc }) {
         }}
       >
         <Compass size={12} />
-        ساحات المشاريع
+        {t('projects.list.hubEyebrow')}
       </div>
       <h1
-        className="font-display text-ink m-0 mb-2"
+        className="font-display m-0 mb-2"
         style={{
           fontSize: 'clamp(28px, 3.6vw, 40px)',
           fontWeight: 700,
           lineHeight: 1.15,
           letterSpacing: '-0.01em',
+          color: 'var(--text-ink)',
         }}
       >
-        تصفّح المشاريع
+        {t('projects.list.hubTitle')}
       </h1>
       <p
-        className="text-muted m-0"
-        style={{ fontSize: 14.5, lineHeight: 1.7, maxWidth: 600 }}
+        className="m-0"
+        style={{
+          fontSize: 14.5,
+          lineHeight: 1.7,
+          maxWidth: 600,
+          color: 'var(--text-muted)',
+        }}
       >
         {desc}
       </p>
@@ -295,10 +321,10 @@ function HubHeader({ desc }) {
 }
 
 /* ============================================================
- *  ArenaHero — bold per-arena header used at /projects/:arena
- *  Each arena's color drives the hero gradient + accent.
+ *  ArenaHero — /projects/:arena
  * ============================================================ */
-function ArenaHero({ arena }) {
+function ArenaHero({ arena, arenaSlug }) {
+  const { t } = useTranslation();
   return (
     <div
       className="relative overflow-hidden mb-8 lg:mb-10 p-7 lg:p-9 rounded-[20px] animate-slide-up-soft"
@@ -310,7 +336,6 @@ function ArenaHero({ arena }) {
         transition: 'box-shadow 400ms ease',
       }}
     >
-      {/* Decorative dot */}
       <div
         className="absolute"
         style={{
@@ -349,7 +374,7 @@ function ArenaHero({ arena }) {
           }}
         >
           <Sparkles size={12} strokeWidth={2} />
-          {arena.shortLabel || 'ساحة'}
+          {t(`arena.${arenaSlug}.short`) || t('projects.list.hubEyebrow')}
         </div>
         <h1
           className="font-display m-0 mb-2"
@@ -360,7 +385,7 @@ function ArenaHero({ arena }) {
             letterSpacing: '-0.01em',
           }}
         >
-          {arena.label}
+          {t(`arena.${arenaSlug}.label`)}
         </h1>
         <p
           className="m-0"
@@ -371,15 +396,13 @@ function ArenaHero({ arena }) {
             opacity: 0.92,
           }}
         >
-          {arena.desc}
+          {t(`arena.${arenaSlug}.desc`)}
         </p>
       </div>
     </div>
   );
 }
 
-/* Darken a hex color for the hero gradient end-stop. Keeps the
-   hero feeling like one continuous arena, not a flat color. */
 function darken(hex) {
   const m = hex.replace('#', '').match(/.{2}/g);
   if (!m) return hex;
@@ -390,23 +413,27 @@ function darken(hex) {
 /* ============================================================
  *  Toolbar
  * ============================================================ */
-function Toolbar({
-  city, setCity, type, setType, sort, setSort,
-  search, setSearch, count, loading,
-}) {
+function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearch, count, loading }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-6">
       <div
         className="p-3 rounded-[14px] flex flex-col lg:flex-row lg:items-center gap-3"
-        style={{ background: 'white', border: '1px solid #e5e3dc' }}
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-default)',
+        }}
       >
         <div className="relative flex-1 min-w-0">
-          <div className="absolute top-1/2 -translate-y-1/2 end-[14px] text-muted pointer-events-none flex">
+          <div
+            className="absolute top-1/2 -translate-y-1/2 end-[14px] pointer-events-none flex"
+            style={{ color: 'var(--text-muted)' }}
+          >
             <Search size={16} strokeWidth={1.7} />
           </div>
           <input
             type="text"
-            placeholder="ابحث في المشاريع المفتوحة..."
+            placeholder={t('projects.list.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="field"
@@ -414,35 +441,38 @@ function Toolbar({
               padding: '10px 40px 10px 14px',
               fontSize: 13.5,
               border: 'none',
-              background: '#fafaf6',
+              background: 'var(--bg-canvas)',
             }}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
-            label="المدينة"
+            label={t('projects.list.filters.cityLabel')}
             value={city}
             onChange={(e) => setCity(e.target.value)}
             options={[
-              { value: 'all', label: 'كل المدن' },
+              { value: 'all', label: t('projects.list.filters.allCities') },
               ...CITIES.map((c) => ({ value: c, label: c })),
             ]}
           />
           <FilterSelect
-            label="النوع"
+            label={t('projects.list.filters.typeLabel')}
             value={type}
             onChange={(e) => setType(e.target.value)}
             options={[
-              { value: 'all', label: 'كل الأنواع' },
-              ...PROJECT_TYPES.map((t) => ({ value: t, label: t })),
+              { value: 'all', label: t('projects.list.filters.allTypes') },
+              ...PROJECT_TYPES.map((tp) => ({ value: tp, label: tp })),
             ]}
           />
           <FilterSelect
-            label="ترتيب"
+            label={t('projects.list.filters.sortLabel')}
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            options={SORT_OPTIONS}
+            options={SORT_KEYS.map((k) => ({
+              value: k,
+              label: t(`projects.list.sort.${SORT_VALUE_TO_KEY[k]}`),
+            }))}
             icon={ArrowDownUp}
           />
         </div>
@@ -451,11 +481,15 @@ function Toolbar({
       {!loading && (
         <div
           className="flex items-center justify-between flex-wrap gap-3 mt-4 px-1"
-          style={{ fontSize: 12.5, color: '#7a7a8c' }}
+          style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
         >
           <span>
-            <span className="font-bold text-ink">{count}</span>{' '}
-            {count === 1 ? 'مشروع متاح' : 'مشروع متاحة'}
+            {t(
+              count === 1
+                ? 'projects.list.countSingular'
+                : 'projects.list.countPlural',
+              { count }
+            )}
           </span>
         </div>
       )}
@@ -469,7 +503,7 @@ function FilterSelect({ label, value, onChange, options, icon: Icon }) {
       {Icon && (
         <div
           className="absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none flex"
-          style={{ color: '#7a7a8c' }}
+          style={{ color: 'var(--text-muted)' }}
         >
           <Icon size={14} strokeWidth={1.7} />
         </div>
@@ -483,12 +517,12 @@ function FilterSelect({ label, value, onChange, options, icon: Icon }) {
           padding: Icon ? '9px 32px 9px 30px' : '9px 32px 9px 14px',
           fontSize: 13,
           fontWeight: 500,
-          background: '#fafaf6',
+          background: 'var(--bg-canvas)',
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7a8c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'left 12px center',
-          border: '1px solid #efece4',
-          color: '#0f1129',
+          border: '1px solid var(--border-soft)',
+          color: 'var(--text-ink)',
           fontFamily: 'inherit',
           minWidth: 130,
         }}
@@ -513,7 +547,11 @@ function SkeletonGrid() {
         <div
           key={i}
           className="p-6 rounded-[16px] animate-pulse"
-          style={{ background: 'white', border: '1px solid #e5e3dc', height: 270 }}
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            height: 270,
+          }}
         />
       ))}
     </div>
@@ -521,16 +559,17 @@ function SkeletonGrid() {
 }
 
 function EmptyState({ search, onClear }) {
+  const { t } = useTranslation();
   return (
     <Centered
       icon={Compass}
-      title={search ? 'لا توجد نتائج تطابق بحثك' : 'لا توجد مشاريع مفتوحة حالياً'}
+      title={search ? t('projects.list.emptySearchTitle') : t('projects.list.emptyTitle')}
       subtitle={
         search
-          ? 'جرّب كلماتٍ أخرى أو أعد تعيين الفلاتر للحصول على نتائج أكثر.'
-          : 'تحقّق لاحقاً من المشاريع الجديدة، أو أعد تعيين الفلاتر.'
+          ? t('projects.list.emptySearchSubtitle')
+          : t('projects.list.emptySubtitle')
       }
-      cta={{ label: 'إعادة تعيين الفلاتر', onClick: onClear }}
+      cta={{ label: t('projects.list.resetFilters'), onClick: onClear }}
     />
   );
 }
@@ -539,7 +578,10 @@ function Centered({ icon: Icon, title, subtitle, cta }) {
   return (
     <div
       className="flex flex-col items-center text-center py-20 px-6 rounded-[18px] animate-fade-up"
-      style={{ background: 'white', border: '1px dashed #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px dashed var(--border-default)',
+      }}
     >
       <div
         className="flex items-center justify-center mb-5"
@@ -547,21 +589,21 @@ function Centered({ icon: Icon, title, subtitle, cta }) {
           width: 64,
           height: 64,
           borderRadius: 16,
-          background: '#f4f1e9',
-          color: '#7a7a8c',
+          background: 'var(--bg-cream)',
+          color: 'var(--text-muted)',
         }}
       >
         <Icon size={28} strokeWidth={1.6} />
       </div>
       <h3
-        className="font-display text-ink m-0 mb-2"
-        style={{ fontSize: 20, fontWeight: 700 }}
+        className="font-display m-0 mb-2"
+        style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-ink)' }}
       >
         {title}
       </h3>
       <p
-        className="text-muted m-0 max-w-md"
-        style={{ fontSize: 14, lineHeight: 1.7 }}
+        className="m-0 max-w-md"
+        style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-muted)' }}
       >
         {subtitle}
       </p>
@@ -570,10 +612,10 @@ function Centered({ icon: Icon, title, subtitle, cta }) {
           onClick={cta.onClick}
           className="mt-7 inline-flex items-center gap-2 px-6 py-3 rounded-[10px] font-semibold transition-all"
           style={{
-            background: 'white',
+            background: 'var(--bg-surface)',
             fontSize: 13.5,
-            border: '1px solid #e5e3dc',
-            color: '#3a3a52',
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
             cursor: 'pointer',
           }}
         >
@@ -585,53 +627,44 @@ function Centered({ icon: Icon, title, subtitle, cta }) {
 }
 
 /* ============================================================
- *  ArenaBlocked — shown when account_type isn't in arena.viewableBy
- *  or when an upgrade-gated arena hasn't been purchased.
+ *  ArenaBlocked — viewableBy / paywall gate
  * ============================================================ */
-function ArenaBlocked({ arena, accountType, hasIsnadUpgrade }) {
-  // إسناد is paywalled. If the user otherwise qualifies (role is in
-  // viewableBy) but hasn't paid, surface the upgrade pitch instead
-  // of the generic "غير متاحة لحسابك" message.
+function ArenaBlocked({ arena, arenaSlug, accountType, hasIsnadUpgrade }) {
+  const { t } = useTranslation();
   if (
     arena?.isUpgrade &&
     !hasIsnadUpgrade &&
     (arena.viewableBy || []).includes(accountType)
   ) {
+    const arenaLabel = t(`arena.${arenaSlug}.label`);
     return (
       <Centered
         icon={Sparkles}
-        title={`${arena.label} — ترقية اختياريّة`}
-        subtitle={`وصول حصري إلى المشاريع الكبرى والفرص التمويليّة (${arena.upgradePrice}). فعّل الترقية من صفحة الباقات لعرض هذه الساحة.`}
+        title={t('projects.list.blockedIsnadTitle', { arena: arenaLabel })}
+        subtitle={t('projects.list.blockedIsnadSubtitle', {
+          arena: arenaLabel,
+          price: t(`arena.${arenaSlug}.upgradePrice`),
+        })}
       />
     );
   }
+  const role = accountType
+    ? t(`accountType.${accountType}`)
+    : t('accountType.unknown');
   const subtitle = arena
-    ? `هذه الساحة غير متاحة لنوع حسابك (${accountTypeLabel(accountType)}).`
-    : 'لا توجد ساحة متاحة لنوع حسابك حالياً.';
+    ? t('projects.list.blockedAccount', { role })
+    : t('projects.list.blockedNoArena');
   return (
     <Centered
       icon={ShieldOff}
-      title="غير متاحة لحسابك"
+      title={t('projects.list.blocked')}
       subtitle={subtitle}
     />
   );
 }
 
-function accountTypeLabel(t) {
-  switch (t) {
-    case 'individual': return 'عميل';
-    case 'developer': return 'مطوّر عقاري';
-    case 'entrepreneur': return 'مقاول';
-    case 'engineering': return 'مكتب هندسي';
-    case 'supplier': return 'مورّد';
-    case 'financier': return 'جهة تمويليّة';
-    default: return 'غير محدّد';
-  }
-}
-
 /* ============================================================
- *  TabsSkeleton — placeholder while we resolve the user's role.
- *  Prevents the brief flash of all-arenas tabs on refresh.
+ *  TabsSkeleton
  * ============================================================ */
 function TabsSkeleton() {
   return (
@@ -640,7 +673,7 @@ function TabsSkeleton() {
         <div
           key={i}
           className="animate-pulse rounded-[12px]"
-          style={{ width: w, height: 44, background: '#efece4' }}
+          style={{ width: w, height: 44, background: 'var(--border-soft)' }}
         />
       ))}
     </div>
@@ -648,10 +681,10 @@ function TabsSkeleton() {
 }
 
 /* ============================================================
- *  ArenaTabs — selector at the top of the hub view. Hides arenas
- *  the user can't view (per the V5 viewableBy matrix).
+ *  ArenaTabs
  * ============================================================ */
 function ArenaTabs({ arenas, value, onChange }) {
+  const { t } = useTranslation();
   return (
     <div
       className="flex gap-2 mb-6 overflow-x-auto pb-1 -mx-1 px-1 smooth-scroll"
@@ -667,9 +700,9 @@ function ArenaTabs({ arenas, value, onChange }) {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[12px] font-semibold transition-all whitespace-nowrap"
             style={{
               fontSize: 13.5,
-              background: active ? a.color : 'white',
-              color: active ? 'white' : '#3a3a52',
-              border: `1.5px solid ${active ? a.color : '#e5e3dc'}`,
+              background: active ? a.color : 'var(--bg-surface)',
+              color: active ? 'white' : 'var(--text-ink-soft)',
+              border: `1.5px solid ${active ? a.color : 'var(--border-default)'}`,
               cursor: 'pointer',
               boxShadow: active ? `0 6px 14px ${a.color}30` : 'none',
               fontFamily: 'inherit',
@@ -682,8 +715,8 @@ function ArenaTabs({ arenas, value, onChange }) {
             }}
             onMouseLeave={(e) => {
               if (!active) {
-                e.currentTarget.style.borderColor = '#e5e3dc';
-                e.currentTarget.style.color = '#3a3a52';
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.color = 'var(--text-ink-soft)';
               }
             }}
           >
@@ -696,7 +729,7 @@ function ArenaTabs({ arenas, value, onChange }) {
                 opacity: active ? 1 : 0.85,
               }}
             />
-            {a.label}
+            {t(`arena.${a.value}.label`)}
           </button>
         );
       })}

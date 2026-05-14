@@ -1,5 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LanguageProvider, useTranslation } from './i18n/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Public pages
 import LandingPage from './pages/LandingPage';
@@ -51,7 +53,22 @@ import RequireNonSupplier from './components/RequireNonSupplier';
 
 export default function App() {
   return (
-    <div dir="rtl" className="font-sans">
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppShell />
+      </LanguageProvider>
+    </ThemeProvider>
+  );
+}
+
+function AppShell() {
+  // `dir` is read from the active language; LanguageContext also
+  // mirrors it to <html dir="..."> so child portals / overlays
+  // inherit the direction correctly.
+  const { dir } = useTranslation();
+
+  return (
+    <div dir={dir} className="font-sans">
       <Routes>
         {/* ===== Fully public ===== */}
         <Route path="/" element={<LandingPage />} />

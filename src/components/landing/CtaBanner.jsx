@@ -1,23 +1,25 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  CtaBanner — final dark CTA block before the footer
  *  ----------------------------------------------------------------
  *  Full-width dark navy section with the same faint grid that
- *  appears in the hero. Pill chip "انضم اليوم", big white serif
- *  headline, subtitle, two buttons: white-filled register +
- *  gold-filled contact-us with a small dot.
+ *  appears in the hero. Eyebrow pill, big white serif headline,
+ *  subtitle, two buttons. The background stays dark in both
+ *  light and dark themes — it's an identity surface.
  * ============================================================ */
 
 export default function CtaBanner() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <section
       className="relative overflow-hidden py-24 lg:py-28"
-      style={{ background: '#0f1147' }}
+      style={{ background: 'var(--bg-ink-section)' }}
     >
       {/* Faint grid background — fades out near edges via radial mask */}
       <div
@@ -65,7 +67,7 @@ export default function CtaBanner() {
             fontWeight: 600,
           }}
         >
-          انضم اليوم
+          {t('landing.cta.pill')}
         </div>
 
         {/* Headline */}
@@ -79,7 +81,7 @@ export default function CtaBanner() {
             color: 'white',
           }}
         >
-          مشاريع أكثر تنتظرك
+          {t('landing.cta.title')}
         </h2>
 
         {/* Subtitle */}
@@ -91,7 +93,7 @@ export default function CtaBanner() {
             color: 'rgba(255,255,255,0.72)',
           }}
         >
-          سجّل الآن مجاناً — وابدأ في الاستفادة من كل خدمات تعاهُد خلال دقائق.
+          {t('landing.cta.subtitle')}
         </p>
 
         {/* CTAs */}
@@ -104,7 +106,7 @@ export default function CtaBanner() {
               fontSize: 14.5,
               padding: '13px 26px',
               background: 'white',
-              color: '#0f1147',
+              color: 'var(--bg-ink-deep)',
               border: '1px solid white',
               cursor: 'pointer',
               boxShadow: '0 10px 24px rgba(0,0,0,0.20)',
@@ -119,7 +121,7 @@ export default function CtaBanner() {
             }}
           >
             <Sparkles size={15} strokeWidth={2} />
-            سجّل الآن مجاناً
+            {t('landing.cta.register')}
           </button>
 
           <a
@@ -154,7 +156,7 @@ export default function CtaBanner() {
                 background: '#1a1306',
               }}
             />
-            تواصل معنا
+            {t('landing.cta.contact')}
           </a>
         </div>
       </div>

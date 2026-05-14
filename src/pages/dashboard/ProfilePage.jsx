@@ -18,43 +18,24 @@ import {
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import {
-  accountTypeLabel,
   hasSpecialty,
-  specialtyLabel,
   CITIES,
 } from '../../config/constants';
 import { auth } from '../../services';
 import Field from '../../components/form/Field';
 import SelectField from '../../components/form/SelectField';
 import PasswordField from '../../components/form/PasswordField';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  ProfilePage — /dashboard/profile
- *  ----------------------------------------------------------------
- *  Three sections (top to bottom):
- *
- *    1. Identity card       — avatar, display name, role,
- *                             phone-verified badge
- *
- *    2. Account info card   — viewable + editable fields. Toggles
- *                             into edit mode via the pencil button;
- *                             save/cancel buttons appear at the
- *                             bottom while editing. Account type is
- *                             always read-only (not user-changeable).
- *
- *    3. Security card       — sign out from all devices (real action
- *                             via /auth/logout-all), and a stubbed
- *                             change-password row marked "soon".
- *
- *  Field labels adapt to account type — for non-individual accounts
- *  the "name" field is labeled "اسم الشركة" instead of "الاسم".
  * ============================================================ */
 
 export default function ProfilePage() {
   const { user, loading, refresh, logout } = useUser();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  // Local UI state (separate from form state below).
   const [editing, setEditing] = useState(false);
 
   if (loading) return <ProfileSkeleton />;
@@ -62,18 +43,23 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="px-5 lg:px-8 py-12 text-center">
-        <p className="text-muted m-0 mb-4">لم يتم تحميل الملف الشخصي.</p>
+        <p
+          className="m-0 mb-4"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {t('dashboard.profile.notLoaded')}
+        </p>
         <button
           onClick={() => navigate('/login')}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-white font-semibold"
           style={{
-            background: '#0f1147',
+            background: 'var(--bg-ink-deep)',
             border: '1px solid #0f1147',
             cursor: 'pointer',
             fontSize: 13.5,
           }}
         >
-          تسجيل الدخول
+          {t('dashboard.profile.goLogin')}
         </button>
       </div>
     );
@@ -81,13 +67,8 @@ export default function ProfilePage() {
 
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[860px]">
-      {/* Page header */}
       <PageHeader />
-
-      {/* Identity card */}
       <IdentityCard user={user} />
-
-      {/* Account info — view or edit mode */}
       <AccountInfoCard
         user={user}
         editing={editing}
@@ -95,14 +76,9 @@ export default function ProfilePage() {
         onCancel={() => setEditing(false)}
         onSaved={async () => {
           setEditing(false);
-          // Re-fetch from /auth/me so we're back in sync with
-          // the source of truth (works whether the backend has
-          // really persisted or not — the stub just echoes).
           await refresh();
         }}
       />
-
-      {/* Security */}
       <SecurityCard onLogout={logout} navigate={navigate} />
     </div>
   );
@@ -112,6 +88,7 @@ export default function ProfilePage() {
  *  Page header
  * ============================================================ */
 function PageHeader() {
+  const { t } = useTranslation();
   return (
     <div className="mb-8 lg:mb-10 animate-fade-up">
       <div
@@ -125,50 +102,55 @@ function PageHeader() {
         }}
       >
         <UserCircle size={12} />
-        الحساب
+        {t('dashboard.profile.eyebrow')}
       </div>
       <h1
-        className="font-display text-ink m-0 mb-2"
+        className="font-display m-0 mb-2"
         style={{
           fontSize: 'clamp(26px, 3.4vw, 36px)',
           fontWeight: 700,
           lineHeight: 1.15,
           letterSpacing: '-0.01em',
+          color: 'var(--text-ink)',
         }}
       >
-        الملف الشخصي
+        {t('dashboard.profile.title')}
       </h1>
       <p
-        className="text-muted m-0"
-        style={{ fontSize: 14, lineHeight: 1.7 }}
+        className="m-0"
+        style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-muted)' }}
       >
-        إدارة بياناتك على تعاهد وإعدادات حسابك.
+        {t('dashboard.profile.subtitle')}
       </p>
     </div>
   );
 }
 
 /* ============================================================
- *  Identity card — avatar + name + role + verified badge
+ *  Identity card
  * ============================================================ */
 function IdentityCard({ user }) {
-  const initial = (user.name || 'م').trim().charAt(0);
-  const roleLabel = accountTypeLabel(user.account_type);
+  const { t } = useTranslation();
+  const initial = (user.name || '·').trim().charAt(0);
+  const roleLabel = user.account_type
+    ? t(`accountType.${user.account_type}`)
+    : '';
   const phoneVerified = user.is_phone_verified === true;
 
   return (
     <div
       className="rounded-[16px] mb-5 overflow-hidden animate-fade-up"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
-      {/* Cover band */}
       <div
         style={{
           background: 'linear-gradient(150deg, #0f1147 0%, #1f2258 100%)',
           height: 96,
         }}
       />
-      {/* Body */}
       <div className="px-7 pb-7" style={{ marginTop: -40 }}>
         <div
           className="flex items-center justify-center font-display font-bold mb-4"
@@ -179,7 +161,7 @@ function IdentityCard({ user }) {
             background: '#136d4a',
             color: 'white',
             fontSize: 32,
-            border: '4px solid white',
+            border: '4px solid var(--bg-surface)',
             boxShadow: '0 10px 24px rgba(15,17,41,0.10)',
           }}
         >
@@ -189,16 +171,20 @@ function IdentityCard({ user }) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <h2
-              className="font-display text-ink m-0 mb-1.5"
-              style={{ fontSize: 22, fontWeight: 700 }}
+              className="font-display m-0 mb-1.5"
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: 'var(--text-ink)',
+              }}
             >
-              {user.name || 'مستخدم'}
+              {user.name || t('dashboard.profile.defaultName')}
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
               {roleLabel && (
                 <span
                   className="inline-flex items-center gap-1.5"
-                  style={{ fontSize: 13, color: '#7a7a8c' }}
+                  style={{ fontSize: 13, color: 'var(--text-muted)' }}
                 >
                   <Briefcase size={13} strokeWidth={1.7} />
                   {roleLabel}
@@ -207,7 +193,9 @@ function IdentityCard({ user }) {
               {user.specialty && (
                 <>
                   <Dot />
-                  <span style={{ fontSize: 13, color: '#7a7a8c' }}>
+                  <span
+                    style={{ fontSize: 13, color: 'var(--text-muted)' }}
+                  >
                     {user.specialty}
                   </span>
                 </>
@@ -225,7 +213,7 @@ function IdentityCard({ user }) {
                     }}
                   >
                     <CheckCircle2 size={11} strokeWidth={2.2} />
-                    رقم موثّق
+                    {t('dashboard.profile.verifiedBadge')}
                   </span>
                 </>
               )}
@@ -238,18 +226,20 @@ function IdentityCard({ user }) {
 }
 
 /* ============================================================
- *  Account info card — view + edit modes
+ *  Account info card
  * ============================================================ */
 function AccountInfoCard({ user, editing, onEnterEdit, onCancel, onSaved }) {
-  // Field labels adapt to account type.
+  const { t } = useTranslation();
   const isCompanyAccount =
     user.account_type && user.account_type !== 'individual';
-  const nameLabel = isCompanyAccount ? 'اسم الشركة' : 'الاسم الكامل';
+  const nameLabel = isCompanyAccount
+    ? t('dashboard.profile.nameLabelCompany')
+    : t('dashboard.profile.nameLabelIndividual');
   const NameIcon = isCompanyAccount ? Building2 : UserIcon;
 
   return (
     <SectionCard
-      title="بيانات الحساب"
+      title={t('dashboard.profile.sectionAccount')}
       action={
         !editing && (
           <button
@@ -258,22 +248,22 @@ function AccountInfoCard({ user, editing, onEnterEdit, onCancel, onSaved }) {
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] font-semibold transition-all"
             style={{
               fontSize: 12.5,
-              background: 'white',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#0f1147';
-              e.currentTarget.style.color = '#0f1147';
+              e.currentTarget.style.borderColor = 'var(--bg-ink-deep)';
+              e.currentTarget.style.color = 'var(--bg-ink-deep)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e3dc';
-              e.currentTarget.style.color = '#3a3a52';
+              e.currentTarget.style.borderColor = 'var(--border-default)';
+              e.currentTarget.style.color = 'var(--text-ink-soft)';
             }}
           >
             <Pencil size={13} strokeWidth={1.8} />
-            تعديل
+            {t('dashboard.profile.editCta')}
           </button>
         )
       }
@@ -293,24 +283,30 @@ function AccountInfoCard({ user, editing, onEnterEdit, onCancel, onSaved }) {
   );
 }
 
-/* ----- View mode (read-only field rows) ----- */
 function ViewMode({ user, nameLabel, NameIcon }) {
+  const { t } = useTranslation();
+  const specialtyFieldLabel = hasSpecialty(user.account_type)
+    ? user.account_type === 'supplier'
+      ? t('specialty.supplierLabel')
+      : t('specialty.developerLabel')
+    : t('specialty.defaultLabel');
+
   return (
     <ul className="m-0 p-0 space-y-5">
       <FieldRow icon={NameIcon} label={nameLabel} value={user.name} />
-      <FieldRow icon={Phone} label="رقم الهاتف" value={user.phone} ltr />
-      <FieldRow icon={Mail} label="البريد الإلكتروني" value={user.email} ltr />
-      <FieldRow icon={MapPin} label="المدينة" value={user.city} />
+      <FieldRow icon={Phone} label={t('dashboard.profile.phone')} value={user.phone} ltr />
+      <FieldRow icon={Mail} label={t('dashboard.profile.email')} value={user.email} ltr />
+      <FieldRow icon={MapPin} label={t('dashboard.profile.city')} value={user.city} />
       <FieldRow
         icon={Briefcase}
-        label="نوع الحساب"
-        value={accountTypeLabel(user.account_type)}
-        readOnlyHint="يحتاج تواصل مع الدعم لتغييره"
+        label={t('dashboard.profile.accountType')}
+        value={user.account_type ? t(`accountType.${user.account_type}`) : ''}
+        readOnlyHint={t('dashboard.profile.accountTypeChangeHint')}
       />
       {hasSpecialty(user.account_type) && (
         <FieldRow
           icon={Briefcase}
-          label={specialtyLabel(user.account_type)}
+          label={specialtyFieldLabel}
           value={user.specialty}
         />
       )}
@@ -324,7 +320,8 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
       <Icon
         size={16}
         strokeWidth={1.7}
-        className="flex-shrink-0 mt-1 text-muted"
+        className="flex-shrink-0 mt-1"
+        style={{ color: 'var(--text-muted)' }}
       />
       <div className="min-w-0 flex-1">
         <div
@@ -332,7 +329,7 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
           style={{
             fontSize: 10.5,
             letterSpacing: '0.08em',
-            color: '#9a9aab',
+            color: 'var(--text-muted)',
           }}
         >
           {label}
@@ -341,9 +338,9 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
           className="font-semibold"
           style={{
             fontSize: 14,
-            color: value ? '#0f1129' : '#a0a1b2',
-            direction: ltr ? 'ltr' : 'rtl',
-            textAlign: ltr ? 'left' : 'right',
+            color: value ? 'var(--text-ink)' : 'var(--text-muted)',
+            direction: ltr ? 'ltr' : undefined,
+            textAlign: ltr ? 'left' : undefined,
             wordBreak: 'break-word',
           }}
         >
@@ -352,7 +349,11 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
         {readOnlyHint && (
           <div
             className="mt-1"
-            style={{ fontSize: 11, color: '#a0a1b2', fontStyle: 'italic' }}
+            style={{
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              fontStyle: 'italic',
+            }}
           >
             {readOnlyHint}
           </div>
@@ -362,12 +363,8 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
   );
 }
 
-/* ----- Edit mode ----- */
 function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
-  // Local form state — populated from current user, mutated as the
-  // user types. Doesn't touch the global UserContext until save.
-  // Specialty is intentionally NOT in this state: BE doesn't allow
-  // editing it via /auth/profile, so it stays read-only below.
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: user.name || '',
     email: user.email || '',
@@ -386,13 +383,13 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = 'الاسم مطلوب';
+    if (!form.name.trim()) e.name = t('dashboard.profile.errors.nameMissing');
     if (!form.email.trim()) {
-      e.email = 'البريد الإلكتروني مطلوب';
+      e.email = t('dashboard.profile.errors.emailMissing');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      e.email = 'صيغة البريد الإلكتروني غير صحيحة';
+      e.email = t('dashboard.profile.errors.emailFormat');
     }
-    if (!form.city) e.city = 'المدينة مطلوبة';
+    if (!form.city) e.city = t('dashboard.profile.errors.cityMissing');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -403,7 +400,6 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
     setSaveError('');
     setSaving(true);
     try {
-      // PATCH /auth/profile — only name/email/city are accepted.
       await auth.updateProfile({
         name: form.name.trim(),
         email: form.email.trim(),
@@ -411,11 +407,17 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
       });
       await onSaved();
     } catch (err) {
-      setSaveError(err.message || 'تعذّر حفظ التغييرات. حاول مرة أخرى.');
+      setSaveError(err.message || t('dashboard.profile.saveError'));
     } finally {
       setSaving(false);
     }
   };
+
+  const specialtyFieldLabel = hasSpecialty(user.account_type)
+    ? user.account_type === 'supplier'
+      ? t('specialty.supplierLabel')
+      : t('specialty.developerLabel')
+    : t('specialty.defaultLabel');
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-5">
@@ -427,16 +429,15 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
         error={errors.name}
       />
 
-      {/* Phone — display only, can't be changed without re-verify */}
       <div>
-        <label className="field-label">رقم الهاتف</label>
+        <label className="field-label">{t('dashboard.profile.phone')}</label>
         <div
           className="px-4 py-3 rounded-[10px] flex items-center gap-2"
           style={{
-            background: '#fafaf6',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-canvas)',
+            border: '1px solid var(--border-default)',
             fontSize: 14,
-            color: '#7a7a8c',
+            color: 'var(--text-muted)',
             direction: 'ltr',
             textAlign: 'left',
           }}
@@ -446,14 +447,14 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
         </div>
         <p
           className="m-0 mt-1.5"
-          style={{ fontSize: 11.5, color: '#9a9aab' }}
+          style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
         >
-          لتغيير رقم الهاتف يتطلّب إعادة التحقق — تواصل مع الدعم.
+          {t('dashboard.profile.phoneChangeHint')}
         </p>
       </div>
 
       <Field
-        label="البريد الإلكتروني"
+        label={t('dashboard.profile.email')}
         icon={Mail}
         type="email"
         value={form.email}
@@ -462,27 +463,25 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
       />
 
       <SelectField
-        label="المدينة"
+        label={t('dashboard.profile.city')}
         icon={MapPin}
         options={CITIES}
         value={form.city}
         onChange={update('city')}
         error={errors.city}
-        placeholder="اختر المدينة"
+        placeholder={t('dashboard.profile.cityPlaceholder')}
       />
 
       {hasSpecialty(user.account_type) && (
         <div>
-          <label className="field-label">
-            {specialtyLabel(user.account_type)}
-          </label>
+          <label className="field-label">{specialtyFieldLabel}</label>
           <div
             className="px-4 py-3 rounded-[10px] flex items-center gap-2"
             style={{
-              background: '#fafaf6',
-              border: '1px solid #e5e3dc',
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-default)',
               fontSize: 14,
-              color: '#7a7a8c',
+              color: 'var(--text-muted)',
             }}
           >
             <Briefcase size={14} strokeWidth={1.7} style={{ flexShrink: 0 }} />
@@ -490,21 +489,20 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
           </div>
           <p
             className="m-0 mt-1.5"
-            style={{ fontSize: 11.5, color: '#9a9aab' }}
+            style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
           >
-            لتغيير التخصص — تواصل مع الدعم.
+            {t('dashboard.profile.specialtyChangeHint')}
           </p>
         </div>
       )}
 
-      {/* Save error */}
       {saveError && (
         <div
           className="flex items-start gap-2 px-3 py-2.5 rounded-[8px]"
           style={{
             background: 'rgba(185,28,28,0.06)',
             border: '1px solid rgba(185,28,28,0.18)',
-            color: '#b91c1c',
+            color: 'var(--accent-danger)',
             fontSize: 13,
           }}
         >
@@ -517,10 +515,9 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
         </div>
       )}
 
-      {/* Actions */}
       <div
         className="flex items-center gap-2.5 pt-2"
-        style={{ borderTop: '1px solid #efece4', paddingTop: 16 }}
+        style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 16 }}
       >
         <button
           type="submit"
@@ -528,14 +525,14 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-white font-semibold transition-all"
           style={{
             fontSize: 13.5,
-            background: saving ? '#8a8ca5' : '#0f1147',
-            border: `1px solid ${saving ? '#8a8ca5' : '#0f1147'}`,
+            background: saving ? '#8a8ca5' : 'var(--bg-ink-deep)',
+            border: `1px solid ${saving ? '#8a8ca5' : 'var(--bg-ink-deep)'}`,
             cursor: saving ? 'wait' : 'pointer',
             boxShadow: saving ? 'none' : '0 6px 14px rgba(15,17,71,0.20)',
           }}
         >
           <Check size={14} strokeWidth={2} />
-          {saving ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
+          {saving ? t('dashboard.profile.savingCta') : t('dashboard.profile.saveCta')}
         </button>
 
         <button
@@ -545,15 +542,15 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] font-semibold transition-all"
           style={{
             fontSize: 13.5,
-            background: 'white',
-            color: '#3a3a52',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-ink-soft)',
+            border: '1px solid var(--border-default)',
             cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.6 : 1,
           }}
         >
           <X size={14} strokeWidth={2} />
-          إلغاء
+          {t('dashboard.profile.cancelCta')}
         </button>
       </div>
     </form>
@@ -563,42 +560,44 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
 /* ============================================================
  *  Security card
  * ============================================================ */
-function SecurityCard({ onLogout, navigate }) {
+function SecurityCard({ navigate }) {
+  const { t } = useTranslation();
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
 
   const handleLogoutAll = async () => {
     if (loggingOutAll) return;
-    const confirmed = window.confirm(
-      'سيتم تسجيل الخروج من جميع الأجهزة بما فيها هذا الجهاز. هل أنت متأكد؟'
-    );
+    const confirmed = window.confirm(t('dashboard.profile.security.logoutAll.confirm'));
     if (!confirmed) return;
     setLoggingOutAll(true);
     try {
       await auth.logoutAll();
     } catch {
-      // logoutAll always clears local token in `finally`, so even
-      // a network error effectively logs us out locally.
+      // logoutAll always clears local token in `finally`
     } finally {
       navigate('/login', { replace: true });
     }
   };
 
   return (
-    <SectionCard title="الأمان">
+    <SectionCard title={t('dashboard.profile.sectionSecurity')}>
       <ul className="m-0 p-0 space-y-2">
         <SecurityRow
           icon={KeyRound}
-          title="تغيير كلمة المرور"
-          desc="حدّث كلمة المرور الخاصة بك بشكل دوري لحماية حسابك."
-          actionLabel="تغيير"
+          title={t('dashboard.profile.security.password.title')}
+          desc={t('dashboard.profile.security.password.desc')}
+          actionLabel={t('dashboard.profile.security.password.action')}
           onAction={() => setChangePwOpen(true)}
         />
         <SecurityRow
           icon={LogOut}
-          title="تسجيل الخروج من كل الأجهزة"
-          desc="ينهي جميع جلساتك في كل الأجهزة فوراً، بما في ذلك الجهاز الحالي."
-          actionLabel={loggingOutAll ? 'جارٍ...' : 'تسجيل الخروج'}
+          title={t('dashboard.profile.security.logoutAll.title')}
+          desc={t('dashboard.profile.security.logoutAll.desc')}
+          actionLabel={
+            loggingOutAll
+              ? t('dashboard.profile.security.logoutAll.working')
+              : t('dashboard.profile.security.logoutAll.action')
+          }
           actionVariant="danger"
           onAction={handleLogoutAll}
         />
@@ -616,13 +615,9 @@ function SecurityCard({ onLogout, navigate }) {
 
 /* ============================================================
  *  ChangePasswordModal
- *  ----------------------------------------------------------------
- *  Three fields: current_password, password, password_confirmation.
- *  On 200 the backend revokes every token (including the current
- *  one) — the service clears the local token in the same call. We
- *  navigate to /login so the user signs back in with the new one.
  * ============================================================ */
 function ChangePasswordModal({ onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -630,7 +625,6 @@ function ChangePasswordModal({ onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Esc closes the modal.
   React.useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape' && !submitting) onClose();
@@ -642,11 +636,11 @@ function ChangePasswordModal({ onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const ve = {};
-    if (!currentPassword) ve.current_password = 'كلمة المرور الحالية مطلوبة.';
+    if (!currentPassword) ve.current_password = t('dashboard.profile.errors.currentMissing');
     if (!password || password.length < 8)
-      ve.password = 'كلمة المرور الجديدة يجب أن تكون ٨ أحرف على الأقل.';
+      ve.password = t('dashboard.profile.errors.passwordShort');
     if (password !== confirmation)
-      ve.confirmation = 'تأكيد كلمة المرور غير مطابق.';
+      ve.confirmation = t('dashboard.profile.errors.passwordMismatch');
     setErrors(ve);
     if (Object.keys(ve).length > 0) return;
 
@@ -660,7 +654,7 @@ function ChangePasswordModal({ onClose, onSuccess }) {
       });
       onSuccess();
     } catch (err) {
-      setError(err.message || 'تعذّر تغيير كلمة المرور.');
+      setError(err.message || t('dashboard.profile.changePassword.errorGeneric'));
     } finally {
       setSubmitting(false);
     }
@@ -672,7 +666,7 @@ function ChangePasswordModal({ onClose, onSuccess }) {
       aria-modal="true"
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-up"
       style={{
-        background: 'rgba(15,17,41,0.45)',
+        background: 'var(--bg-overlay)',
         backdropFilter: 'blur(3px)',
       }}
       onClick={() => {
@@ -682,13 +676,13 @@ function ChangePasswordModal({ onClose, onSuccess }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'white',
+          background: 'var(--bg-surface)',
           borderRadius: 18,
           maxWidth: 460,
           width: '100%',
           padding: '24px 24px 20px',
-          boxShadow: '0 30px 70px rgba(15,17,41,0.30)',
-          border: '1px solid #e5e3dc',
+          boxShadow: 'var(--shadow-elevated)',
+          border: '1px solid var(--border-default)',
         }}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -707,16 +701,25 @@ function ChangePasswordModal({ onClose, onSuccess }) {
             </div>
             <div>
               <h2
-                className="font-display text-ink m-0"
-                style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3 }}
+                className="font-display m-0"
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  lineHeight: 1.3,
+                  color: 'var(--text-ink)',
+                }}
               >
-                تغيير كلمة المرور
+                {t('dashboard.profile.changePassword.title')}
               </h2>
               <p
-                className="text-muted m-0 mt-0.5"
-                style={{ fontSize: 12.5, lineHeight: 1.5 }}
+                className="m-0 mt-0.5"
+                style={{
+                  fontSize: 12.5,
+                  lineHeight: 1.5,
+                  color: 'var(--text-muted)',
+                }}
               >
-                ستحتاج إلى تسجيل الدخول مجدّداً بعد التغيير.
+                {t('dashboard.profile.changePassword.subtitle')}
               </p>
             </div>
           </div>
@@ -724,15 +727,15 @@ function ChangePasswordModal({ onClose, onSuccess }) {
             type="button"
             onClick={onClose}
             disabled={submitting}
-            aria-label="إغلاق"
+            aria-label={t('dashboard.profile.changePassword.close')}
             className="flex items-center justify-center transition-colors"
             style={{
               width: 32,
               height: 32,
               borderRadius: 9,
-              background: '#fafaf6',
-              border: '1px solid #e5e3dc',
-              color: '#3a3a52',
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-ink-soft)',
               cursor: submitting ? 'not-allowed' : 'pointer',
               opacity: submitting ? 0.5 : 1,
               flexShrink: 0,
@@ -749,7 +752,7 @@ function ChangePasswordModal({ onClose, onSuccess }) {
               style={{
                 background: 'rgba(185,28,28,0.06)',
                 border: '1px solid rgba(185,28,28,0.18)',
-                color: '#b91c1c',
+                color: 'var(--accent-danger)',
                 fontSize: 13,
               }}
             >
@@ -763,8 +766,8 @@ function ChangePasswordModal({ onClose, onSuccess }) {
           )}
 
           <PasswordField
-            label="كلمة المرور الحالية"
-            placeholder="أدخل كلمة المرور الحالية"
+            label={t('dashboard.profile.changePassword.current')}
+            placeholder={t('dashboard.profile.changePassword.currentPlaceholder')}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             error={errors.current_password}
@@ -772,16 +775,16 @@ function ChangePasswordModal({ onClose, onSuccess }) {
           />
 
           <PasswordField
-            label="كلمة المرور الجديدة"
-            placeholder="٨ أحرف على الأقل"
+            label={t('dashboard.profile.changePassword.newPassword')}
+            placeholder={t('dashboard.profile.changePassword.newPasswordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
           />
 
           <PasswordField
-            label="تأكيد كلمة المرور"
-            placeholder="أعد إدخال كلمة المرور الجديدة"
+            label={t('dashboard.profile.changePassword.confirm')}
+            placeholder={t('dashboard.profile.changePassword.confirmPlaceholder')}
             value={confirmation}
             onChange={(e) => setConfirmation(e.target.value)}
             error={errors.confirmation}
@@ -789,7 +792,7 @@ function ChangePasswordModal({ onClose, onSuccess }) {
 
           <div
             className="flex items-center gap-2.5 pt-3"
-            style={{ borderTop: '1px solid #efece4' }}
+            style={{ borderTop: '1px solid var(--border-soft)' }}
           >
             <button
               type="submit"
@@ -797,14 +800,16 @@ function ChangePasswordModal({ onClose, onSuccess }) {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-white font-semibold transition-all"
               style={{
                 fontSize: 13.5,
-                background: submitting ? '#8a8ca5' : '#0f1147',
-                border: `1px solid ${submitting ? '#8a8ca5' : '#0f1147'}`,
+                background: submitting ? '#8a8ca5' : 'var(--bg-ink-deep)',
+                border: `1px solid ${submitting ? '#8a8ca5' : 'var(--bg-ink-deep)'}`,
                 cursor: submitting ? 'wait' : 'pointer',
                 boxShadow: submitting ? 'none' : '0 6px 14px rgba(15,17,71,0.20)',
               }}
             >
               <Check size={14} strokeWidth={2} />
-              {submitting ? 'جارٍ التحديث...' : 'تحديث كلمة المرور'}
+              {submitting
+                ? t('dashboard.profile.changePassword.submitting')
+                : t('dashboard.profile.changePassword.submit')}
             </button>
             <button
               type="button"
@@ -813,14 +818,14 @@ function ChangePasswordModal({ onClose, onSuccess }) {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] font-semibold transition-all"
               style={{
                 fontSize: 13.5,
-                background: 'white',
-                border: '1px solid #e5e3dc',
-                color: '#3a3a52',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 opacity: submitting ? 0.6 : 1,
               }}
             >
-              إلغاء
+              {t('dashboard.profile.cancelCta')}
             </button>
           </div>
         </form>
@@ -843,7 +848,7 @@ function SecurityRow({
   return (
     <li
       className="list-none flex items-start justify-between gap-4 py-4"
-      style={{ borderBottom: '1px solid #f4f1e9' }}
+      style={{ borderBottom: '1px solid var(--border-soft)' }}
     >
       <div className="flex items-start gap-3 min-w-0 flex-1">
         <div
@@ -852,7 +857,9 @@ function SecurityRow({
             width: 36,
             height: 36,
             borderRadius: 10,
-            background: isDanger ? 'rgba(185,28,28,0.08)' : 'rgba(58,61,153,0.08)',
+            background: isDanger
+              ? 'rgba(185,28,28,0.08)'
+              : 'rgba(58,61,153,0.08)',
             color: isDanger ? '#b91c1c' : '#3a3d99',
           }}
         >
@@ -861,13 +868,17 @@ function SecurityRow({
         <div className="min-w-0">
           <div
             className="font-display font-bold"
-            style={{ fontSize: 14, color: '#0f1129' }}
+            style={{ fontSize: 14, color: 'var(--text-ink)' }}
           >
             {title}
           </div>
           <div
             className="mt-0.5"
-            style={{ fontSize: 12.5, color: '#7a7a8c', lineHeight: 1.6 }}
+            style={{
+              fontSize: 12.5,
+              color: 'var(--text-muted)',
+              lineHeight: 1.6,
+            }}
           >
             {desc}
           </div>
@@ -881,21 +892,19 @@ function SecurityRow({
         style={{
           fontSize: 12,
           background: actionDisabled
-            ? '#fafaf6'
-            : isDanger
-            ? 'white'
-            : 'white',
+            ? 'var(--bg-canvas)'
+            : 'var(--bg-surface)',
           color: actionDisabled
-            ? '#a0a1b2'
+            ? 'var(--text-muted)'
             : isDanger
-            ? '#b91c1c'
-            : '#3a3a52',
+            ? 'var(--accent-danger)'
+            : 'var(--text-ink-soft)',
           border: `1px solid ${
             actionDisabled
-              ? '#e5e3dc'
+              ? 'var(--border-default)'
               : isDanger
               ? 'rgba(185,28,28,0.25)'
-              : '#e5e3dc'
+              : 'var(--border-default)'
           }`,
           cursor: actionDisabled ? 'not-allowed' : 'pointer',
           fontFamily: 'inherit',
@@ -904,17 +913,17 @@ function SecurityRow({
           if (actionDisabled) return;
           e.currentTarget.style.background = isDanger
             ? 'rgba(185,28,28,0.06)'
-            : '#fafaf6';
+            : 'var(--bg-canvas)';
           e.currentTarget.style.borderColor = isDanger
             ? '#b91c1c'
-            : '#0f1147';
+            : 'var(--bg-ink-deep)';
         }}
         onMouseLeave={(e) => {
           if (actionDisabled) return;
-          e.currentTarget.style.background = 'white';
+          e.currentTarget.style.background = 'var(--bg-surface)';
           e.currentTarget.style.borderColor = isDanger
             ? 'rgba(185,28,28,0.25)'
-            : '#e5e3dc';
+            : 'var(--border-default)';
         }}
       >
         {actionLabel}
@@ -930,15 +939,18 @@ function SectionCard({ title, action, children }) {
   return (
     <section
       className="rounded-[16px] mb-5 animate-fade-up"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <header
         className="px-6 py-4 flex items-center justify-between gap-3"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         <h3
-          className="font-display text-ink m-0"
-          style={{ fontSize: 14.5, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h3>
@@ -970,7 +982,7 @@ function ProfileSkeleton() {
         style={{
           height: 28,
           width: 200,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 8,
           marginBottom: 12,
         }}
@@ -979,7 +991,7 @@ function ProfileSkeleton() {
         style={{
           height: 14,
           width: 320,
-          background: '#efece4',
+          background: 'var(--border-soft)',
           borderRadius: 6,
           marginBottom: 32,
         }}
@@ -990,8 +1002,8 @@ function ProfileSkeleton() {
           className="mb-5"
           style={{
             height: h,
-            background: 'white',
-            border: '1px solid #e5e3dc',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
             borderRadius: 16,
           }}
         />

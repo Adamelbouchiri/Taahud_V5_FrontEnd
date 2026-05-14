@@ -1,20 +1,24 @@
 import React from 'react';
 import { Phone } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function PhoneField({
-  label = 'رقم الهاتف',
+  label,
   value,
   onChange,
   error,
   hint,
-  countryCode = '٩٦٦+',
-  placeholder = '5X XXX XXXX',
+  countryCode,
+  placeholder,
 }) {
+  const { t } = useTranslation();
   return (
     <div className="animate-fade-up">
-      <label className="field-label">{label}</label>
+      <label className="field-label">{label || t('auth.phoneFieldLabel')}</label>
       <div className="flex gap-2">
-        <span className="phone-cc">{countryCode}</span>
+        <span className="phone-cc">
+          {countryCode || t('auth.phoneCountryCode')}
+        </span>
         <div className="relative flex-1">
           <div className="absolute top-1/2 -translate-y-1/2 end-[14px] text-muted pointer-events-none flex">
             <Phone size={17} strokeWidth={1.7} />
@@ -22,7 +26,7 @@ export default function PhoneField({
           <input
             type="tel"
             inputMode="numeric"
-            placeholder={placeholder}
+            placeholder={placeholder || t('auth.phonePlaceholder')}
             value={value}
             onChange={onChange}
             className={`field ${error ? 'error' : ''}`}

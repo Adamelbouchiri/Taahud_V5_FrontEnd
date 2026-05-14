@@ -1,33 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Mail,
-  KeyRound,
-  CheckCircle2,
-  ArrowLeft,
-} from 'lucide-react';
+import { Mail, KeyRound, CheckCircle2, ArrowLeft } from 'lucide-react';
 import AuthShell from '../components/auth/AuthShell';
 import Field from '../components/form/Field';
 import PasswordField from '../components/form/PasswordField';
 import { auth } from '../services';
+import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
  *  ForgotPasswordPage
  *  ----------------------------------------------------------------
  *  Two-step flow on a single page:
- *
- *    1. request — user enters their email; we call
- *       POST /auth/forgot-password and the BE emails a 6-digit code.
- *    2. reset   — user enters the code + new password; we call
- *       POST /auth/reset-password. On success the BE revokes every
- *       token for the account, so we route to /login.
- *
- *  The BE response on step 1 is identical for known/unknown emails
- *  (privacy by design). We treat any 2xx as "sent" and advance.
+ *    1. request — POST /auth/forgot-password
+ *    2. reset   — POST /auth/reset-password (revokes all tokens on
+ *                 success, so we route to /login).
  * ============================================================ */
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState('request'); // request | reset | done
   const [email, setEmail] = useState('');
@@ -38,9 +29,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
 
-  /* -------------------------------------------------------------
-   * Step 1 — request a code
-   * ----------------------------------------------------------- */
   const handleRequest = async (e) => {
     e.preventDefault();
     if (!email) return;
@@ -50,23 +38,20 @@ export default function ForgotPasswordPage() {
       await auth.forgotPassword({ email });
       setStep('reset');
     } catch (err) {
-      setError(err.message || 'تعذّر إرسال الرمز. تحقّق من بريدك الإلكتروني.');
+      setError(err.message || t('auth.forgot.errorRequest'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* -------------------------------------------------------------
-   * Step 2 — submit the code + new password
-   * ----------------------------------------------------------- */
   const handleReset = async (e) => {
     e.preventDefault();
     const ve = {};
-    if (!/^\d{6}$/.test(code.trim())) ve.code = 'الرمز مكوّن من ٦ أرقام.';
+    if (!/^\d{6}$/.test(code.trim())) ve.code = t('auth.forgot.errors.codeFormat');
     if (!password || password.length < 8)
-      ve.password = 'كلمة المرور يجب أن تكون ٨ أحرف على الأقل.';
+      ve.password = t('auth.forgot.errors.passwordShort');
     if (password !== confirmation)
-      ve.confirmation = 'تأكيد كلمة المرور غير مطابق.';
+      ve.confirmation = t('auth.forgot.errors.passwordMismatch');
     setErrors(ve);
     if (Object.keys(ve).length > 0) return;
 
@@ -81,20 +66,17 @@ export default function ForgotPasswordPage() {
       });
       setStep('done');
     } catch (err) {
-      setError(err.message || 'تعذّر إعادة تعيين كلمة المرور.');
+      setError(err.message || t('auth.forgot.errorReset'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* -------------------------------------------------------------
-   * Step 3 — success card
-   * ----------------------------------------------------------- */
   if (step === 'done') {
     return (
       <AuthShell
-        title="تمّ تغيير كلمة المرور"
-        subtitle="يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة."
+        title={t('auth.forgot.successTitle')}
+        subtitle={t('auth.forgot.successSubtitle')}
         onBack={() => navigate('/login')}
       >
         <div className="flex flex-col items-center gap-4 pt-6 pb-2 animate-fade-up">
@@ -106,30 +88,26 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <button
-          className="btn-primary mt-4"
-          onClick={() => navigate('/login')}
-        >
-          الانتقال إلى تسجيل الدخول
+        <button className="btn-primary mt-4" onClick={() => navigate('/login')}>
+          {t('auth.forgot.goToLogin')}
           <ArrowLeft size={17} />
         </button>
       </AuthShell>
     );
   }
 
-  /* -------------------------------------------------------------
-   * Step 2 view — code + new password
-   * ----------------------------------------------------------- */
   if (step === 'reset') {
     return (
       <AuthShell
-        kicker="استرجاع الحساب"
-        title="أدخل الرمز وكلمة المرور الجديدة"
+        kicker={t('auth.forgot.kicker')}
+        title={t('auth.forgot.step2Title')}
         subtitle={
           <>
-            أرسلنا رمزاً مكوّناً من ٦ أرقام إلى{' '}
-            <span className="text-ink font-semibold">{email}</span>. أدخله أدناه
-            مع كلمة المرور الجديدة.
+            {t('auth.forgot.step2SubtitlePrefix')}{' '}
+            <span className="font-semibold" style={{ color: 'var(--text-ink)' }}>
+              {email}
+            </span>
+            {t('auth.forgot.step2SubtitleSuffix')}
           </>
         }
         onBack={() => {
@@ -144,7 +122,7 @@ export default function ForgotPasswordPage() {
               style={{
                 background: 'rgba(185,28,28,0.06)',
                 border: '1px solid rgba(185,28,28,0.18)',
-                color: '#b91c1c',
+                color: 'var(--accent-danger)',
                 fontSize: 13.5,
               }}
             >
@@ -153,45 +131,44 @@ export default function ForgotPasswordPage() {
           )}
 
           <Field
-            label="الرمز"
+            label={t('auth.forgot.code')}
             icon={KeyRound}
             type="text"
             inputMode="numeric"
             maxLength={6}
-            placeholder="123456"
+            placeholder={t('auth.forgot.codePlaceholder')}
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
             error={errors.code}
-            hint="٦ أرقام، صالحة لمدّة ١٥ دقيقة."
+            hint={t('auth.forgot.codeHint')}
           />
 
           <PasswordField
-            label="كلمة المرور الجديدة"
-            placeholder="٨ أحرف على الأقل"
+            label={t('auth.forgot.newPassword')}
+            placeholder={t('auth.forgot.newPasswordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
           />
 
           <PasswordField
-            label="تأكيد كلمة المرور"
-            placeholder="أعد إدخال كلمة المرور"
+            label={t('auth.forgot.newPasswordConfirm')}
+            placeholder={t('auth.forgot.newPasswordConfirmPlaceholder')}
             value={confirmation}
             onChange={(e) => setConfirmation(e.target.value)}
             error={errors.confirmation}
           />
 
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={submitting}
-          >
-            {submitting ? 'جارٍ التحديث...' : 'تحديث كلمة المرور'}
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? t('auth.forgot.step2Submitting') : t('auth.forgot.step2Submit')}
             {!submitting && <ArrowLeft size={17} />}
           </button>
 
-          <div className="text-center mt-2 text-sm text-muted">
-            لم يصل الرمز؟{' '}
+          <div
+            className="text-center mt-2 text-sm"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {t('auth.forgot.codeNotReceived')}{' '}
             <button
               type="button"
               className="link bg-transparent border-0 p-0 cursor-pointer"
@@ -200,7 +177,7 @@ export default function ForgotPasswordPage() {
                 setError('');
               }}
             >
-              أعد المحاولة
+              {t('auth.forgot.tryAgain')}
             </button>
           </div>
         </form>
@@ -208,14 +185,11 @@ export default function ForgotPasswordPage() {
     );
   }
 
-  /* -------------------------------------------------------------
-   * Step 1 view — request the code
-   * ----------------------------------------------------------- */
   return (
     <AuthShell
-      kicker="استرجاع الحساب"
-      title="نسيت كلمة المرور؟"
-      subtitle="أدخل بريدك الإلكتروني وسنرسل لك رمزاً لإعادة تعيين كلمة المرور."
+      kicker={t('auth.forgot.kicker')}
+      title={t('auth.forgot.step1Title')}
+      subtitle={t('auth.forgot.step1Subtitle')}
       onBack={() => navigate('/login')}
     >
       <form onSubmit={handleRequest} className="flex flex-col gap-[18px]">
@@ -225,7 +199,7 @@ export default function ForgotPasswordPage() {
             style={{
               background: 'rgba(185,28,28,0.06)',
               border: '1px solid rgba(185,28,28,0.18)',
-              color: '#b91c1c',
+              color: 'var(--accent-danger)',
               fontSize: 13.5,
             }}
           >
@@ -233,25 +207,28 @@ export default function ForgotPasswordPage() {
           </div>
         )}
         <Field
-          label="البريد الإلكتروني"
+          label={t('auth.forgot.email')}
           icon={Mail}
           type="email"
-          placeholder="name@example.com"
+          placeholder={t('auth.forgot.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          hint="أدخل البريد المرتبط بحسابك."
+          hint={t('auth.forgot.emailHint')}
         />
 
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'جارٍ الإرسال...' : 'إرسال رمز الاسترجاع'}
+          {submitting ? t('auth.forgot.step1Submitting') : t('auth.forgot.step1Submit')}
           {!submitting && <ArrowLeft size={17} />}
         </button>
       </form>
 
-      <div className="text-center mt-6 text-sm text-muted">
-        تذكرت كلمة المرور؟{' '}
+      <div
+        className="text-center mt-6 text-sm"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {t('auth.forgot.backLogin')}{' '}
         <a className="link" onClick={() => navigate('/login')}>
-          سجّل الدخول
+          {t('auth.forgot.signIn')}
         </a>
       </div>
     </AuthShell>

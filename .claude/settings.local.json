@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "PowerShell($routes = @\\('/', '/projects', '/projects/public', '/projects/private', '/projects/solidarity', '/projects/arena', '/projects/assignment', '/projects/new'\\); foreach \\($r in $routes\\) { try { $resp = Invoke-WebRequest -Uri \"http://127.0.0.1:5181$r\" -UseBasicParsing -TimeoutSec 5; \"{0,-26} {1}  {2} bytes\" -f $r, $resp.StatusCode, $resp.RawContent.Length } catch { \"{0,-26} ERR  {1}\" -f $r, $_.Exception.Message } })",
-      "WebFetch(domain:unsplash.com)"
+      "WebFetch(domain:unsplash.com)",
+      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Services.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Plans.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Testimonials.jsx\" | Measure-Object -Line\\).Lines)"
     ]
   }
 }

@@ -1,4 +1,19 @@
 /* ============================================================
+ *  Latin + CJK type — Google Fonts (must come before @font-face
+ *  so the cascade order is right).
+ *  ----------------------------------------------------------------
+ *    Inter              — English body / UI sans
+ *    DM Serif Display   — English display serif (headings)
+ *    Noto Sans SC       — Simplified Chinese body sans
+ *    Noto Serif SC      — Simplified Chinese display serif
+ *
+ *  Switched per active language by the `html[lang="..."]` rules
+ *  further down. Arabic stays on the locally-bundled Thmanyah
+ *  family below.
+ * ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap');
+
+/* ============================================================
  *  Thmanyah Typeface (self-hosted)
  *  ----------------------------------------------------------------
  *  Three families:
@@ -136,6 +151,128 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+ *  Theme tokens — flipped by ThemeContext via .dark on <html>
+ *  ----------------------------------------------------------------
+ *  Light values match the legacy hardcoded palette so existing
+ *  inline-style code keeps working without edits. Dark values are
+ *  shifted versions of the same hues for visual continuity.
+ *
+ *  Use via `style={{ background: 'var(--bg-canvas)' }}` or
+ *  via Tailwind `dark:` variants for utility classes.
+ * ============================================================ */
+:root {
+  /* Font families — driven by CSS variables so the active
+     language can swap the stack without touching components.
+     Defaults (Arabic) live here; en / zh overrides further down. */
+  --font-sans: 'Thmanyah Sans', system-ui, sans-serif;
+  --font-display: 'Thmanyah Serif Display', system-ui, serif;
+  --font-serif: 'Thmanyah Serif Text', system-ui, serif;
+
+  /* RGB triples — used by `rgba(var(--rgb-*), alpha)` for
+     translucent surfaces (Navbar backdrop, modal overlays, etc.). */
+  --rgb-surface: 255 255 255;
+  --rgb-canvas: 250 250 246;
+
+  --bg-canvas: #fafaf6;
+  --bg-surface: #ffffff;
+  --bg-surface-soft: #fafaf6;
+  --bg-elevated: #ffffff;
+  --bg-cream: #f4f1e9;
+  --bg-overlay: rgba(15, 17, 41, 0.45);
+
+  --text-ink: #0f1129;
+  --text-ink-soft: #3a3a52;
+  --text-muted: #7a7a8c;
+  --text-inverse: #ffffff;
+
+  --border-default: #e5e3dc;
+  --border-soft: #efece4;
+  --border-strong: #cfcdc4;
+
+  --accent-primary: #2c2f7c;
+  --accent-secondary: #136d4a;
+  --accent-gold: #b8862a;
+  --accent-danger: #b91c1c;
+
+  --shadow-card: 0 4px 14px rgba(15, 17, 71, 0.04);
+  --shadow-elevated: 0 12px 28px rgba(15, 17, 41, 0.06);
+
+  /* Warm-callout surface (Isnad add-on banner, etc.) — fixed
+     cream + gold accent in light mode; muted dark amber in dark
+     mode so inner text stays readable. */
+  --bg-callout-warm: #fbf7ec;
+  --border-callout-warm: #ede4cd;
+
+  /* Deep-ink button / dark-section surface. Hardcoded #0f1147
+     blends into the dark canvas in dark mode — flipping to a
+     brighter indigo here gives CTAs and the dark hero strip
+     enough contrast to read. */
+  --bg-ink-deep: #0f1147;
+  --bg-ink-deep-hover: #1a1d5e;
+  --bg-ink-section: #0f1147;
+}
+
+html.dark {
+  --rgb-surface: 20 23 42;
+  --rgb-canvas: 11 13 29;
+
+  --bg-canvas: #0b0d1d;
+  --bg-surface: #14172a;
+  --bg-surface-soft: #11132a;
+  --bg-elevated: #1a1d33;
+  --bg-cream: #1f2138;
+  --bg-overlay: rgba(0, 0, 0, 0.65);
+
+  --text-ink: #f1f1f7;
+  --text-ink-soft: #cfd1e0;
+  --text-muted: #8e90a8;
+  --text-inverse: #0f1129;
+
+  --border-default: #2b2e4a;
+  --border-soft: #20223a;
+  --border-strong: #3a3d5c;
+
+  --accent-primary: #6e72d6;
+  --accent-secondary: #2fae7d;
+  --accent-gold: #d4a755;
+  --accent-danger: #ef4444;
+
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 12px 28px rgba(0, 0, 0, 0.5);
+
+  --bg-callout-warm: #221f12;
+  --border-callout-warm: rgba(201, 163, 90, 0.30);
+
+  /* Brighter indigo in dark mode so CTAs and the dark hero
+     section don't blend into the near-black canvas. */
+  --bg-ink-deep: #4f53b8;
+  --bg-ink-deep-hover: #6e72d6;
+  --bg-ink-section: #1d2161;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+ *  Per-language font stacks
+ *  ----------------------------------------------------------------
+ *  LanguageContext writes `lang="ar|en|zh"` onto <html>; these
+ *  rules pick the appropriate sans + display + serif stack so
+ *  Latin and CJK headlines look right without component-level
+ *  conditionals.
+ * ============================================================ */
+html[lang='en'] {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'DM Serif Display', 'Inter', Georgia, serif;
+  --font-serif: 'DM Serif Display', Georgia, serif;
+}
+
+html[lang='zh'] {
+  --font-sans: 'Noto Sans SC', system-ui, sans-serif;
+  --font-display: 'Noto Serif SC', 'Noto Sans SC', serif;
+  --font-serif: 'Noto Serif SC', serif;
+}
+
 @layer base {
   html {
     height: 100%;
@@ -152,9 +289,10 @@
 
   body {
     margin: 0;
-    font-family: 'Thmanyah Sans', system-ui, sans-serif;
-    background: #fafaf6;
-    color: #0f1129;
+    font-family: var(--font-sans);
+    background: var(--bg-canvas);
+    color: var(--text-ink);
+    transition: background-color 0.2s ease, color 0.2s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -185,22 +323,29 @@
 @layer components {
   /* ---------- Form fields ---------- */
   .field {
-    @apply w-full bg-white border border-app-border rounded-[11px] text-ink outline-none transition-all;
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 11px;
+    color: var(--text-ink);
+    outline: none;
+    transition: all 0.18s ease;
     padding: 14px 44px 14px 16px;
     font-size: 14.5px;
   }
   .field::placeholder {
-    color: #b5b5c2;
+    color: var(--text-muted);
+    opacity: 0.7;
   }
   .field:hover {
-    border-color: #cfcdc4;
+    border-color: var(--border-strong);
   }
   .field:focus {
     border-color: #2c2f7c;
     box-shadow: 0 0 0 4px rgba(44, 47, 124, 0.1);
   }
   .field.error {
-    border-color: #b91c1c;
+    border-color: var(--accent-danger);
   }
   .field.error:focus {
     box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
@@ -210,18 +355,38 @@
   }
 
   .field-label {
-    @apply block text-[13px] font-medium text-ink-soft mb-2;
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-ink-soft);
+    margin-bottom: 8px;
   }
   .field-hint {
-    @apply text-xs text-muted mt-1.5;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
   }
   .field-err {
-    @apply text-xs text-danger mt-1.5;
+    font-size: 12px;
+    color: var(--accent-danger);
+    margin-top: 6px;
   }
 
   /* ---------- Buttons ---------- */
   .btn-primary {
-    @apply w-full inline-flex items-center justify-center gap-2 bg-primary text-white border border-primary rounded-[11px] text-[15px] font-semibold transition-all cursor-pointer;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #2c2f7c;
+    color: white;
+    border: 1px solid #2c2f7c;
+    border-radius: 11px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    cursor: pointer;
     padding: 14px 24px;
     box-shadow: 0 6px 14px rgba(44, 47, 124, 0.18);
   }
@@ -241,16 +406,36 @@
   }
 
   .btn-secondary {
-    @apply w-full inline-flex items-center justify-center gap-2 bg-white text-ink border border-app-border rounded-[11px] text-[15px] font-medium transition-all cursor-pointer;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    color: var(--text-ink);
+    border: 1px solid var(--border-default);
+    border-radius: 11px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.18s ease;
+    cursor: pointer;
     padding: 13px 24px;
   }
   .btn-secondary:hover {
-    border-color: #cfcdc4;
-    background: #f4f1e9;
+    border-color: var(--border-strong);
+    background: var(--bg-cream);
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1 bg-transparent border-0 text-muted cursor-pointer transition-colors;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.18s ease;
     padding: 8px;
   }
   .btn-ghost:hover {
@@ -258,18 +443,34 @@
   }
 
   .link {
-    @apply text-secondary font-semibold cursor-pointer transition-colors;
+    color: #136d4a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.18s ease;
     text-decoration: none;
   }
   .link:hover {
     color: #0d5538;
   }
+  html.dark .link {
+    color: var(--accent-secondary);
+  }
+  html.dark .link:hover {
+    color: #3fbf90;
+  }
 
   /* ---------- Account type cards ---------- */
   .acct {
-    @apply flex flex-col items-center gap-2.5 bg-white cursor-pointer text-center transition-all;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-surface);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s ease;
     padding: 16px 12px;
-    border: 1.5px solid #e5e3dc;
+    border: 1.5px solid var(--border-default);
     border-radius: 12px;
   }
   .acct:hover {
@@ -278,25 +479,36 @@
   }
   .acct.active {
     border-color: #2c2f7c;
-    background: rgba(44, 47, 124, 0.04);
+    background: rgba(44, 47, 124, 0.06);
   }
   .acct .ico {
-    @apply flex items-center justify-center bg-cream text-muted transition-all;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-cream);
+    color: var(--text-muted);
+    transition: all 0.18s ease;
     width: 38px;
     height: 38px;
     border-radius: 10px;
   }
   .acct.active .ico {
-    @apply bg-primary text-white;
+    background: #2c2f7c;
+    color: white;
   }
 
   /* ---------- OTP ---------- */
   .otp {
-    @apply text-center font-bold bg-white text-ink outline-none transition-all;
+    text-align: center;
+    font-weight: 700;
+    background: var(--bg-surface);
+    color: var(--text-ink);
+    outline: none;
+    transition: all 0.18s ease;
     width: 52px;
     height: 60px;
     font-size: 22px;
-    border: 1.5px solid #e5e3dc;
+    border: 1.5px solid var(--border-default);
     border-radius: 11px;
   }
   .otp:focus {
@@ -306,24 +518,42 @@
   .otp.filled {
     border-color: #136d4a;
     color: #136d4a;
-    background: rgba(19, 109, 74, 0.04);
+    background: rgba(19, 109, 74, 0.06);
+  }
+  html.dark .otp.filled {
+    color: #2fae7d;
   }
   .otp.error {
-    border-color: #b91c1c;
+    border-color: var(--accent-danger);
   }
 
   /* ---------- Toggle pills ---------- */
   .pill-group {
-    @apply flex gap-1 p-1 bg-cream rounded-xl;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-cream);
+    border-radius: 12px;
   }
   .pill {
-    @apply flex-1 rounded-[9px] border-0 bg-transparent text-muted font-semibold cursor-pointer transition-all;
+    flex: 1;
+    border-radius: 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
     padding: 10px 14px;
     font-size: 13.5px;
   }
   .pill.active {
-    @apply bg-white text-primary;
+    background: var(--bg-surface);
+    color: #2c2f7c;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  html.dark .pill.active {
+    color: var(--accent-primary);
   }
 
   /* ---------- Native select chevron (RTL: chevron on the LEFT) ---------- */
@@ -334,10 +564,18 @@
     background-position: left 16px center;
     padding-left: 40px;
   }
+  html.dark select.field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238e90a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  }
 
   /* ---------- Phone country-code prefix ---------- */
   .phone-cc {
-    @apply bg-white border border-app-border rounded-[11px] font-semibold text-ink whitespace-nowrap;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 11px;
+    font-weight: 600;
+    color: var(--text-ink);
+    white-space: nowrap;
     padding: 14px 14px;
     font-size: 14.5px;
   }
@@ -371,11 +609,21 @@
   .shimmer {
     background: linear-gradient(
       90deg,
-      #efece4 0%,
-      #f7f5ee 50%,
-      #efece4 100%
+      var(--border-soft) 0%,
+      var(--bg-cream) 50%,
+      var(--border-soft) 100%
     );
     background-size: 200% 100%;
     animation: shimmer 1.6s linear infinite;
+  }
+
+  /* ---------- Date input — native picker indicator inverts
+     in dark mode so the calendar icon stays visible. ---------- */
+  html.dark input[type='date']::-webkit-calendar-picker-indicator,
+  html.dark input[type='datetime-local']::-webkit-calendar-picker-indicator,
+  html.dark input[type='time']::-webkit-calendar-picker-indicator,
+  html.dark input[type='month']::-webkit-calendar-picker-indicator,
+  html.dark input[type='week']::-webkit-calendar-picker-indicator {
+    filter: invert(0.9) hue-rotate(180deg);
   }
 }

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import {
-  // Tab pills
   HardHat,
   Truck,
   Building2,
-  // Service icons (contractors)
   Handshake,
   Gem,
   Building,
@@ -14,7 +12,6 @@ import {
   Paperclip,
   Bot,
   ClipboardList,
-  // Service icons (suppliers)
   ShoppingCart,
   CreditCard,
   ScrollText,
@@ -22,8 +19,6 @@ import {
   TrendingUp,
   Star,
   ClipboardCheck,
-  Sparkles,
-  // Service icons (developers)
   Ruler,
   Target,
   Crown,
@@ -33,213 +28,61 @@ import {
   ShieldCheck,
   LineChart,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
  *  Services — three-tab layout
  *  ----------------------------------------------------------------
- *  Three audiences (contractors / suppliers / developers), each
- *  with their own grid of service cards. Tab pill switcher at the
- *  top — clicking changes which grid renders.
- *
- *  Cards may carry an optional badge: حصري (gold), جديد (green),
- *  VIP (sand). Position is the top start corner of the card.
- *
- *  Card content lives in the AUDIENCES array below — change copy
- *  or add cards there without touching layout.
+ *  Audience tabs (contractors / suppliers / developers), each
+ *  with a 9-card grid. Titles, descriptions, and tab labels live
+ *  in the i18n dictionary at `landing.services.*`; only icons,
+ *  accents, and optional badges are configured here.
  * ============================================================ */
 
 const AUDIENCES = [
   {
     id: 'contractors',
-    label: 'مقدّمي الخدمات (المقاولين)',
     icon: HardHat,
-    description:
-      'للمقاولين والشركات التي تنفّذ المشاريع — نمنحك الأدوات لتفوز بمشاريع أكثر، وتُديرها باحتراف، وتحلّ مشاكلك القانونية والمالية في ثوانٍ.',
     cards: [
-      {
-        title: 'ساحة المشاريع المتاحة',
-        desc: 'جميع المشاريع من اعتماد وفرصة ومقاول والقطاع الخاص في مكان واحد — مع تنبيهات فورية للفرص المناسبة لتصنيفك.',
-        icon: Building,
-        accent: '#136d4a',
-      },
-      {
-        title: 'الساحة الخاصة',
-        desc: 'مشاريع منتقاة من شركاء استراتيجيين كبار — متاحة فقط لمشتركي باقة إسناد، بحجوم وقيم تنافسية.',
-        icon: Gem,
-        accent: '#3a3d99',
-        badge: { label: 'حصري', tone: 'gold' },
-      },
-      {
-        title: 'ساحة التضامن',
-        desc: 'تضامن مع مقاولين آخرين لتنفيذ مشاريع تتجاوز قدرتك الفردية — اطرح فرصتك أو تضامن مع آخرين.',
-        icon: Handshake,
-        accent: '#c9a35a',
-      },
-      {
-        title: 'مولّد العقود الذكي',
-        desc: 'قوالب عقود معتمدة قانونياً — تخصيص ذكي بالـ AI + توقيع إلكتروني عبر نفاذ في أقل من 5 دقائق.',
-        icon: FileSignature,
-        accent: '#0f1147',
-        badge: { label: 'جديد', tone: 'green' },
-      },
-      {
-        title: 'مدقق العقود',
-        desc: 'ارفع عقدك واحصل على تحليل ذكي للبنود الخطرة، الغرامات غير العادلة، والثغرات التي قد تكلّفك مالاً.',
-        icon: ScanSearch,
-        accent: '#3a3d99',
-      },
-      {
-        title: 'محلل المشاريع',
-        desc: 'احسب ربحية المشروع قبل التقديم — تكاليف، هامش ربح، تدفق نقدي، وتقييم المخاطر بثوانٍ.',
-        icon: BarChart3,
-        accent: '#136d4a',
-      },
-      {
-        title: 'متابع المشاريع',
-        desc: 'تتبّع مراحل التنفيذ، الدفعات، والمستلمات لكل مشروع — مع تنبيهات للتأخيرات والأحداث المهمة.',
-        icon: ClipboardList,
-        accent: '#0f1147',
-      },
-      {
-        title: 'مساعد AI متخصص',
-        desc: 'مساعد ذكي يفهم قطاع المقاولات السعودي — اسأل عن العقود، الأنظمة، التسعير، والقضايا القانونية.',
-        icon: Bot,
-        accent: '#c9a35a',
-      },
-      {
-        title: 'إدارة المستندات',
-        desc: 'احفظ كل مستندات مشاريعك — عقود، مخططات، تقارير استلام، فواتير — في خزانة سحابية آمنة.',
-        icon: Paperclip,
-        accent: '#3a3d99',
-      },
+      { key: 'hub', icon: Building, accent: '#136d4a' },
+      { key: 'private', icon: Gem, accent: '#3a3d99', badge: 'exclusive', badgeTone: 'gold' },
+      { key: 'solidarity', icon: Handshake, accent: '#c9a35a' },
+      { key: 'contractGen', icon: FileSignature, accent: '#0f1147', badge: 'new', badgeTone: 'green' },
+      { key: 'contractCheck', icon: ScanSearch, accent: '#3a3d99' },
+      { key: 'analyzer', icon: BarChart3, accent: '#136d4a' },
+      { key: 'tracker', icon: ClipboardList, accent: '#0f1147' },
+      { key: 'ai', icon: Bot, accent: '#c9a35a' },
+      { key: 'docs', icon: Paperclip, accent: '#3a3d99' },
     ],
   },
   {
     id: 'suppliers',
-    label: 'الموردين',
     icon: Truck,
-    description:
-      'لموردي مواد البناء والمعدات — منصة تعاهُد توصلك مباشرة بآلاف المقاولين والمشاريع النشطة، وتساعدك في إدارة طلباتك بكفاءة.',
     cards: [
-      {
-        title: 'سوق التوريد المباشر',
-        desc: 'اعرض منتجاتك ومعداتك أمام المقاولين النشطين — طلبات مباشرة بدون وسطاء، مع نظام تقييم وتصنيف.',
-        icon: ShoppingCart,
-        accent: '#136d4a',
-      },
-      {
-        title: 'طلبات العروض (RFQ)',
-        desc: 'احصل على إشعارات فورية بطلبات الأسعار من المقاولين حسب تخصصك — قدّم عرضك في دقائق.',
-        icon: ClipboardCheck,
-        accent: '#c9a35a',
-        badge: { label: 'جديد', tone: 'green' },
-      },
-      {
-        title: 'تحليل الطلب السوقي',
-        desc: 'رؤية شاملة لاتجاهات السوق — أكثر المواد طلباً، المناطق النشطة، والأسعار التنافسية.',
-        icon: TrendingUp,
-        accent: '#3a3d99',
-      },
-      {
-        title: 'إدارة التوصيل',
-        desc: 'جدولة التوصيلات، تتبّع الشحنات، وإصدار إشعارات تسليم تلقائية للمقاولين.',
-        icon: Truck,
-        accent: '#c9a35a',
-      },
-      {
-        title: 'الدفع المضمون',
-        desc: 'نظام دفع آمن مع ضمانات — احصل على مستحقاتك في الوقت المحدد بدون تأخيرات أو نزاعات.',
-        icon: CreditCard,
-        accent: '#136d4a',
-      },
-      {
-        title: 'عقود التوريد الذكية',
-        desc: 'قوالب عقود توريد معتمدة — تشمل بنود الجودة، التسليم، الدفع، وحماية حقوقك القانونية.',
-        icon: ScrollText,
-        accent: '#0f1147',
-      },
-      {
-        title: 'سمعتك الرقمية',
-        desc: 'بناء سمعة قوية من خلال تقييمات المقاولين — كل تسليم ناجح يزيد من ظهورك ومبيعاتك.',
-        icon: Star,
-        accent: '#c9a35a',
-      },
-      {
-        title: 'إدارة المخزون',
-        desc: 'تحكّم بمخزونك، تحديثات الأسعار، عروض خاصة — كل ذلك من لوحة تحكم بسيطة.',
-        icon: Boxes,
-        accent: '#3a3d99',
-      },
-      {
-        title: 'مساعد المبيعات AI',
-        desc: 'يحلّل عملاءك ويقترح أفضل الفرص، يجاوب الاستفسارات، ويساعدك في إعداد عروض تنافسية.',
-        icon: Bot,
-        accent: '#136d4a',
-      },
+      { key: 'market', icon: ShoppingCart, accent: '#136d4a' },
+      { key: 'rfq', icon: ClipboardCheck, accent: '#c9a35a', badge: 'new', badgeTone: 'green' },
+      { key: 'demand', icon: TrendingUp, accent: '#3a3d99' },
+      { key: 'delivery', icon: Truck, accent: '#c9a35a' },
+      { key: 'payment', icon: CreditCard, accent: '#136d4a' },
+      { key: 'contracts', icon: ScrollText, accent: '#0f1147' },
+      { key: 'reputation', icon: Star, accent: '#c9a35a' },
+      { key: 'inventory', icon: Boxes, accent: '#3a3d99' },
+      { key: 'aiSales', icon: Bot, accent: '#136d4a' },
     ],
   },
   {
     id: 'developers',
-    label: 'المطوّرين العقاريين',
     icon: Building2,
-    description:
-      'للمطوّرين العقاريين الذين يبنون المستقبل — تعاهُد تمنحك الأدوات للعثور على أفضل المقاولين، إدارة المشاريع الكبرى، والوصول للتمويل بسهولة.',
     cards: [
-      {
-        title: 'شبكة المقاولين المعتمدين',
-        desc: 'قاعدة بيانات لأكثر من 1200 مقاول معتمد — مع تصنيفات، خبرات سابقة، وتقييمات حقيقية من العملاء.',
-        icon: Crown,
-        accent: '#0f1147',
-      },
-      {
-        title: 'مناقصات حصرية',
-        desc: 'اطرح مشاريعك بسرية تامة على نخبة من المقاولين المختارين — استلم عروضاً مدروسة في وقت قياسي.',
-        icon: Target,
-        accent: '#c9a35a',
-        badge: { label: 'VIP', tone: 'sand' },
-      },
-      {
-        title: 'إدارة محفظة المشاريع',
-        desc: 'رؤية موحّدة لجميع مشاريعك التطويرية — تقدّم العمل، الميزانيات، الجداول الزمنية، والمخاطر.',
-        icon: Ruler,
-        accent: '#136d4a',
-      },
-      {
-        title: 'Escrow وضمانات الدفع',
-        desc: 'نظام دفع آمن بضمانات بنكية — حماية كاملة لاستثماراتك مع آلية دفع مرتبطة بمراحل الإنجاز.',
-        icon: Lock,
-        accent: '#3a3d99',
-      },
-      {
-        title: 'بوابة التمويل',
-        desc: 'روابط مباشرة مع البنوك والممولين السعوديين — احصل على عروض تمويل لمشاريعك بشروط تنافسية.',
-        icon: Wallet,
-        accent: '#c9a35a',
-      },
-      {
-        title: 'تحليلات التطوير العقاري',
-        desc: 'بيانات السوق، الأسعار التاريخية، توقعات الجدوى الاقتصادية — كل ما تحتاجه لقرارات استثمارية ذكية.',
-        icon: PieChart,
-        accent: '#0f1147',
-      },
-      {
-        title: 'تأهيل المقاولين',
-        desc: 'نظام تأهيل آلي للمقاولين — التحقق من السجلات التجارية، التصنيفات، والمشاريع السابقة قبل التعاقد.',
-        icon: ShieldCheck,
-        accent: '#136d4a',
-      },
-      {
-        title: 'تقارير المستثمرين',
-        desc: 'تقارير مالية وتشغيلية احترافية لمستثمريك — تُصدر تلقائياً بصورة شهرية أو ربعية.',
-        icon: LineChart,
-        accent: '#3a3d99',
-      },
-      {
-        title: 'مستشار التطوير AI',
-        desc: 'مساعد ذكي يحلّل دراسات الجدوى، يقترح المواقع المثالية، ويساعدك في اتخاذ قرارات استثمارية مدروسة.',
-        icon: Bot,
-        accent: '#c9a35a',
-      },
+      { key: 'network', icon: Crown, accent: '#0f1147' },
+      { key: 'tenders', icon: Target, accent: '#c9a35a', badge: 'vip', badgeTone: 'sand' },
+      { key: 'portfolio', icon: Ruler, accent: '#136d4a' },
+      { key: 'escrow', icon: Lock, accent: '#3a3d99' },
+      { key: 'financing', icon: Wallet, accent: '#c9a35a' },
+      { key: 'analytics', icon: PieChart, accent: '#0f1147' },
+      { key: 'qualify', icon: ShieldCheck, accent: '#136d4a' },
+      { key: 'investorReports', icon: LineChart, accent: '#3a3d99' },
+      { key: 'ai', icon: Bot, accent: '#c9a35a' },
     ],
   },
 ];
@@ -251,6 +94,7 @@ const BADGE_TONES = {
 };
 
 export default function Services() {
+  const { t } = useTranslation();
   const [activeId, setActiveId] = useState('contractors');
   const active = AUDIENCES.find((a) => a.id === activeId);
 
@@ -258,10 +102,9 @@ export default function Services() {
     <section
       id="services"
       className="relative py-24 lg:py-32 scroll-mt-20"
-      style={{ background: '#fafaf6' }}
+      style={{ background: 'var(--bg-canvas)' }}
     >
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
-        {/* Eyebrow + headline */}
         <div className="text-center max-w-[680px] mx-auto mb-12">
           <div
             className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full animate-fade-up"
@@ -273,7 +116,7 @@ export default function Services() {
               letterSpacing: '0.05em',
             }}
           >
-            خدمات متخصصة
+            {t('landing.services.eyebrow')}
           </div>
 
           <h2
@@ -283,14 +126,13 @@ export default function Services() {
               fontWeight: 700,
               lineHeight: 1.15,
               letterSpacing: '-0.015em',
-              color: '#0f1147',
+              color: 'var(--text-ink)',
             }}
           >
-            منصة واحدة. ثلاثة أنواع من المستخدمين.
+            {t('landing.services.title')}
           </h2>
         </div>
 
-        {/* Tab pills */}
         <div className="flex justify-center gap-2.5 mb-7 flex-wrap">
           {AUDIENCES.map((aud) => {
             const Icon = aud.icon;
@@ -304,9 +146,9 @@ export default function Services() {
                 style={{
                   fontSize: 13.5,
                   padding: '11px 20px',
-                  background: isActive ? '#0f1147' : 'white',
-                  color: isActive ? 'white' : '#3a3a52',
-                  border: `1px solid ${isActive ? '#0f1147' : '#e5e3dc'}`,
+                  background: isActive ? '#0f1147' : 'var(--bg-surface)',
+                  color: isActive ? 'white' : 'var(--text-ink-soft)',
+                  border: `1px solid ${isActive ? '#0f1147' : 'var(--border-default)'}`,
                   cursor: 'pointer',
                   boxShadow: isActive ? '0 8px 18px rgba(15,17,71,0.20)' : 'none',
                   fontFamily: 'inherit',
@@ -319,37 +161,36 @@ export default function Services() {
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.borderColor = '#e5e3dc';
-                    e.currentTarget.style.color = '#3a3a52';
+                    e.currentTarget.style.borderColor = 'var(--border-default)';
+                    e.currentTarget.style.color = 'var(--text-ink-soft)';
                   }
                 }}
               >
                 <Icon size={15} strokeWidth={1.8} />
-                {aud.label}
+                {t(`landing.services.tabs.${aud.id}`)}
               </button>
             );
           })}
         </div>
 
-        {/* Audience description */}
         <p
           className="text-center max-w-[680px] mx-auto mb-12 m-0 animate-fade-up"
           style={{
             fontSize: 14.5,
             lineHeight: 1.8,
-            color: '#5a5b78',
+            color: 'var(--text-muted)',
           }}
           key={active.id}
         >
-          {active.description}
+          {t(`landing.services.audienceDescriptions.${active.id}`)}
         </p>
 
-        {/* Cards grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {active.cards.map((card, i) => (
             <ServiceCard
-              key={`${active.id}-${i}`}
+              key={`${active.id}-${card.key}`}
               card={card}
+              audienceId={active.id}
               delay={i * 0.04}
             />
           ))}
@@ -359,28 +200,29 @@ export default function Services() {
   );
 }
 
-function ServiceCard({ card, delay }) {
+function ServiceCard({ card, audienceId, delay }) {
+  const { t } = useTranslation();
   const Icon = card.icon;
-  const badgeTone = card.badge ? BADGE_TONES[card.badge.tone] : null;
+  const badgeTone = card.badge ? BADGE_TONES[card.badgeTone] : null;
+  const k = `landing.services.cards.${audienceId}.${card.key}`;
 
   return (
     <article
       className="relative p-7 rounded-[16px] transition-all animate-fade-up hover:-translate-y-1"
       style={{
-        background: 'white',
-        border: '1px solid #e8e6dd',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
         animationDelay: `${delay}s`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = '#cfcdc4';
+        e.currentTarget.style.borderColor = 'var(--border-strong)';
         e.currentTarget.style.boxShadow = '0 16px 32px rgba(15,17,71,0.07)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#e8e6dd';
+        e.currentTarget.style.borderColor = 'var(--border-default)';
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Badge — sits in the top-start corner per RTL */}
       {card.badge && (
         <span
           className="absolute font-bold"
@@ -396,11 +238,10 @@ function ServiceCard({ card, delay }) {
             letterSpacing: '0.03em',
           }}
         >
-          {card.badge.label}
+          {t(`landing.services.badges.${card.badge}`)}
         </span>
       )}
 
-      {/* Icon tile */}
       <div
         className="flex items-center justify-center mb-6"
         style={{
@@ -414,29 +255,27 @@ function ServiceCard({ card, delay }) {
         <Icon size={22} strokeWidth={1.7} />
       </div>
 
-      {/* Title */}
       <h3
         className="font-display m-0 mb-2"
         style={{
           fontSize: 17,
           fontWeight: 700,
-          color: '#0f1147',
+          color: 'var(--text-ink)',
           lineHeight: 1.3,
         }}
       >
-        {card.title}
+        {t(`${k}.title`)}
       </h3>
 
-      {/* Description */}
       <p
         className="m-0"
         style={{
           fontSize: 13.5,
           lineHeight: 1.75,
-          color: '#5a5b78',
+          color: 'var(--text-muted)',
         }}
       >
-        {card.desc}
+        {t(`${k}.desc`)}
       </p>
     </article>
   );

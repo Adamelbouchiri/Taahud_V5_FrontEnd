@@ -24,8 +24,7 @@ export default function DashboardLayout() {
     <UserProvider>
       <div
         className="min-h-screen"
-        style={{ background: '#fafaf6' }}
-        dir="rtl"
+        style={{ background: 'var(--bg-canvas)' }}
       >
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

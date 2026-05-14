@@ -6,7 +6,7 @@ import {
   ListChecks,
   FileText,
 } from 'lucide-react';
-import { arenaLabel } from '../../../config/projectConstants';
+import { useTranslation } from '../../../i18n/LanguageContext';
 
 /**
  * Final step — read-only review of all entered data with edit-jump
@@ -14,9 +14,11 @@ import { arenaLabel } from '../../../config/projectConstants';
  * submitting. After submit, files are uploaded one-by-one.
  */
 export default function StepReview({ form, onJumpToStep }) {
+  const { t, lang } = useTranslation();
+  const k = 'projects.create.steps.review';
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Helper note */}
       <div
         className="flex gap-3 p-4 rounded-[12px]"
         style={{
@@ -33,16 +35,23 @@ export default function StepReview({ form, onJumpToStep }) {
         <div>
           <p
             className="m-0 mb-1"
-            style={{ fontSize: 13.5, fontWeight: 600, color: '#0f1129' }}
+            style={{
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: 'var(--text-ink)',
+            }}
           >
-            ماذا يحدث بعد الإرسال؟
+            {t(`${k}.explainerTitle`)}
           </p>
           <p
             className="m-0"
-            style={{ fontSize: 13, color: '#3a3a52', lineHeight: 1.7 }}
+            style={{
+              fontSize: 13,
+              color: 'var(--text-ink-soft)',
+              lineHeight: 1.7,
+            }}
           >
-            سيُعرض مشروعك على مقدّمي الخدمات والموردين الموثوقين. يمكنك مراجعة
-            عروضهم واختيار الشريك المناسب من صفحة المشروع لاحقاً.
+            {t(`${k}.explainerBody`)}
           </p>
         </div>
       </div>
@@ -50,47 +59,54 @@ export default function StepReview({ form, onJumpToStep }) {
       <div className="flex items-center justify-between">
         <div>
           <h3
-            className="font-display text-ink m-0"
-            style={{ fontSize: 18, fontWeight: 700 }}
+            className="font-display m-0"
+            style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-ink)' }}
           >
-            مراجعة البيانات
+            {t(`${k}.headTitle`)}
           </h3>
-          <p className="text-muted m-0 mt-1" style={{ fontSize: 13 }}>
-            تأكّد من صحة المعلومات قبل الإرسال.
+          <p
+            className="m-0 mt-1"
+            style={{ fontSize: 13, color: 'var(--text-muted)' }}
+          >
+            {t(`${k}.headSubtitle`)}
           </p>
         </div>
         <CheckCircle2 size={22} style={{ color: '#136d4a' }} />
       </div>
 
       <ReviewBlock
-        title="تفاصيل المشروع"
+        title={t(`${k}.sectionDetails`)}
         onEdit={() => onJumpToStep(0)}
         rows={[
-          { label: 'ساحة النشر', value: arenaLabel(form.arena) },
-          { label: 'اسم المشروع', value: form.name },
-          { label: 'النوع', value: form.type },
-          { label: 'المدينة', value: form.city },
-          { label: 'الوصف', value: form.description, full: true },
+          {
+            label: t(`${k}.arenaField`),
+            value: form.arena ? t(`arena.${form.arena}.label`) : '',
+          },
+          { label: t(`${k}.nameField`), value: form.name },
+          { label: t(`${k}.typeField`), value: form.type },
+          { label: t(`${k}.cityField`), value: form.city },
+          { label: t(`${k}.descriptionField`), value: form.description, full: true },
         ]}
       />
 
       <ReviewBlock
-        title="النطاق والميزانية"
+        title={t(`${k}.sectionScope`)}
         onEdit={() => onJumpToStep(1)}
         rows={[
-          { label: 'نطاق العمل', value: form.scope, full: true },
-          { label: 'تاريخ البداية', value: form.start_date },
-          { label: 'تاريخ الانتهاء', value: form.end_date },
-          { label: 'المدة المتوقعة', value: form.expected_duration },
+          { label: t(`${k}.scopeField`), value: form.scope, full: true },
+          { label: t(`${k}.startDateField`), value: form.start_date },
+          { label: t(`${k}.endDateField`), value: form.end_date },
+          { label: t(`${k}.durationField`), value: form.expected_duration },
           {
-            label: 'الميزانية',
-            value: form.budget ? `${formatNumber(form.budget)} ر.س` : '',
+            label: t(`${k}.budgetField`),
+            value: form.budget
+              ? `${formatNumber(form.budget, lang)} ${t('common.currency')}`
+              : '',
           },
-          { label: 'الخبرة المطلوبة', value: form.experience },
+          { label: t(`${k}.experienceField`), value: form.experience },
         ]}
       />
 
-      {/* Requirements + Files block */}
       <FilesAndRequirementsBlock
         requirements={form.requirements}
         files={form.files}
@@ -102,24 +118,25 @@ export default function StepReview({ form, onJumpToStep }) {
   );
 }
 
-/* ============================================================
- *  Generic key-value review block
- * ============================================================ */
 function ReviewBlock({ title, rows, onEdit }) {
+  const { t } = useTranslation();
   const visibleRows = rows.filter((r) => r.value);
 
   return (
     <div
       className="rounded-[14px]"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <div
         className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         <h4
-          className="font-display text-ink m-0"
-          style={{ fontSize: 14.5, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-ink)' }}
         >
           {title}
         </h4>
@@ -130,14 +147,17 @@ function ReviewBlock({ title, rows, onEdit }) {
           style={{ fontSize: 12.5 }}
         >
           <Edit2 size={12} />
-          تعديل
+          {t('projects.create.steps.review.editStep')}
         </button>
       </div>
 
       <div className="px-5 py-4">
         {visibleRows.length === 0 ? (
-          <p className="text-muted m-0" style={{ fontSize: 13 }}>
-            لم يتمّ إدخال بيانات في هذا القسم.
+          <p
+            className="m-0"
+            style={{ fontSize: 13, color: 'var(--text-muted)' }}
+          >
+            {t('projects.create.steps.review.emptyBlock')}
           </p>
         ) : (
           <dl className="m-0 grid sm:grid-cols-2 gap-x-6 gap-y-3.5">
@@ -151,7 +171,7 @@ function ReviewBlock({ title, rows, onEdit }) {
                   style={{
                     fontSize: 11,
                     letterSpacing: '0.08em',
-                    color: '#7a7a8c',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   {r.label}
@@ -160,7 +180,7 @@ function ReviewBlock({ title, rows, onEdit }) {
                   className="m-0"
                   style={{
                     fontSize: 13.5,
-                    color: '#0f1129',
+                    color: 'var(--text-ink)',
                     lineHeight: 1.6,
                   }}
                 >
@@ -175,9 +195,6 @@ function ReviewBlock({ title, rows, onEdit }) {
   );
 }
 
-/* ============================================================
- *  Files & requirements summary
- * ============================================================ */
 function FilesAndRequirementsBlock({
   requirements = [],
   files = [],
@@ -185,6 +202,8 @@ function FilesAndRequirementsBlock({
   isStartedExternally = false,
   onEdit,
 }) {
+  const { t } = useTranslation();
+  const k = 'projects.create.steps.review';
   const isEmpty =
     requirements.length === 0 &&
     files.length === 0 &&
@@ -194,17 +213,20 @@ function FilesAndRequirementsBlock({
   return (
     <div
       className="rounded-[14px]"
-      style={{ background: 'white', border: '1px solid #e5e3dc' }}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
     >
       <div
         className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: '1px solid #efece4' }}
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
       >
         <h4
-          className="font-display text-ink m-0"
-          style={{ fontSize: 14.5, fontWeight: 700 }}
+          className="font-display m-0"
+          style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-ink)' }}
         >
-          الملفات والمتطلبات
+          {t(`${k}.sectionFiles`)}
         </h4>
         <button
           type="button"
@@ -213,29 +235,31 @@ function FilesAndRequirementsBlock({
           style={{ fontSize: 12.5 }}
         >
           <Edit2 size={12} />
-          تعديل
+          {t(`${k}.editStep`)}
         </button>
       </div>
 
       <div className="px-5 py-4">
         {isEmpty ? (
-          <p className="text-muted m-0" style={{ fontSize: 13 }}>
-            لم تتمّ إضافة ملفات أو متطلبات.
+          <p
+            className="m-0"
+            style={{ fontSize: 13, color: 'var(--text-muted)' }}
+          >
+            {t(`${k}.emptyFilesReqs`)}
           </p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
-            {/* Requirements column */}
             <div>
               <div
                 className="font-medium uppercase mb-3 flex items-center gap-1.5"
                 style={{
                   fontSize: 11,
                   letterSpacing: '0.08em',
-                  color: '#7a7a8c',
+                  color: 'var(--text-muted)',
                 }}
               >
                 <ListChecks size={12} />
-                المتطلبات ({requirements.length})
+                {t(`${k}.reqsHeading`, { count: requirements.length })}
               </div>
               {requirements.length > 0 ? (
                 <ul className="m-0 p-0 space-y-1.5">
@@ -245,7 +269,7 @@ function FilesAndRequirementsBlock({
                       className="list-none flex items-start gap-2"
                       style={{
                         fontSize: 13,
-                        color: '#0f1129',
+                        color: 'var(--text-ink)',
                         lineHeight: 1.55,
                       }}
                     >
@@ -268,24 +292,26 @@ function FilesAndRequirementsBlock({
                   ))}
                 </ul>
               ) : (
-                <p className="text-muted m-0" style={{ fontSize: 12.5 }}>
-                  لا توجد متطلبات.
+                <p
+                  className="m-0"
+                  style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
+                >
+                  {t(`${k}.noRequirements`)}
                 </p>
               )}
             </div>
 
-            {/* Files column */}
             <div>
               <div
                 className="font-medium uppercase mb-3 flex items-center gap-1.5"
                 style={{
                   fontSize: 11,
                   letterSpacing: '0.08em',
-                  color: '#7a7a8c',
+                  color: 'var(--text-muted)',
                 }}
               >
                 <FileText size={12} />
-                الملفات ({files.length})
+                {t(`${k}.filesHeading`, { count: files.length })}
               </div>
               {files.length > 0 ? (
                 <ul className="m-0 p-0 space-y-1.5">
@@ -295,14 +321,14 @@ function FilesAndRequirementsBlock({
                       className="list-none flex items-center justify-between gap-2"
                       style={{
                         fontSize: 13,
-                        color: '#0f1129',
+                        color: 'var(--text-ink)',
                         lineHeight: 1.55,
                       }}
                     >
                       <span className="truncate">{f.name}</span>
                       <span
                         className="flex-shrink-0"
-                        style={{ fontSize: 11.5, color: '#7a7a8c' }}
+                        style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
                       >
                         {formatSize(f.size)}
                       </span>
@@ -310,8 +336,11 @@ function FilesAndRequirementsBlock({
                   ))}
                 </ul>
               ) : (
-                <p className="text-muted m-0" style={{ fontSize: 12.5 }}>
-                  لا توجد ملفات.
+                <p
+                  className="m-0"
+                  style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
+                >
+                  {t(`${k}.noFiles`)}
                 </p>
               )}
             </div>
@@ -323,14 +352,18 @@ function FilesAndRequirementsBlock({
                   style={{
                     fontSize: 11,
                     letterSpacing: '0.08em',
-                    color: '#7a7a8c',
+                    color: 'var(--text-muted)',
                   }}
                 >
-                  الوثائق المطلوبة
+                  {t(`${k}.requiredDocsHeading`)}
                 </div>
                 <p
                   className="m-0"
-                  style={{ fontSize: 13, color: '#0f1129', lineHeight: 1.65 }}
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--text-ink)',
+                    lineHeight: 1.65,
+                  }}
                 >
                   {requiredDocuments}
                 </p>
@@ -350,7 +383,7 @@ function FilesAndRequirementsBlock({
                   }}
                 >
                   <CheckCircle2 size={12} />
-                  المشروع بدأ بالفعل خارج المنصّة
+                  {t(`${k}.startedExternallyBadge`)}
                 </span>
               </div>
             )}
@@ -361,11 +394,16 @@ function FilesAndRequirementsBlock({
   );
 }
 
-/* ---------- Helpers ---------- */
-function formatNumber(n) {
+function localeFor(lang) {
+  if (lang === 'en') return 'en-US';
+  if (lang === 'zh') return 'zh-CN';
+  return 'ar-SA';
+}
+
+function formatNumber(n, lang) {
   const num = typeof n === 'string' ? Number(n) : n;
   if (Number.isNaN(num)) return n;
-  return new Intl.NumberFormat('ar-SA').format(num);
+  return new Intl.NumberFormat(localeFor(lang)).format(num);
 }
 
 function formatSize(bytes) {
