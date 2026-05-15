@@ -10,6 +10,12 @@ import RegisterPage from './pages/RegisterPage';
 import OtpPage from './pages/OtpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
+// Legal pages — public, no guards
+import TermsPage from './pages/legal/TermsPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import RefundPolicyPage from './pages/legal/RefundPolicyPage';
+import CookiesPolicyPage from './pages/legal/CookiesPolicyPage';
+
 // Project pages — outside the dashboard, full-screen
 import PublicProjectsPage from './pages/PublicProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
@@ -72,6 +78,10 @@ function AppShell() {
       <Routes>
         {/* ===== Fully public ===== */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
 
         {/* ===== Guest-only (auth pages) =====
             If a logged-in user lands here, bounce them to /dashboard. */}

@@ -683,6 +683,22 @@ export default {
     },
   },
 
+  legal: {
+    chrome: {
+      backHome: '返回首页',
+      lastUpdated: '最后更新',
+      translationDisclaimer:
+        '这是阿拉伯语原版的非官方翻译。如有任何差异，以阿拉伯语版本为准。',
+      footerColumn: '法律',
+    },
+    nav: {
+      terms: '条款与条件',
+      privacy: '隐私政策',
+      refund: '退款与换货',
+      cookies: 'Cookies 政策',
+    },
+  },
+
   auth: {
     login: {
       kicker: '欢迎回来',

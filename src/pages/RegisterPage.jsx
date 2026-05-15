@@ -272,13 +272,27 @@ export default function RegisterPage() {
               .map((part, i) => {
                 if (part === '__TERMS__')
                   return (
-                    <a key={i} className="link">
+                    <a
+                      key={i}
+                      className="link"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate('/terms');
+                      }}
+                    >
                       {t('auth.register.terms')}
                     </a>
                   );
                 if (part === '__PRIVACY__')
                   return (
-                    <a key={i} className="link">
+                    <a
+                      key={i}
+                      className="link"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate('/privacy');
+                      }}
+                    >
                       {t('auth.register.privacy')}
                     </a>
                   );

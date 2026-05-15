@@ -376,6 +376,40 @@ export default function Sidebar({ open, onClose }) {
               <LogOut size={17} strokeWidth={1.75} />
               <span>{t('dashboard.sidebar.logout')}</span>
             </button>
+            <div
+              className="px-3 pt-3 mt-2 flex flex-wrap gap-x-3 gap-y-1"
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                borderTop: '1px dashed var(--border-default)',
+              }}
+            >
+              {[
+                { key: 'terms', to: '/terms' },
+                { key: 'privacy', to: '/privacy' },
+                { key: 'refund', to: '/refund-policy' },
+                { key: 'cookies', to: '/cookies-policy' },
+              ].map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => {
+                    navigate(l.to);
+                    onClose?.();
+                  }}
+                  className="bg-transparent border-0 p-0 cursor-pointer"
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--text-muted)',
+                    fontFamily: 'inherit',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  {t(`legal.nav.${l.key}`)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

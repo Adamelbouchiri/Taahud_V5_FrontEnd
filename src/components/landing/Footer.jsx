@@ -24,6 +24,13 @@ const NAV_PLATFORM = [
   { id: 'plans', href: '#plans' },
 ];
 
+const LEGAL_LINKS = [
+  { key: 'terms', to: '/terms' },
+  { key: 'privacy', to: '/privacy' },
+  { key: 'refund', to: '/refund-policy' },
+  { key: 'cookies', to: '/cookies-policy' },
+];
+
 export default function Footer() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -37,7 +44,7 @@ export default function Footer() {
       style={{ background: '#080927', color: 'rgba(255,255,255,0.78)' }}
     >
       <div className="max-w-[1280px] mx-auto px-6 lg:px-12 py-16 lg:py-20">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-12">
           {/* === Column 1: Brand === */}
           <div>
             <div className="mb-5">
@@ -84,7 +91,16 @@ export default function Footer() {
             </FooterLink>
           </FooterColumn>
 
-          {/* === Column 4: Contact === */}
+          {/* === Column 4: Legal === */}
+          <FooterColumn title={t('legal.chrome.footerColumn')}>
+            {LEGAL_LINKS.map((l) => (
+              <FooterLink key={l.key} onClick={() => navigate(l.to)}>
+                {t(`legal.nav.${l.key}`)}
+              </FooterLink>
+            ))}
+          </FooterColumn>
+
+          {/* === Column 5: Contact === */}
           <FooterColumn title={t('landing.footer.columns.contact')}>
             <ContactRow Icon={MessageCircle}>
               <span style={{ direction: 'ltr', display: 'inline-block' }}>

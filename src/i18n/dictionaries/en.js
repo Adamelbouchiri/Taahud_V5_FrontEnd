@@ -688,6 +688,22 @@ export default {
     },
   },
 
+  legal: {
+    chrome: {
+      backHome: 'Back to home',
+      lastUpdated: 'Last updated',
+      translationDisclaimer:
+        'This is an unofficial translation of the canonical Arabic version. In case of any discrepancy, the Arabic version prevails.',
+      footerColumn: 'Legal',
+    },
+    nav: {
+      terms: 'Terms & Conditions',
+      privacy: 'Privacy Policy',
+      refund: 'Refund & Exchange',
+      cookies: 'Cookies Policy',
+    },
+  },
+
   auth: {
     login: {
       kicker: 'Welcome back',

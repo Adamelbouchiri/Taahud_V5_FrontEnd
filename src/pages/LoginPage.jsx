@@ -179,9 +179,14 @@ export default function LoginPage() {
         style={{ color: 'var(--text-muted)' }}
       >
         {t('auth.login.termsPrefix')}{' '}
-        <a className="link">{t('auth.login.terms')}</a>{' '}
+        <a className="link" onClick={() => navigate('/terms')}>
+          {t('auth.login.terms')}
+        </a>{' '}
         {t('auth.login.termsAnd')}{' '}
-        <a className="link">{t('auth.login.privacy')}</a>.
+        <a className="link" onClick={() => navigate('/privacy')}>
+          {t('auth.login.privacy')}
+        </a>
+        .
       </p>
     </AuthShell>
   );
