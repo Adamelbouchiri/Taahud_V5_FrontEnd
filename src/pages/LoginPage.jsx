@@ -47,6 +47,7 @@ export default function LoginPage() {
       const res = await auth.login({
         login: buildLoginField(),
         password,
+        remember_me: remember,
       });
       const verified = res?.user?.is_phone_verified !== false;
       if (!verified) {

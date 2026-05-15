@@ -92,6 +92,7 @@ export const auth = {
     const body = {
       login: payload.login, // already normalized email or phone
       password: payload.password,
+      remember_me: Boolean(payload.remember_me),
       device_name: deviceName(),
     };
 
