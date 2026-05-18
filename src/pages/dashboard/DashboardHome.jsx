@@ -498,10 +498,11 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
           )}
         </div>
 
-        {/* Bids received — only meaningful for owners. BE returns
-            applications_count alongside requirements_count and
-            files_count on the project list response. */}
-        {typeof project.applications_count === 'number' && (
+        {/* Pending-bid count from pending_applications_count (BE list
+            response). Always an integer per FRONTEND_INTEGRATION.md §10,
+            but we keep a typeof guard so a missing field during a
+            transitional deploy doesn't render "undefined". */}
+        {typeof project.pending_applications_count === 'number' && (
           <div
             className="text-end"
             style={{ marginInlineEnd: 10 }}
@@ -521,7 +522,7 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
               style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
             >
               <Users size={12.5} strokeWidth={1.7} />
-              {project.applications_count}
+              {project.pending_applications_count}
             </div>
           </div>
         )}

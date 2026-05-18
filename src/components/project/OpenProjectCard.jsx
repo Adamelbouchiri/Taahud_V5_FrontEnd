@@ -235,10 +235,12 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
           )}
         </div>
 
-        {/* BE returns applications_count on the project list response
-            (alongside requirements_count + files_count). When present we
-            render the bid count; if missing we render "—" so the column
-            stays visible but doesn't lie about there being zero bids. */}
+        {/* BE returns pending_applications_count on the project list +
+            show responses (FRONTEND_INTEGRATION.md §10). Pending-only —
+            excludes accepted/rejected so it stays meaningful after a
+            project is awarded. Always present as an integer; the
+            typeof check is a defensive guard for older cached payloads
+            served during a deploy. */}
         <div className="text-end">
           <div
             className="font-semibold uppercase mb-0.5"
@@ -255,8 +257,8 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
             style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}
           >
             <Users size={12} strokeWidth={1.8} />
-            {typeof project.applications_count === 'number'
-              ? project.applications_count
+            {typeof project.pending_applications_count === 'number'
+              ? project.pending_applications_count
               : '—'}
           </div>
         </div>

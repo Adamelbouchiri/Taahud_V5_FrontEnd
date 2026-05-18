@@ -212,7 +212,12 @@ function ProjectDetailsPage() {
 
             {isOwner && (
               <Section
-                title={t('projects.details.applications.title')}
+                title={
+                  typeof project.pending_applications_count === 'number' &&
+                  project.pending_applications_count > 0
+                    ? `${t('projects.details.applications.title')} (${project.pending_applications_count})`
+                    : t('projects.details.applications.title')
+                }
                 icon={Users}
               >
                 <OwnerApplications
