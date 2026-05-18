@@ -14,6 +14,7 @@ import {
   Plus,
   HardHat,
   Handshake,
+  Users,
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { projects as projectsApi } from '../../services';
@@ -496,6 +497,34 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
             </span>
           )}
         </div>
+
+        {/* Bids received — only meaningful for owners. BE returns
+            applications_count alongside requirements_count and
+            files_count on the project list response. */}
+        {typeof project.applications_count === 'number' && (
+          <div
+            className="text-end"
+            style={{ marginInlineEnd: 10 }}
+          >
+            <div
+              className="font-semibold uppercase mb-0.5"
+              style={{
+                fontSize: 9.5,
+                letterSpacing: '0.08em',
+                color: 'var(--text-muted)',
+              }}
+            >
+              {t('projects.list.applicants')}
+            </div>
+            <div
+              className="font-bold inline-flex items-center gap-1"
+              style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
+            >
+              <Users size={12.5} strokeWidth={1.7} />
+              {project.applications_count}
+            </div>
+          </div>
+        )}
 
         <span
           className="inline-flex items-center justify-center transition-all"

@@ -235,6 +235,10 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
           )}
         </div>
 
+        {/* BE returns applications_count on the project list response
+            (alongside requirements_count + files_count). When present we
+            render the bid count; if missing we render "—" so the column
+            stays visible but doesn't lie about there being zero bids. */}
         <div className="text-end">
           <div
             className="font-semibold uppercase mb-0.5"
@@ -251,7 +255,9 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
             style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}
           >
             <Users size={12} strokeWidth={1.8} />
-            {project.applications_count ?? 0}
+            {typeof project.applications_count === 'number'
+              ? project.applications_count
+              : '—'}
           </div>
         </div>
       </div>
