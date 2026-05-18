@@ -39,7 +39,10 @@ function useLandingAuth() {
   const [status, setStatus] = useState('loading'); // loading | guest | authed
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Token may live in localStorage (remember_me) or sessionStorage
+    // (tab-scoped). See services/auth.js.
+    const token =
+      localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
       setStatus('guest');
       return;

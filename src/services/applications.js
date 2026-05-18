@@ -1,339 +1,195 @@
-import http from './http';
+import http, { resolveFileUrl } from './http';
 
 /* ============================================================
- *  APPLICATIONS SERVICE
+ *  APPLICATIONS SERVICE — wired to Taahud V5 API.
  *  ----------------------------------------------------------------
- *  Two actors interact with the `applications` table, so the
- *  service is grouped by who's doing the action:
+ *  Endpoints (all under /api):
  *
- *    applications.applicant.*  → service provider / supplier
- *                                acting on their OWN application
- *    applications.owner.*      → project owner (customer)
- *                                acting on applications they RECEIVED
+ *    POST   /projects/:projectId/applications     submit a bid
+ *    GET    /applications?project_id&status&...   list (paginated)
+ *    GET    /applications/:id                     show one
+ *    POST   /applications/:id/accept              owner accepts (cascades)
+ *    POST   /applications/:id/reject              owner rejects
+ *    POST   /applications/:id/files               applicant uploads a file
+ *    DELETE /applications/:id/files/:fileId       applicant deletes a file
  *
- *  This avoids the confusion of `withdraw` vs `reject` — they're
- *  both "remove an application" but by different people for
- *  different reasons.
+ *  Backend wraps single resources in { data: {...} } and lists in
+ *  { data: [...], links, meta }. We unwrap here so callers get the
+ *  flat shape the UI already expects.
  *
- *  Migration shape (matches `applications` table):
- *    id, user_id, project_id,
- *    cover_letter (text),
- *    bid_amount (integer),
- *    delevery_date (string),
- *    status (default 'pending'),
- *    is_accepted (default false),
- *    timestamps.
+ *  Authorization (FRONTEND_INTEGRATION.md §3, §11):
+ *    - Submit:        per-arena applicants matrix —
+ *                       private:    entrepreneur, engineering
+ *                       solidarity: entrepreneur only
+ *                       arena:      entrepreneur, engineering
+ *                       isnad:      entrepreneur, engineering, developer
+ *                     Individuals and suppliers can never apply.
+ *                     Project must be `open_for_bids`. Owner cannot
+ *                     apply to own project. One application per user
+ *                     per project (DB-unique). No withdrawal.
+ *                     FE gates: RequireServiceProvider (broad
+ *                     pre-gate), then ApplyPage refines with
+ *                     canApplyArena(project.arena, account_type).
+ *    - List / show:   BE enforces — applicant of that row, project
+ *                     owner, or project partner.
+ *    - Accept/Reject: project owner only, pending applications only.
+ *                     Accept cascades atomically: app → accepted,
+ *                     project.partner_id → applicant, project.status
+ *                     → awarded, sibling pendings → rejected.
+ *    - File ops:      applicant only, pending applications only.
+ *                     Max 20 MB; PDF/JPG/JPEG/PNG/DOC/DOCX/XLS/XLSX.
  * ============================================================ */
 
-const delay = (ms = 500) => new Promise((r) => setTimeout(r, ms));
+
+/* ============================================================
+ *  Adapter — bridge BE response shape to what FE components read.
+ *  ----------------------------------------------------------------
+ *  Derived fields:
+ *    - user_id:    from applicant.id (applicant stays nested too)
+ *    - project_id: from project.id (when project is nested)
+ *    - is_accepted: convenience flag for `status === 'accepted'`
+ *    - files[]:    alias .url → .file_path so legacy renderers work
+ * ============================================================ */
+function adaptApplication(a) {
+  if (!a || typeof a !== 'object') return a;
+
+  const out = { ...a };
+
+  if (a.applicant) out.user_id = a.applicant.id;
+  if (a.project && out.project_id == null) out.project_id = a.project.id;
+
+  out.is_accepted = a.status === 'accepted';
+
+  if (Array.isArray(a.files)) {
+    out.files = a.files.map((f) => {
+      const url = resolveFileUrl(f.url ?? f.file_path);
+      return { ...f, url, file_path: url };
+    });
+  }
+
+  return out;
+}
+
+
+function buildParams(filters = {}) {
+  const params = {};
+  if (filters.project_id != null && filters.project_id !== 'all') {
+    params.project_id = filters.project_id;
+  }
+  if (filters.status && filters.status !== 'all') params.status = filters.status;
+  if (filters.per_page) params.per_page = filters.per_page;
+  if (filters.page) params.page = filters.page;
+  return params;
+}
 
 
 export const applications = {
-
   /* ============================================================
-   *  APPLICANT — actions a service provider takes on
-   *  applications they themselves submitted.
+   * READ
    * ============================================================ */
-  applicant: {
-    /**
-     * Submit a new application to a project.
-     * POST /api/projects/:projectId/apply
-     *
-     * Server: creates a row with user_id=auth, status='pending',
-     *         is_accepted=false.
-     *
-     * @param {number} projectId
-     * @param {{ cover_letter, bid_amount, delevery_date }} payload
-     */
-    async submit(projectId, payload) {
-      // return http.post(`/projects/${projectId}/apply`, payload);
 
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(700);
-      const created = {
-        id: MOCK_APPLICATIONS.length + 100,
-        user_id: 1,
-        project_id: projectId,
-        ...payload,
-        status: 'pending',
-        is_accepted: false,
-        created_at: new Date().toISOString(),
-      };
-      MOCK_APPLICATIONS.unshift(created);
-      return created;
-    },
+  /**
+   * GET /api/applications — applications the current user is
+   * involved in (as applicant or project owner). BE returns the
+   * union; filter further with `project_id` / `status`.
+   * Returns a flat array (drops pagination metadata).
+   */
+  async list(filters = {}) {
+    const res = await http.get('/applications', { params: buildParams(filters) });
+    const rows = Array.isArray(res?.data) ? res.data : res?.data?.data ?? [];
+    return rows.map(adaptApplication);
+  },
 
-    /**
-     * List MY applications (the ones I submitted).
-     * GET /api/me/applications
-     */
-    async listMine() {
-      // return http.get('/me/applications');
+  /** GET /api/applications/:id */
+  async get(id) {
+    const res = await http.get(`/applications/${id}`);
+    return adaptApplication(res?.data ?? res);
+  },
 
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(450);
-      return MOCK_APPLICATIONS;
-    },
-
-    /**
-     * Cancel my own pending application.
-     * DELETE /api/applications/:id
-     *
-     * Server: deletes the row (or sets status='withdrawn',
-     * depending on your backend choice).
-     */
-    async cancelMine(applicationId) {
-      // return http.delete(`/applications/${applicationId}`);
-
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(400);
-    },
+  /**
+   * Convenience wrapper: list applications received on a project
+   * I own. Same endpoint as list() with project_id pinned — BE
+   * decides visibility.
+   */
+  async listForProject(projectId, filters = {}) {
+    return applications.list({ ...filters, project_id: projectId });
   },
 
 
   /* ============================================================
-   *  OWNER — actions the project owner (customer) takes on
-   *  applications they received on their project.
+   * WRITE — applicant
    * ============================================================ */
-  owner: {
-    /**
-     * List applications received on a project I own.
-     * GET /api/projects/:projectId/applications
-     */
-    async listForProject(projectId) {
-      // return http.get(`/projects/${projectId}/applications`);
 
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(400);
-      return MOCK_RECEIVED_APPLICATIONS.filter(
-        (a) => a.project_id === Number(projectId)
-      );
-    },
+  /**
+   * POST /api/projects/:projectId/applications
+   *
+   * BE requires:
+   *   - cover_letter (string, 20–5000)
+   *   - bid_amount   (non-negative number)
+   *   - delivery_date (Y-m-d, in the future)
+   */
+  async submit(projectId, payload) {
+    const res = await http.post(`/projects/${projectId}/applications`, payload);
+    return adaptApplication(res?.data ?? res);
+  },
 
-    /**
-     * Accept an application — choose this applicant as my partner.
-     * POST /api/applications/:id/accept
-     *
-     * Server should also:
-     *   - set application.status = 'accepted', is_accepted = true
-     *   - set project.partner_id = applicant.user_id
-     *   - set project.is_accepted = true
-     *   - set project.status = 'in_progress'
-     *   - set all OTHER applications on this project to 'rejected'
-     */
-    async acceptApplication(applicationId) {
-      // return http.post(`/applications/${applicationId}/accept`);
 
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(500);
-      const target = MOCK_RECEIVED_APPLICATIONS.find((a) => a.id === Number(applicationId));
-      if (!target) return;
-      target.status = 'accepted';
-      target.is_accepted = true;
-      // Reject siblings
-      for (const a of MOCK_RECEIVED_APPLICATIONS) {
-        if (a.project_id === target.project_id && a.id !== target.id) {
-          a.status = 'rejected';
-          a.is_accepted = false;
+  /* ============================================================
+   * WRITE — project owner
+   * ============================================================ */
+
+  /**
+   * POST /api/applications/:id/accept
+   *
+   * Cascading effect on the server (transactional):
+   *   - this application → 'accepted'
+   *   - project.partner_id → this applicant
+   *   - project.status     → 'awarded'
+   *   - all sibling pending applications → 'rejected'
+   */
+  async accept(applicationId) {
+    const res = await http.post(`/applications/${applicationId}/accept`);
+    return adaptApplication(res?.data ?? res);
+  },
+
+  /**
+   * POST /api/applications/:id/reject
+   * Flips status only — no cascade.
+   */
+  async reject(applicationId) {
+    const res = await http.post(`/applications/${applicationId}/reject`);
+    return adaptApplication(res?.data ?? res);
+  },
+
+
+  /* ============================================================
+   * FILES — applicant only, pending applications only
+   * ============================================================ */
+
+  /**
+   * POST /api/applications/:applicationId/files
+   * Multipart upload. onProgress receives 0..100.
+   */
+  async uploadFile(applicationId, file, onProgress) {
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await http.post(`/applications/${applicationId}/files`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
         }
-      }
-    },
+      },
+    });
 
-    /**
-     * Reject an application — turn down this applicant.
-     * POST /api/applications/:id/reject
-     *
-     * Server: sets application.status = 'rejected'. Doesn't delete
-     * the row so the applicant can still see they were rejected.
-     */
-    async rejectApplication(applicationId) {
-      // return http.post(`/applications/${applicationId}/reject`);
+    const f = res?.data ?? res;
+    const url = resolveFileUrl(f.url ?? f.file_path);
+    return { ...f, url, file_path: url };
+  },
 
-      /* ── MOCK ── remove when backend is ready ───────────────── */
-      await delay(500);
-      const target = MOCK_RECEIVED_APPLICATIONS.find((a) => a.id === Number(applicationId));
-      if (target) {
-        target.status = 'rejected';
-        target.is_accepted = false;
-      }
-    },
+  /** DELETE /api/applications/:applicationId/files/:fileId */
+  async removeFile(applicationId, fileId) {
+    return http.delete(`/applications/${applicationId}/files/${fileId}`);
   },
 };
-
-
-/* ============================================================
- *  MOCK DATA
- *  Delete this section once the backend is live.
- *
- *  Two mock arrays:
- *    - MOCK_APPLICATIONS         applications submitted BY user 1
- *                                (used by applicant.listMine)
- *    - MOCK_RECEIVED_APPLICATIONS applications received on projects
- *                                OWNED BY user 1 (used by owner.listForProject)
- * ============================================================ */
-
-const MOCK_APPLICATIONS = [
-  {
-    id: 1,
-    user_id: 1,
-    project_id: 102,
-    cover_letter:
-      'لدينا خبرة واسعة في تشطيب المباني التجارية، أنجزنا أكثر من ١٢ مشروعاً مماثلاً في جدّة خلال العامين الماضيين. نلتزم بالمواعيد ونوفّر شهادات الجودة لكلّ مرحلة.',
-    bid_amount: 620000,
-    delevery_date: '2026-09-15',
-    status: 'pending',
-    is_accepted: false,
-    created_at: '2026-04-26T10:00:00',
-    project: {
-      id: 102,
-      name: 'تشطيب مكاتب إدارية - برج تجاري',
-      type: 'تشطيب',
-      city: 'جدّة',
-      budget: 650000,
-      status: 'open',
-      owner: { id: 21, name: 'شركة المسار العقاري' },
-    },
-  },
-  {
-    id: 2,
-    user_id: 1,
-    project_id: 105,
-    cover_letter:
-      'فريقنا متخصص في التجديد السكني، يمكننا إنجاز التشطيبات بجودة عالية خلال المدة المطلوبة.',
-    bid_amount: 72000,
-    delevery_date: '2026-07-05',
-    status: 'accepted',
-    is_accepted: true,
-    created_at: '2026-04-15T14:00:00',
-    project: {
-      id: 105,
-      name: 'تجديد مطبخ وحمامات',
-      type: 'ترميم وتجديد',
-      city: 'مكة المكرمة',
-      budget: 75000,
-      status: 'in_progress',
-      owner: { id: 24, name: 'منى السلمي' },
-    },
-  },
-  {
-    id: 3,
-    user_id: 1,
-    project_id: 103,
-    cover_letter:
-      'نقدّم خدمات صيانة دورية لأكثر من ٣٠ منشأة تجارية. سجلنا حافل بالاستمرارية والاعتماد.',
-    bid_amount: 240000,
-    delevery_date: '2027-04-30',
-    status: 'rejected',
-    is_accepted: false,
-    created_at: '2026-04-10T09:30:00',
-    project: {
-      id: 103,
-      name: 'صيانة شاملة لمستودع',
-      type: 'صيانة دورية',
-      city: 'الدمام',
-      budget: 220000,
-      status: 'open',
-      owner: { id: 22, name: 'مستودعات الشرق' },
-    },
-  },
-];
-
-const MOCK_RECEIVED_APPLICATIONS = [
-  // Applications received on project #1 (تجديد فيلا في حي النخيل)
-  {
-    id: 101,
-    user_id: 30,
-    project_id: 1,
-    cover_letter:
-      'مؤسّسة الإتقان للمقاولات، خبرة ١٢ عاماً في الترميم. أنجزنا مشاريع مماثلة في الرياض ضمن نفس النطاق السعري.',
-    bid_amount: 235000,
-    delevery_date: '2026-09-30',
-    status: 'pending',
-    is_accepted: false,
-    created_at: '2026-04-23T11:00:00',
-    applicant: {
-      id: 30,
-      name: 'مؤسّسة الإتقان للمقاولات',
-      account_type: 'entrepreneur',
-      specialty: 'مقاولات عامة',
-      city: 'الرياض',
-    },
-  },
-  {
-    id: 102,
-    user_id: 31,
-    project_id: 1,
-    cover_letter:
-      'فريق متكامل من النجارين والكهربائيين والسبّاكين، يمكننا تنفيذ التشطيبات الداخلية والخارجية بالتوازي.',
-    bid_amount: 248000,
-    delevery_date: '2026-10-15',
-    status: 'pending',
-    is_accepted: false,
-    created_at: '2026-04-24T15:30:00',
-    applicant: {
-      id: 31,
-      name: 'مكتب البناء الحديث',
-      account_type: 'entrepreneur',
-      specialty: 'تشطيب',
-      city: 'الرياض',
-    },
-  },
-  {
-    id: 103,
-    user_id: 32,
-    project_id: 1,
-    cover_letter:
-      'نختصّ بالتجديد الفاخر، نوفّر مواد عالية الجودة وضمان كامل لمدة سنتين.',
-    bid_amount: 265000,
-    delevery_date: '2026-09-15',
-    status: 'pending',
-    is_accepted: false,
-    created_at: '2026-04-25T10:00:00',
-    applicant: {
-      id: 32,
-      name: 'مكتب الإبداع للتصميم',
-      account_type: 'engineering',
-      specialty: 'تصميم وإشراف',
-      city: 'الرياض',
-    },
-  },
-  // Applications on project #2 (مجمع سكني في الشرقية)
-  {
-    id: 104,
-    user_id: 33,
-    project_id: 2,
-    cover_letter:
-      'شركة الإنشاءات الكبرى، خبرة في المشاريع السكنية الكبيرة. أنجزنا ٣ مجمعات مماثلة خلال السنوات الخمس الماضية.',
-    bid_amount: 8200000,
-    delevery_date: '2027-12-30',
-    status: 'pending',
-    is_accepted: false,
-    created_at: '2026-04-19T09:00:00',
-    applicant: {
-      id: 33,
-      name: 'شركة الإنشاءات الكبرى',
-      account_type: 'entrepreneur',
-      specialty: 'مقاولات عامة',
-      city: 'الدمام',
-    },
-  },
-  // An accepted application on project #3 (already in_progress)
-  {
-    id: 105,
-    user_id: 4,
-    project_id: 3,
-    cover_letter: 'فريقنا جاهز لإنجاز التشطيبات الثلاث ضمن الجدول الزمني المحدد.',
-    bid_amount: 470000,
-    delevery_date: '2026-07-30',
-    status: 'accepted',
-    is_accepted: true,
-    created_at: '2026-02-12T10:00:00',
-    applicant: {
-      id: 4,
-      name: 'شركة الإنشاءات الحديثة',
-      account_type: 'entrepreneur',
-      specialty: 'تشطيب',
-      city: 'جدّة',
-    },
-  },
-];

@@ -16,6 +16,7 @@ import {
   Pencil,
   Users,
   CheckCircle2,
+  XCircle,
   Download,
   Image as ImageIcon,
   FileSpreadsheet,
@@ -24,9 +25,12 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
-import { projects as projectsApi } from '../services';
-import { isServiceProvider } from '../config/constants';
-import { arenaConfig } from '../config/projectConstants';
+import { projects as projectsApi, applications as applicationsApi } from '../services';
+import {
+  arenaConfig,
+  canApplyArena,
+  canSeeProjectBudget,
+} from '../config/projectConstants';
 import { UserProvider, useUser } from '../contexts/UserContext';
 import StatusBadge from '../components/project/StatusBadge';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -52,6 +56,15 @@ function ProjectDetailsPage() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const reloadProject = React.useCallback(async () => {
+    try {
+      const p = await projectsApi.get(id);
+      setProject(p);
+    } catch (err) {
+      setError(err.message || t('projects.details.loadErrorTitle'));
+    }
+  }, [id, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,9 +101,14 @@ function ProjectDetailsPage() {
     );
 
   const isOwner = user && project.user_id === user.id;
-  const isApplicant = user && isServiceProvider(user.account_type);
+  // Per-arena applicants matrix (FRONTEND_INTEGRATION.md §3). solidarity
+  // is entrepreneur-only, isnad also allows developer, etc.
   const canApply =
-    isApplicant && project.status === 'open_for_bids' && !project.has_applied && !isOwner;
+    !!user &&
+    !isOwner &&
+    project.status === 'open_for_bids' &&
+    !project.has_applied &&
+    canApplyArena(project.arena, user.account_type);
 
   return (
     <Shell>
@@ -197,17 +215,10 @@ function ProjectDetailsPage() {
                 title={t('projects.details.applications.title')}
                 icon={Users}
               >
-                <div
-                  className="p-6 rounded-[12px] text-center"
-                  style={{
-                    background: 'var(--bg-canvas)',
-                    border: '1px dashed var(--border-default)',
-                    color: 'var(--text-muted)',
-                    fontSize: 13.5,
-                  }}
-                >
-                  {t('projects.details.applicationsPlaceholder')}
-                </div>
+                <OwnerApplications
+                  projectId={project.id}
+                  onAfterAccept={reloadProject}
+                />
               </Section>
             )}
           </div>
@@ -508,18 +519,288 @@ function Section({ title, icon: Icon, children }) {
 }
 
 /* ============================================================
+ *  Owner-only: list of applications submitted to this project
+ *  with inline accept/reject controls. Accepting cascades on BE:
+ *  project becomes 'awarded' + partner set, siblings auto-rejected.
+ * ============================================================ */
+function OwnerApplications({ projectId, onAfterAccept }) {
+  const { t, lang } = useTranslation();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [acting, setActing] = useState(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const rows = await applicationsApi.listForProject(projectId);
+      setItems(rows);
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const accept = async (id) => {
+    setActing(id);
+    try {
+      await applicationsApi.accept(id);
+      await load();
+      onAfterAccept?.();
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const reject = async (id) => {
+    setActing(id);
+    try {
+      await applicationsApi.reject(id);
+      await load();
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setActing(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-2 animate-pulse">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            style={{
+              height: 96,
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-soft)',
+              borderRadius: 11,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div
+        className="p-6 rounded-[12px] text-center"
+        style={{
+          background: 'var(--bg-canvas)',
+          border: '1px dashed var(--border-default)',
+          color: 'var(--text-muted)',
+          fontSize: 13.5,
+        }}
+      >
+        {t('projects.details.applications.empty')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {error && (
+        <div
+          className="p-3 rounded-[10px]"
+          style={{
+            background: 'rgba(185,28,28,0.06)',
+            border: '1px solid rgba(185,28,28,0.18)',
+            color: 'var(--accent-danger)',
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+      {items.map((a) => {
+        const isPending = a.status === 'pending';
+        return (
+          <article
+            key={a.id}
+            className="p-4 rounded-[12px]"
+            style={{
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-soft)',
+            }}
+          >
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+              <div className="min-w-0">
+                <div
+                  className="font-semibold mb-0.5"
+                  style={{ fontSize: 14, color: 'var(--text-ink)' }}
+                >
+                  {a.applicant?.name ||
+                    t('projects.details.applications.applicant')}
+                </div>
+                <div
+                  className="flex items-center gap-2 flex-wrap"
+                  style={{ fontSize: 12, color: 'var(--text-muted)' }}
+                >
+                  {a.applicant?.account_type && (
+                    <span>{t(`accountType.${a.applicant.account_type}`)}</span>
+                  )}
+                  {a.applicant?.city && (
+                    <>
+                      <span>·</span>
+                      <span>{a.applicant.city}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <ApplicationPill status={a.status} t={t} />
+            </div>
+
+            {a.cover_letter && (
+              <p
+                className="m-0 mb-3"
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  color: 'var(--text-ink-soft)',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {a.cover_letter}
+              </p>
+            )}
+
+            <div className="flex items-end justify-between gap-3 flex-wrap">
+              <div className="flex gap-5 flex-wrap" style={{ fontSize: 12.5 }}>
+                <div>
+                  <div
+                    className="font-medium uppercase mb-0.5"
+                    style={{
+                      fontSize: 9.5,
+                      letterSpacing: '0.08em',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
+                    {t('projects.details.applications.bid')}
+                  </div>
+                  <div className="font-semibold" style={{ color: 'var(--text-ink)' }}>
+                    {formatNumber(a.bid_amount, lang)} {t('common.currency')}
+                  </div>
+                </div>
+                {a.delivery_date && (
+                  <div>
+                    <div
+                      className="font-medium uppercase mb-0.5"
+                      style={{
+                        fontSize: 9.5,
+                        letterSpacing: '0.08em',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      {t('projects.details.applications.deliveryDate')}
+                    </div>
+                    <div className="font-semibold" style={{ color: 'var(--text-ink)' }}>
+                      {formatDate(a.delivery_date, lang)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {isPending && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={acting === a.id}
+                    onClick={() => reject(a.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] font-semibold transition-all"
+                    style={{
+                      fontSize: 12.5,
+                      background: 'var(--bg-surface)',
+                      border: '1px solid rgba(185,28,28,0.3)',
+                      color: '#b91c1c',
+                      cursor: acting === a.id ? 'wait' : 'pointer',
+                      opacity: acting === a.id ? 0.6 : 1,
+                    }}
+                  >
+                    <XCircle size={13} strokeWidth={1.8} />
+                    {t('projects.details.applications.reject')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={acting === a.id}
+                    onClick={() => accept(a.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-white font-semibold transition-all"
+                    style={{
+                      fontSize: 12.5,
+                      background: '#136d4a',
+                      border: '1px solid #136d4a',
+                      cursor: acting === a.id ? 'wait' : 'pointer',
+                      opacity: acting === a.id ? 0.7 : 1,
+                    }}
+                  >
+                    <CheckCircle2 size={13} strokeWidth={1.8} />
+                    {t('projects.details.applications.accept')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function ApplicationPill({ status, t }) {
+  const cfg = {
+    pending: { bg: 'rgba(184,134,42,0.12)', color: '#8a6620', border: 'rgba(184,134,42,0.28)' },
+    accepted: { bg: 'rgba(19,109,74,0.1)', color: '#0d5538', border: 'rgba(19,109,74,0.28)' },
+    rejected: { bg: 'rgba(185,28,28,0.08)', color: '#b91c1c', border: 'rgba(185,28,28,0.24)' },
+  }[status] || { bg: 'var(--bg-canvas)', color: 'var(--text-muted)', border: 'var(--border-default)' };
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap"
+      style={{
+        fontSize: 11,
+        padding: '3px 9px',
+        background: cfg.bg,
+        color: cfg.color,
+        border: `1px solid ${cfg.border}`,
+      }}
+    >
+      <span
+        className="rounded-full"
+        style={{ width: 5, height: 5, background: cfg.color }}
+      />
+      {t(`status.application.${status}`)}
+    </span>
+  );
+}
+
+/* ============================================================
  *  Sidebar cards
  * ============================================================ */
 
 function FactsCard({ project }) {
   const { t, lang } = useTranslation();
+  const { user } = useUser();
+  const showBudget = canSeeProjectBudget(project, user?.id);
   const facts = [
     { icon: Tag, label: t('projects.details.meta.type'), value: project.type },
     { icon: MapPin, label: t('projects.details.meta.city'), value: project.city },
     project.budget != null && {
       icon: Wallet,
       label: t('projects.details.meta.budget'),
-      value: `${formatNumber(project.budget, lang)} ${t('common.currency')}`,
+      value: showBudget
+        ? `${formatNumber(project.budget, lang)} ${t('common.currency')}`
+        : t('projects.details.meta.budgetSealed'),
     },
     project.expected_duration && {
       icon: Clock,
@@ -763,8 +1044,14 @@ function FileRow({ file }) {
       {href && (
         <a
           href={href}
+          // `download` triggers a save-as instead of inline navigation,
+          // and uses the original filename rather than the random hash
+          // in the URL. Cross-origin file servers may ignore the hint
+          // (browser falls back to opening in a new tab), but for the
+          // same-origin Laravel storage symlink it works as expected.
+          download={name}
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="flex items-center justify-center transition-colors"
           style={{
             width: 32,

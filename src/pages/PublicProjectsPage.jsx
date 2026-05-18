@@ -33,17 +33,19 @@ import { useTranslation } from '../i18n/LanguageContext';
  *  load the user's account_type via auth.me() directly.
  * ============================================================ */
 
-const SORT_KEYS = ['newest', 'budget_high', 'budget_low'];
+// Budget is sealed from browsers until the owner accepts (see
+// canSeeProjectBudget) — sorting by a hidden number would be
+// confusing UX, so we expose only the "newest" sort here.
+const SORT_KEYS = ['newest'];
 const SORT_VALUE_TO_KEY = {
   newest: 'newest',
-  budget_high: 'budgetHigh',
-  budget_low: 'budgetLow',
 };
 
 export default function PublicProjectsPage({ arenaSlug = null }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [accountType, setAccountType] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [hasIsnadUpgrade, setHasIsnadUpgrade] = useState(false);
   const [accountLoaded, setAccountLoaded] = useState(false);
 
@@ -64,6 +66,7 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
       .then((u) => {
         if (cancelled) return;
         setAccountType(u?.account_type || null);
+        setUserId(u?.id ?? null);
         setHasIsnadUpgrade(!!u?.has_isnad_upgrade);
         setAccountLoaded(true);
       })
@@ -208,6 +211,7 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
                     <div key={p.id} className="animate-fade-up">
                       <OpenProjectCard
                         project={p}
+                        currentUserId={userId}
                         onView={(project) => navigate(`/projects/${project.id}`)}
                       />
                     </div>

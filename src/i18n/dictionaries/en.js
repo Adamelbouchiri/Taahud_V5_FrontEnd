@@ -917,12 +917,49 @@ export default {
       logout: 'Sign out',
       items: {
         home: 'Home',
+        applications: 'Applications',
         profile: 'Profile',
         ai: 'AI analytics',
         analytics: 'Analytics',
         reports: 'Reports',
         messages: 'Messages',
         notifications: 'Notifications',
+      },
+    },
+    applications: {
+      eyebrow: 'Applications',
+      title: 'Manage applications',
+      titleSubmittedOnly: 'My bids',
+      titleReceivedOnly: 'Received bids',
+      subtitle:
+        "Every bid you've submitted on other people's projects and every bid received on yours — in one place.",
+      subtitleSubmittedOnly:
+        "Every bid you've submitted on open projects, with its current status.",
+      subtitleReceivedOnly:
+        'Bids submitted on your projects. Review each one and accept or reject.',
+      loadError: "Couldn't load applications.",
+      actionError: "Couldn't complete the action. Please try again.",
+      projectFallback: 'Project #{id}',
+      tabs: {
+        submitted: 'My bids',
+        received: 'Received bids',
+      },
+      fields: {
+        bid: 'Bid amount',
+        delivery: 'Delivery date',
+      },
+      actions: {
+        accept: 'Accept',
+        reject: 'Reject',
+        openProject: 'Open project',
+      },
+      empty: {
+        submittedTitle: "You haven't submitted any bids yet.",
+        submittedSubtitle:
+          'Browse the open projects and submit a bid to see it here.',
+        receivedTitle: "You haven't received any bids yet.",
+        receivedSubtitle:
+          'Once a partner bids on one of your projects, it will appear here for review.',
       },
     },
     userMenu: {
@@ -1107,6 +1144,7 @@ export default {
       applicants: 'Applicants',
       budgetLabel: 'Budget',
       budgetUnspecified: 'Budget unspecified',
+      budgetSealed: 'Budget sealed',
       ownerFallback: 'Client',
       ownerGeneric: 'Project owner',
       viewDetails: 'View details',
@@ -1158,6 +1196,7 @@ export default {
         city: 'City',
         duration: 'Expected duration',
         budget: 'Budget',
+        budgetSealed: 'Revealed once a bid is accepted',
         experience: 'Required experience',
         startDate: 'Start date',
         endDate: 'End date',
@@ -1431,6 +1470,9 @@ export default {
           'Introduce yourself and your past work to demonstrate you can deliver this project.',
         bidTitle: 'Financial offer & timing',
         bidSubtitle: 'Set the bid amount and the expected delivery date.',
+        filesTitle: 'Supporting attachments',
+        filesSubtitle:
+          'Portfolio, CV, past work, or certificates. Optional.',
       },
       cover: 'Message',
       coverPlaceholder:
@@ -1454,6 +1496,7 @@ export default {
         type: 'Type',
         city: 'City',
         clientBudget: 'Client budget',
+        clientBudgetSealed: 'Revealed once your bid is accepted',
         duration: 'Expected duration',
         startDate: 'Start date',
         endDate: 'End date',
@@ -1465,6 +1508,8 @@ export default {
         title: "Couldn't open the bid page",
         notOpen: 'This project is no longer open for bids.',
         alreadyApplied: 'You have already submitted a bid on this project.',
+        ownProject: "You can't bid on your own project.",
+        notEligible: "Your account type can't bid on projects in this arena.",
         loadFailed: "Couldn't load the project.",
         backToBrowse: 'Back to browse',
       },
@@ -1483,6 +1528,13 @@ export default {
         deliveryFuture: 'Delivery date must be in the future.',
       },
       errorGeneric: "Couldn't send the bid. Please try again.",
+      files: {
+        pickCta: 'Choose files to attach',
+        hint: 'PDF, JPG, PNG, DOC, XLS — up to 20 MB per file.',
+        typeRejected: 'Unsupported file type: {name}',
+        sizeRejected: 'File "{name}" is larger than 20 MB.',
+        removeAria: 'Remove {name}',
+      },
     },
     requirements: {
       placeholder: 'e.g. Valid building permit',

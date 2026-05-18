@@ -16,6 +16,7 @@ import {
   Building2,
   Target,
   Landmark,
+  Briefcase,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -44,6 +45,13 @@ const NAV_ITEMS = [
     icon: Home,
     accountTypes: ALL_TYPES,
     end: true,
+  },
+  {
+    to: '/dashboard/applications',
+    labelKey: 'dashboard.sidebar.items.applications',
+    icon: Briefcase,
+    // Suppliers don't have a project flow in V5; hide it for them.
+    accountTypes: ['individual', 'entrepreneur', 'engineering', 'developer'],
   },
   {
     to: '/dashboard/profile',

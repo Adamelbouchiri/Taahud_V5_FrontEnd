@@ -14,21 +14,35 @@ import {
   AlertCircle,
   ListChecks,
   User,
+  Paperclip,
+  X as XIcon,
+  UploadCloud,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
 import TextareaField from '../components/form/TextareaField';
 import { projects as projectsApi, applications as applicationsApi } from '../services';
 import { useTranslation } from '../i18n/LanguageContext';
+import { UserProvider, useUser } from '../contexts/UserContext';
+import { canApplyArena } from '../config/projectConstants';
 
 /* ============================================================
  *  ApplyPage — /projects/:id/apply
  * ============================================================ */
 
-export default function ApplyPage() {
+export default function ApplyPageRoute() {
+  return (
+    <UserProvider>
+      <ApplyPage />
+    </UserProvider>
+  );
+}
+
+function ApplyPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useUser();
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +51,7 @@ export default function ApplyPage() {
   const [coverLetter, setCoverLetter] = useState('');
   const [bidAmount, setBidAmount] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [files, setFiles] = useState([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -44,6 +59,10 @@ export default function ApplyPage() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    // Wait for user context to resolve so we can apply the per-arena
+    // applicant check below. Without it we'd race and either miss the
+    // gate (false positive open form) or flash a wrong error.
+    if (!user) return;
     let cancelled = false;
     setLoading(true);
     setLoadError('');
@@ -53,6 +72,19 @@ export default function ApplyPage() {
         if (cancelled) return;
         if (p.status !== 'open_for_bids') {
           setLoadError(t('projects.apply.errorState.notOpen'));
+          return;
+        }
+        // Owners cannot apply to their own projects (BE enforces; this
+        // gives a clearer error than a 403).
+        if (p.user_id && p.user_id === user.id) {
+          setLoadError(t('projects.apply.errorState.ownProject'));
+          return;
+        }
+        // Per-arena applicant check — FRONTEND_INTEGRATION.md §3.
+        // solidarity is entrepreneur-only, isnad also allows developer,
+        // private/arena are entrepreneur+engineering.
+        if (!canApplyArena(p.arena, user.account_type)) {
+          setLoadError(t('projects.apply.errorState.notEligible'));
           return;
         }
         if (p.has_applied) {
@@ -71,7 +103,7 @@ export default function ApplyPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, t]);
+  }, [id, t, user]);
 
   const validate = () => {
     const e = {};
@@ -98,11 +130,26 @@ export default function ApplyPage() {
     setSubmitError('');
     setSubmitting(true);
     try {
-      await applicationsApi.applicant.submit(Number(id), {
+      const created = await applicationsApi.submit(Number(id), {
         cover_letter: coverLetter.trim(),
         bid_amount: Math.round(Number(bidAmount)),
-        delevery_date: deliveryDate,
+        delivery_date: deliveryDate,
       });
+
+      // Upload supporting files sequentially. BE enforces applicant-only,
+      // pending-only, 20 MB max, PDF/JPG/JPEG/PNG/DOC/DOCX/XLS/XLSX. If
+      // any single upload fails, surface it but still treat the app as
+      // submitted (user can manage files later from the applications page).
+      if (created?.id && files.length > 0) {
+        for (const f of files) {
+          try {
+            await applicationsApi.uploadFile(created.id, f);
+          } catch (_err) {
+            // Soft-fail: the cover-letter/bid are already saved.
+          }
+        }
+      }
+
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.message || t('projects.apply.errorGeneric'));
@@ -234,11 +281,14 @@ export default function ApplyPage() {
               />
 
               <div className="grid sm:grid-cols-2 gap-4">
+                {/* Bidders never see the client budget — it stays sealed
+                    until acceptance. Pass undefined so BidAmountField
+                    drops the "above/below client budget" hint. */}
                 <BidAmountField
                   value={bidAmount}
                   onChange={(e) => setBidAmount(e.target.value)}
                   error={errors.bid_amount}
-                  customerBudget={project.budget}
+                  customerBudget={undefined}
                   t={t}
                 />
                 <DeliveryDateField
@@ -248,6 +298,18 @@ export default function ApplyPage() {
                   t={t}
                 />
               </div>
+
+              <div
+                className="my-6 border-t"
+                style={{ borderColor: 'var(--border-soft)' }}
+              />
+
+              <SectionHeader
+                title={t('projects.apply.sections.filesTitle')}
+                subtitle={t('projects.apply.sections.filesSubtitle')}
+              />
+
+              <AttachmentsField files={files} onChange={setFiles} t={t} />
 
               <div
                 className="flex gap-3 mt-7 p-4 rounded-[12px]"
@@ -470,13 +532,14 @@ function ProjectSummary({ project }) {
         <div className="px-6 py-5 grid grid-cols-2 gap-x-5 gap-y-4">
           <Fact icon={Tag} label={t('projects.apply.summary.type')} value={project.type} />
           <Fact icon={MapPin} label={t('projects.apply.summary.city')} value={project.city} />
-          {project.budget != null && (
-            <Fact
-              icon={Wallet}
-              label={t('projects.apply.summary.clientBudget')}
-              value={`${formatNumber(project.budget, lang)} ${t('common.currency')}`}
-            />
-          )}
+          {/* Budget is sealed from bidders until the owner accepts an
+              application. We show a "sealed" placeholder so bidders
+              know the budget exists but isn't revealed yet. */}
+          <Fact
+            icon={Wallet}
+            label={t('projects.apply.summary.clientBudget')}
+            value={t('projects.apply.summary.clientBudgetSealed')}
+          />
           {project.expected_duration && (
             <Fact
               icon={Clock}
@@ -712,6 +775,138 @@ function BidAmountField({ value, onChange, error, customerBudget, t }) {
       )}
     </div>
   );
+}
+
+const FILE_MAX_BYTES = 20 * 1024 * 1024; // BE cap: 20 MB
+const FILE_ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'];
+
+function AttachmentsField({ files, onChange, t }) {
+  const inputRef = React.useRef(null);
+  const [pickError, setPickError] = useState('');
+
+  const handlePick = (e) => {
+    const picked = Array.from(e.target.files || []);
+    e.target.value = ''; // reset so re-picking the same file fires change
+    if (picked.length === 0) return;
+
+    const errors = [];
+    const accepted = [];
+    for (const f of picked) {
+      const ext = f.name.split('.').pop()?.toLowerCase() || '';
+      if (!FILE_ALLOWED_EXT.includes(ext)) {
+        errors.push(t('projects.apply.files.typeRejected', { name: f.name }));
+        continue;
+      }
+      if (f.size > FILE_MAX_BYTES) {
+        errors.push(t('projects.apply.files.sizeRejected', { name: f.name }));
+        continue;
+      }
+      accepted.push(f);
+    }
+    setPickError(errors[0] || '');
+    if (accepted.length > 0) onChange([...files, ...accepted]);
+  };
+
+  const removeAt = (i) => onChange(files.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="animate-fade-up">
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+        onChange={handlePick}
+        style={{ display: 'none' }}
+      />
+
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-[12px] transition-all"
+        style={{
+          background: 'var(--bg-canvas)',
+          border: '1.5px dashed var(--border-default)',
+          color: 'var(--text-ink-soft)',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#136d4a';
+          e.currentTarget.style.background = 'rgba(19,109,74,0.04)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--border-default)';
+          e.currentTarget.style.background = 'var(--bg-canvas)';
+        }}
+      >
+        <UploadCloud size={22} strokeWidth={1.6} style={{ color: '#136d4a' }} />
+        <span className="font-semibold" style={{ fontSize: 13.5 }}>
+          {t('projects.apply.files.pickCta')}
+        </span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+          {t('projects.apply.files.hint')}
+        </span>
+      </button>
+
+      {pickError && <p className="field-err">{pickError}</p>}
+
+      {files.length > 0 && (
+        <ul className="m-0 p-0 mt-4 space-y-2">
+          {files.map((f, i) => (
+            <li
+              key={`${f.name}-${i}`}
+              className="list-none flex items-center gap-3 px-3.5 py-2.5 rounded-[10px]"
+              style={{
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-soft)',
+              }}
+            >
+              <Paperclip
+                size={14}
+                strokeWidth={1.7}
+                style={{ color: 'var(--text-muted)', flexShrink: 0 }}
+              />
+              <div className="min-w-0 flex-1">
+                <div
+                  className="font-semibold truncate"
+                  style={{ fontSize: 12.5, color: 'var(--text-ink)' }}
+                >
+                  {f.name}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {formatSize(f.size)}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeAt(i)}
+                aria-label={t('projects.apply.files.removeAria', { name: f.name })}
+                className="flex items-center justify-center flex-shrink-0"
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 7,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                }}
+              >
+                <XIcon size={12} strokeWidth={2} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function formatSize(bytes) {
+  if (bytes == null) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function DeliveryDateField({ value, onChange, error, t }) {

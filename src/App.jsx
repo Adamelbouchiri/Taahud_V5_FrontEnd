@@ -36,12 +36,14 @@ import IsnadArenaPage from './pages/arenas/IsnadArenaPage';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardHome from './pages/dashboard/DashboardHome';
 import ProfilePage from './pages/dashboard/ProfilePage';
+import ApplicationsPage from './pages/dashboard/ApplicationsPage';
 import ComingSoonPage from './pages/dashboard/ComingSoonPage';
 
 // Route guards
 import RequireAuth from './components/RequireAuth';
 import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
+import RequireServiceProvider from './components/RequireServiceProvider';
 
 
 /* ============================================================
@@ -198,9 +200,9 @@ function AppShell() {
           path="/projects/:id/apply"
           element={
             <RequireAuth>
-              <RequireNonSupplier>
+              <RequireServiceProvider>
                 <ApplyPage />
-              </RequireNonSupplier>
+              </RequireServiceProvider>
             </RequireAuth>
           }
         />
@@ -218,6 +220,7 @@ function AppShell() {
         >
           <Route index element={<DashboardHome />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="applications" element={<ApplicationsPage />} />
 
           {/* Coming-soon features. Each renders the same component
               with a different variant preset. Add them here so the
@@ -233,7 +236,6 @@ function AppShell() {
         <Route path="/dashboard/projects" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard/projects/new" element={<Navigate to="/projects/new" replace />} />
         <Route path="/dashboard/browse" element={<Navigate to="/projects" replace />} />
-        <Route path="/dashboard/applications" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

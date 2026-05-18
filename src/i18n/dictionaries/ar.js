@@ -916,12 +916,49 @@ export default {
       logout: 'تسجيل الخروج',
       items: {
         home: 'الرئيسية',
+        applications: 'الطلبات',
         profile: 'الملف الشخصي',
         ai: 'تحليلات الذكاء الاصطناعي',
         analytics: 'الإحصائيات',
         reports: 'التقارير',
         messages: 'الرسائل',
         notifications: 'الإشعارات',
+      },
+    },
+    applications: {
+      eyebrow: 'الطلبات',
+      title: 'إدارة الطلبات',
+      titleSubmittedOnly: 'طلباتي',
+      titleReceivedOnly: 'العروض المستلمة',
+      subtitle:
+        'كل العروض التي قدّمتها على مشاريع الآخرين والعروض المستلمة على مشاريعك في مكان واحد.',
+      subtitleSubmittedOnly:
+        'كل العروض التي قدّمتها على المشاريع المفتوحة، مع حالة كل عرض.',
+      subtitleReceivedOnly:
+        'العروض التي استلمتها على مشاريعك. راجع كل عرض ثم اقبله أو ارفضه.',
+      loadError: 'تعذّر تحميل الطلبات.',
+      actionError: 'تعذّر تنفيذ العمليّة. حاول مرة أخرى.',
+      projectFallback: 'مشروع #{id}',
+      tabs: {
+        submitted: 'طلباتي',
+        received: 'العروض المستلمة',
+      },
+      fields: {
+        bid: 'قيمة العرض',
+        delivery: 'تاريخ التسليم',
+      },
+      actions: {
+        accept: 'قبول',
+        reject: 'رفض',
+        openProject: 'فتح المشروع',
+      },
+      empty: {
+        submittedTitle: 'لم تقدّم أيّ عرض بعد.',
+        submittedSubtitle:
+          'تصفّح المشاريع المفتوحة وقدّم عرضك ليظهر هنا.',
+        receivedTitle: 'لم تستقبل أيّ عرض بعد.',
+        receivedSubtitle:
+          'بمجرد أن يقدّم شريك عرضاً على أحد مشاريعك، سيظهر هنا للمراجعة.',
       },
     },
     userMenu: {
@@ -1104,6 +1141,7 @@ export default {
       applicants: 'متقدّمون',
       budgetLabel: 'الميزانية',
       budgetUnspecified: 'ميزانية غير محدّدة',
+      budgetSealed: 'الميزانية مخفية',
       ownerFallback: 'عميل',
       ownerGeneric: 'صاحب المشروع',
       viewDetails: 'عرض التفاصيل',
@@ -1157,6 +1195,7 @@ export default {
         city: 'المدينة',
         duration: 'المدة المتوقعة',
         budget: 'الميزانية',
+        budgetSealed: 'تُكشف بعد قبول العرض',
         experience: 'الخبرة المطلوبة',
         startDate: 'تاريخ البداية',
         endDate: 'تاريخ الانتهاء',
@@ -1427,6 +1466,9 @@ export default {
           'عرّف بنفسك وبأعمالك السابقة بما يثبت قدرتك على إنجاز المشروع.',
         bidTitle: 'العرض المالي والزمني',
         bidSubtitle: 'حدّد قيمة العرض وتاريخ التسليم المتوقّع.',
+        filesTitle: 'المرفقات الداعمة',
+        filesSubtitle:
+          'الملف الشخصي، السيرة الذاتية، أعمال سابقة، أو شهادات. اختياري.',
       },
       cover: 'الرسالة',
       coverPlaceholder:
@@ -1450,6 +1492,7 @@ export default {
         type: 'النوع',
         city: 'المدينة',
         clientBudget: 'ميزانية العميل',
+        clientBudgetSealed: 'تُكشف بعد قبول العرض',
         duration: 'المدة المتوقعة',
         startDate: 'تاريخ البداية',
         endDate: 'تاريخ الانتهاء',
@@ -1461,6 +1504,8 @@ export default {
         title: 'تعذّر فتح صفحة التقديم',
         notOpen: 'هذا المشروع لم يعد مفتوحاً للعروض.',
         alreadyApplied: 'لقد قدّمت طلباً سابقاً على هذا المشروع.',
+        ownProject: 'لا يمكنك تقديم عرض على مشروعك الخاص.',
+        notEligible: 'نوع حسابك لا يسمح بتقديم عروض على هذه الساحة.',
         loadFailed: 'تعذّر تحميل المشروع.',
         backToBrowse: 'العودة للتصفّح',
       },
@@ -1479,6 +1524,13 @@ export default {
         deliveryFuture: 'تاريخ التسليم يجب أن يكون في المستقبل.',
       },
       errorGeneric: 'تعذّر إرسال الطلب. حاول مرة أخرى.',
+      files: {
+        pickCta: 'اختر ملفات للإرفاق',
+        hint: 'PDF، JPG، PNG، DOC، XLS — حتى ٢٠ ميجابايت لكل ملف.',
+        typeRejected: 'صيغة الملف غير مدعومة: {name}',
+        sizeRejected: 'الملف "{name}" أكبر من ٢٠ ميجابايت.',
+        removeAria: 'إزالة {name}',
+      },
     },
     requirements: {
       placeholder: 'مثال: رخصة بناء سارية',

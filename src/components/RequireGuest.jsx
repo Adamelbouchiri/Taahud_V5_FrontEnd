@@ -24,7 +24,9 @@ import { Navigate, useLocation } from 'react-router-dom';
  * ============================================================ */
 export default function RequireGuest({ children }) {
   const location = useLocation();
-  const token = localStorage.getItem('token');
+  // Check both buckets — sessionStorage covers a no-remember_me login.
+  const token =
+    localStorage.getItem('token') || sessionStorage.getItem('token');
 
   if (token) {
     // Already logged in — send to whatever was requested, or to

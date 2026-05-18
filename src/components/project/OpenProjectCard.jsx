@@ -2,6 +2,7 @@ import React from 'react';
 import {
   MapPin,
   Wallet,
+  Lock,
   ArrowLeft,
   Tag,
   Clock,
@@ -9,15 +10,23 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { canSeeProjectBudget } from '../../config/projectConstants';
 
 /**
  * Card used in the browse feed. Always opens the project details
  * page when clicked — the apply flow happens from there, after
  * the user has read the full project info.
+ *
+ * `currentUserId` is optional but required for budget visibility:
+ * if it matches the project owner or partner, the budget number is
+ * shown; otherwise a "sealed" placeholder appears. Browse feeds
+ * usually display other people's projects, so the budget stays
+ * hidden in practice.
  */
-export default function OpenProjectCard({ project, onView }) {
+export default function OpenProjectCard({ project, onView, currentUserId }) {
   const { t, lang } = useTranslation();
   const applied = project.has_applied;
+  const showBudget = canSeeProjectBudget(project, currentUserId);
 
   const ownerLabel = (() => {
     const at = project.owner?.account_type;
@@ -174,7 +183,7 @@ export default function OpenProjectCard({ project, onView }) {
         style={{ borderTop: '1px solid var(--border-soft)' }}
       >
         <div className="min-w-0">
-          {project.budget ? (
+          {project.budget && showBudget ? (
             <>
               <div
                 className="font-semibold uppercase mb-0.5"
@@ -195,6 +204,28 @@ export default function OpenProjectCard({ project, onView }) {
                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   {t('common.currency')}
                 </span>
+              </div>
+            </>
+          ) : project.budget ? (
+            // Budget exists but the viewer isn't the owner/partner —
+            // sealed until acceptance.
+            <>
+              <div
+                className="font-semibold uppercase mb-0.5"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                {t('projects.list.budgetLabel')}
+              </div>
+              <div
+                className="inline-flex items-center gap-1"
+                style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 600 }}
+              >
+                <Lock size={11} strokeWidth={1.8} />
+                {t('projects.list.budgetSealed')}
               </div>
             </>
           ) : (

@@ -18,13 +18,20 @@
                                           — requires the إسناد upgrade (600 ر.س/شهر)
 
    Each entry carries:
-     - `postableBy`: account types allowed to CREATE a project here.
+     - `postableBy`:  account types allowed to CREATE a project here.
                      Empty array = system-locked (no one can post manually).
                      The public arena is system-locked because its content
                      is aggregated from external sources (E'timad, Forsa,
                      Muqawil...) via API — users can't add to it.
-     - `viewableBy`: account types allowed to VIEW projects in this arena,
-                     per the V5 packages workbook (sheet 05_الساحات).
+     - `viewableBy`: account types allowed to VIEW non-owned projects in
+                     this arena. Per FRONTEND_INTEGRATION.md §3:
+                     owners/partners always see their own regardless.
+     - `applicableBy`: account types allowed to SUBMIT BIDS on projects
+                     here. Per FRONTEND_INTEGRATION.md §3 — matches the
+                     viewer table for internal arenas, but kept as its
+                     own field because the matrices could diverge later
+                     (e.g. suppliers eventually viewing public but not
+                     applying via the same channel).
      - `lockReason`:  short Arabic hint shown when the picker is locked
                      for that account type
      - `systemLocked`: true when no one can post (public arena).
@@ -44,6 +51,8 @@ export const ARENAS = [
     postableBy: [],
     systemLocked: true,
     viewableBy: ['supplier', 'entrepreneur', 'engineering'],
+    // Public is a future tendersalerts proxy — no bidding via this API.
+    applicableBy: [],
     lockReason: 'الفرص العامّة تُجمَع تلقائيّاً من مصادر خارجيّة.',
   },
   {
@@ -55,6 +64,7 @@ export const ARENAS = [
     accentSoft: 'rgba(19,109,74,0.08)',
     postableBy: ['individual'],
     viewableBy: ['entrepreneur', 'engineering'],
+    applicableBy: ['entrepreneur', 'engineering'],
     lockReason: 'متاحة لعملاء تعاهد فقط.',
   },
   {
@@ -66,6 +76,9 @@ export const ARENAS = [
     accentSoft: 'rgba(184,134,42,0.10)',
     postableBy: ['entrepreneur'],
     viewableBy: ['entrepreneur'],
+    // Per FRONTEND_INTEGRATION.md §3 — solidarity is entrepreneur-only,
+    // engineering offices cannot apply here.
+    applicableBy: ['entrepreneur'],
     lockReason: 'مخصّصة للمقاولين فقط.',
   },
   {
@@ -76,7 +89,12 @@ export const ARENAS = [
     color: '#7a3aa3',
     accentSoft: 'rgba(122,58,163,0.10)',
     postableBy: ['developer'],
-    viewableBy: ['developer'],
+    // Per FRONTEND_INTEGRATION.md §3 — non-owner viewers are entrepre-
+    // neurs and engineering offices. The developer owns the projects
+    // here and sees them via "my projects" (owner check), not as a
+    // marketplace browser.
+    viewableBy: ['entrepreneur', 'engineering'],
+    applicableBy: ['entrepreneur', 'engineering'],
     lockReason: 'مخصّصة للمطوّر العقاري.',
   },
   {
@@ -89,7 +107,11 @@ export const ARENAS = [
     // Posting is restricted to real-estate developers (screenshot
     // 2026-05-12 153348 — "من يستطيع تنزيل / طرح المشروع؟").
     postableBy: ['developer'],
-    viewableBy: ['developer', 'entrepreneur', 'engineering', 'financier'],
+    // Per FRONTEND_INTEGRATION.md §3 — entrepreneurs, engineering, and
+    // OTHER developers may view/apply. ('financier' is in the roadmap
+    // but not a real account_type yet, so it's omitted.)
+    viewableBy: ['entrepreneur', 'engineering', 'developer'],
+    applicableBy: ['entrepreneur', 'engineering', 'developer'],
     isUpgrade: true,
     upgradePrice: '600 ر.س / شهر',
     lockReason: 'تتطلّب ترقية إسناد.',
@@ -168,6 +190,49 @@ export function canViewArena(arenaValue, accountType, hasIsnadUpgrade = false) {
   if (a.isUpgrade && !hasIsnadUpgrade) return false;
   if (!accountType) return true; // loading — don't gate prematurely
   return (a.viewableBy || []).includes(accountType);
+}
+
+/* True if the given account type is allowed to APPLY (submit bids)
+   on projects in this arena. Per FRONTEND_INTEGRATION.md §3 the rule
+   is per-arena: solidarity is entrepreneur-only, isnad also lets
+   developers bid, etc. Individuals and suppliers never apply.
+
+   Project ownership still has to be checked separately — owners can't
+   apply to their own projects regardless of arena. */
+export function canApplyArena(arenaValue, accountType) {
+  const a = ARENAS.find((x) => x.value === arenaValue);
+  if (!a) return false;
+  if (!accountType) return false; // unknown role — fail closed for apply
+  return (a.applicableBy || []).includes(accountType);
+}
+
+/* True if the account type can apply in at least one arena. Drives
+   broad pre-gates (e.g. the /projects/:id/apply route filter) before
+   we know which arena the project sits in. */
+export function canApplyAnyArena(accountType) {
+  if (!accountType) return false;
+  return ARENAS.some((a) => (a.applicableBy || []).includes(accountType));
+}
+
+/* True if this user is allowed to see the project's budget.
+   ----------------------------------------------------------------
+   Product rule (Adam, 2026-05-18): budget is sealed until accept.
+   Only the project owner sees it during the bidding phase. After
+   the owner accepts an application, the partner_id is set on the
+   project and the chosen partner can ALSO see the budget.
+
+   Everyone else (browsing users, applicants who haven't won yet,
+   arena viewers in general) sees a "budget undisclosed" placeholder
+   instead of the number.
+
+   Note: this is FE-side hiding only — the BE currently returns the
+   budget in API responses regardless of viewer. If true privacy is
+   needed later, the BE has to redact too. */
+export function canSeeProjectBudget(project, userId) {
+  if (!project || !userId) return false;
+  if (project.user_id === userId) return true; // owner
+  if (project.partner_id && project.partner_id === userId) return true; // accepted partner
+  return false;
 }
 
 /* Short reason string to show under a locked arena card. */

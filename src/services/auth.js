@@ -15,8 +15,16 @@ import http from './http';
  *    POST  /api/auth/logout-all
  *
  *  The bearer token is attached automatically by http.js's request
- *  interceptor — see services/http.js. Tokens get stored to
- *  localStorage on login/register and cleared on logout.
+ *  interceptor — see services/http.js.
+ *
+ *  Token storage (per FRONTEND_INTEGRATION.md §4):
+ *    remember_me === true   → localStorage  (survives browser close,
+ *                                            paired with BE's 30-day
+ *                                            TTL)
+ *    remember_me === false  → sessionStorage (dies with the tab,
+ *                                             paired with BE's 24h TTL)
+ *  http.js reads from BOTH on every request and clears BOTH on 401,
+ *  so the read path doesn't have to know which one was written.
  *
  *  Phone format: every phone payload must be normalized to
  *  +9665XXXXXXXX BEFORE being sent here. The auth pages handle
@@ -24,6 +32,28 @@ import http from './http';
  * ============================================================ */
 
 const TOKEN_KEY = 'token';
+
+/* Save the bearer token to the right storage based on persistence
+   intent. When persistent, use localStorage; otherwise sessionStorage.
+   Always clear the OTHER bucket so a stale token from a previous
+   session can't shadow the new one. */
+function saveToken(token, persistent) {
+  if (!token) return;
+  if (persistent) {
+    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } else {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+/* Clear from both buckets — used on logout, password change, and
+   password reset (which revoke the token server-side). */
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+}
 
 /* Reads the device label sent with login/register. Useful so you
    can later distinguish sessions in the DB (`web-chrome`, etc.). */
@@ -70,7 +100,11 @@ export const auth = {
 
     const res = await http.post('/auth/register', body);
     if (res?.token) {
-      localStorage.setItem(TOKEN_KEY, res.token);
+      // Registration always lands on /otp next, so we need the token
+      // to survive a tab-close mid-verification. Persist in
+      // localStorage; users can sign out after if they don't want to
+      // stay logged in.
+      saveToken(res.token, true);
     }
     return res; // { user, token, message }
   },
@@ -89,16 +123,20 @@ export const auth = {
    *  (unverified) or /dashboard (verified).
    * ============================================================ */
   async login(payload) {
+    const rememberMe = Boolean(payload.remember_me);
     const body = {
       login: payload.login, // already normalized email or phone
       password: payload.password,
-      remember_me: Boolean(payload.remember_me),
+      remember_me: rememberMe,
       device_name: deviceName(),
     };
 
     const res = await http.post('/auth/login', body);
     if (res?.token) {
-      localStorage.setItem(TOKEN_KEY, res.token);
+      // Mirror the BE's TTL choice in storage durability:
+      //   remember_me=true  → localStorage  (BE TTL: 30 days)
+      //   remember_me=false → sessionStorage (BE TTL: 24h, dies with tab)
+      saveToken(res.token, rememberMe);
     }
     return res; // { user, token, ... }
   },
@@ -155,7 +193,7 @@ export const auth = {
         payload.password_confirmation ?? payload.password,
     };
     const res = await http.post('/auth/change-password', body);
-    localStorage.removeItem(TOKEN_KEY);
+    clearToken();
     return res;
   },
 
@@ -191,7 +229,7 @@ export const auth = {
     try {
       await http.post('/auth/logout');
     } finally {
-      localStorage.removeItem(TOKEN_KEY);
+      clearToken();
     }
   },
 
@@ -206,7 +244,7 @@ export const auth = {
     try {
       await http.post('/auth/logout-all');
     } finally {
-      localStorage.removeItem(TOKEN_KEY);
+      clearToken();
     }
   },
 
@@ -243,7 +281,7 @@ export const auth = {
         payload.password_confirmation ?? payload.password,
     };
     const res = await http.post('/auth/reset-password', body);
-    localStorage.removeItem(TOKEN_KEY);
+    clearToken();
     return res;
   },
 };

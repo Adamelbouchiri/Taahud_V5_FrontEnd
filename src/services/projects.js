@@ -1,4 +1,4 @@
-import http from './http';
+import http, { resolveFileUrl } from './http';
 
 /* ============================================================
  *  PROJECTS SERVICE — wired to Taahud V5 API.
@@ -11,8 +11,21 @@ import http from './http';
  *    PATCH  /projects/:id            update (owner-only)
  *    DELETE /projects/:id            soft-delete (owner-only)
  *    POST   /projects/:id/restore    restore archived
- *    POST   /projects/:id/files      upload file (multipart)
+ *    POST   /projects/:id/files      upload file (multipart, max 10 MB)
  *    DELETE /projects/:id/files/:fid delete file
+ *
+ *  List-endpoint visibility (FRONTEND_INTEGRATION.md §10):
+ *    The BE applies different rules per the user's relationship to
+ *    each project:
+ *      - Owner   → sees all statuses
+ *      - Partner → sees all statuses
+ *      - Third-party browser → ONLY status `open_for_bids`
+ *    So a `pending_review`/`awarded`/`in_progress`/`completed` project
+ *    is invisible to arena viewers — only the owner and partner see
+ *    them. The FE never needs to filter by status client-side for
+ *    visibility; the BE returns exactly what the user is allowed to
+ *    see. The `mine=1` query flag narrows the response further to
+ *    only-owned projects.
  *
  *  Backend wraps single resources in { data: {...} } and lists in
  *  { data: [...], links, meta }. We unwrap here so callers get the
@@ -52,12 +65,17 @@ function adaptProject(p) {
   }
 
   if (Array.isArray(p.files)) {
-    out.files = p.files.map((f) => ({
-      ...f,
-      // Mirror url → file_path so legacy renderers still work, while
-      // keeping original_name + size_bytes for proper display.
-      file_path: f.file_path ?? f.url,
-    }));
+    out.files = p.files.map((f) => {
+      const url = resolveFileUrl(f.url ?? f.file_path);
+      return {
+        ...f,
+        // Always emit a fully-qualified URL the browser can navigate
+        // to, regardless of whether the BE returned absolute or
+        // relative. Mirror to file_path too for legacy renderers.
+        url,
+        file_path: url,
+      };
+    });
   }
 
   return out;
@@ -85,7 +103,8 @@ export const projects = {
 
   /**
    * GET /api/projects?mine=1 — projects the current user owns.
-   * Backend returns paginated; we flatten to an array.
+   * Returns all statuses (owner sees their entire pipeline). Backend
+   * returns paginated; we flatten to an array.
    */
   async list(filters = {}) {
     const res = await http.get('/projects', {
@@ -96,8 +115,14 @@ export const projects = {
   },
 
   /**
-   * GET /api/projects?mine=0 — projects from other users that the
-   * current user is allowed to see (per the BE viewability matrix).
+   * GET /api/projects (no mine flag) — projects the user can see in
+   * the marketplace. BE applies visibility per relationship:
+   *   - own projects (any status)         ← from list page, mixed in
+   *   - partner projects (any status)     ← from list page, mixed in
+   *   - arena-viewable open_for_bids only ← the real "browse" set
+   *
+   * Callers that want strictly the third-party browse set should
+   * filter out p.user_id===me / p.partner_id===me locally.
    *
    * The FE has a `public` arena that the backend doesn't expose yet
    * (it's the future tendersalerts proxy). Short-circuit to an empty
@@ -116,13 +141,17 @@ export const projects = {
   /**
    * Projects the current user is "associated with" — i.e. ones they
    * own OR are the partner on. Used by the service-provider dashboard
-   * to surface live engagements (Postman: "A user always sees:
-   * Projects they own, Projects where they are the partner").
+   * to surface live engagements.
    *
-   * The BE has no `partner=mine` filter, so we lean on the visibility
-   * matrix (mine=0 returns own + partner + arena-viewable) and drop
-   * the arena-only rows here. Commonly empty until the
-   * accept-application flow lands and `partner_id` starts getting set.
+   * The BE has no `partner=mine` filter, but the default list call
+   * (no mine flag) already returns the union of:
+   *   - own (any status)
+   *   - partner (any status)
+   *   - arena-viewable open_for_bids
+   * so we filter the third bucket out client-side and keep the first
+   * two. Partner relationships are only populated after the owner
+   * accepts an application, so this is often empty for fresh
+   * service-provider accounts.
    */
   async associated(userId) {
     if (!userId) return [];
@@ -192,8 +221,8 @@ export const projects = {
     });
 
     const f = res?.data ?? res;
-    // Mirror url → file_path; keep original_name + size_bytes intact.
-    return { ...f, file_path: f.file_path ?? f.url };
+    const url = resolveFileUrl(f.url ?? f.file_path);
+    return { ...f, url, file_path: url };
   },
 
   /** DELETE /api/projects/:projectId/files/:fileId */
