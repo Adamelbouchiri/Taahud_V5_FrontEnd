@@ -123,13 +123,13 @@ export default {
       eyebrow: '专业服务',
       title: '一个平台，三类用户。',
       tabs: {
-        contractors: '承包商',
+        contractors: '承包商与工程办公室',
         suppliers: '供应商',
         developers: '开发商',
       },
       audienceDescriptions: {
         contractors:
-          '为执行项目的承包商和公司提供工具 — 赢得更多项目、专业地管理它们，并在数秒内解决法律和财务问题。',
+          '为执行和监管项目的承包商与工程办公室提供工具 — 赢得更多项目、专业地管理它们，并在数秒内解决法律和财务问题。',
         suppliers:
           '为建筑材料和设备供应商而设 — Taahud 直接连接您与数千家活跃的承包商及项目，并帮助您高效管理订单。',
         developers:

@@ -123,13 +123,13 @@ export default {
       eyebrow: 'Specialized services',
       title: 'One platform. Three kinds of users.',
       tabs: {
-        contractors: 'Contractors',
+        contractors: 'Contractors & engineering offices',
         suppliers: 'Suppliers',
         developers: 'Developers',
       },
       audienceDescriptions: {
         contractors:
-          'For contractors and companies who deliver projects — win more work, manage it professionally, and resolve legal & financial issues in seconds.',
+          'For contractors and engineering offices that deliver and supervise projects — win more work, manage it professionally, and resolve legal & financial issues in seconds.',
         suppliers:
           'For building-material and equipment suppliers — Taahud connects you directly to thousands of active contractors and projects, and helps you manage orders efficiently.',
         developers:
