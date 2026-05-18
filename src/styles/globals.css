@@ -304,6 +304,55 @@ html[lang='zh'] {
     font-family: inherit;
   }
 
+  /* ============================================================
+   *  Custom scrollbars — themed for light + dark.
+   *  ----------------------------------------------------------------
+   *  Two engines, one set of tokens:
+   *    Firefox / standards-track: `scrollbar-color` / `scrollbar-width`
+   *    WebKit (Chrome, Safari, Edge, Opera): the ::-webkit-scrollbar
+   *      pseudo-elements
+   *
+   *  All colors reference the same CSS variables that drive the rest
+   *  of the UI, so toggling html.dark automatically flips the bar to
+   *  the dark palette without a separate rule. Hover lifts the thumb
+   *  to the brand primary so the active scroll position is visible.
+   * ============================================================ */
+
+  /* Firefox + spec-compliant engines */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  /* WebKit / Blink */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 2px solid var(--bg-canvas);
+    border-radius: 999px;
+    transition: background-color 0.18s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Scoped surfaces (sidebars, modals, dropdowns) sitting on
+     var(--bg-surface) instead of var(--bg-canvas) — give the thumb
+     a matching border so it doesn't show a canvas-colored seam. */
+  .taahud-sidebar ::-webkit-scrollbar-thumb,
+  [data-on-surface='true'] ::-webkit-scrollbar-thumb {
+    border-color: var(--bg-surface);
+  }
+
   /* Respect the user's OS-level motion preference. Strip the fancy
      stuff but keep functional indicators. */
   @media (prefers-reduced-motion: reduce) {
