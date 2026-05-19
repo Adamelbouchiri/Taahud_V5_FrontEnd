@@ -1,28 +1,32 @@
 import React from 'react';
 import Navbar from '../components/landing/Navbar';
 import Hero from '../components/landing/Hero';
+import IntegratedPlatform from '../components/landing/IntegratedPlatform';
 import Services from '../components/landing/Services';
 import FeaturedProjects from '../components/landing/FeaturedProjects';
 import Arenas from '../components/landing/Arenas';
 import Testimonials from '../components/landing/Testimonials';
 import Plans from '../components/landing/Plans';
+import GuaranteeStrip from '../components/landing/GuaranteeStrip';
 import CtaBanner from '../components/landing/CtaBanner';
-import UpcomingFeatures from '../components/landing/UpcomingFeatures';
+import GetStarted from '../components/landing/GetStarted';
 import Footer from '../components/landing/Footer';
 
 /* ============================================================
  *  LandingPage — public marketing page
  *  ----------------------------------------------------------------
- *  Order matches the navbar links:
- *    Hero → Services → FeaturedProjects → Arenas → Testimonials
- *      → Plans → CtaBanner → UpcomingFeatures → Footer
+ *  Order:
+ *    Hero → IntegratedPlatform → Services → FeaturedProjects
+ *      → Arenas → Testimonials → Plans → GuaranteeStrip
+ *      → CtaBanner → GetStarted → Footer
  *
- *  Stats are baked into the Hero (no separate section anymore).
- *  Old "About" and "Contact" sections were dropped — the new
- *  Arenas section + Footer contact column cover the same ground.
- *  UpcomingFeatures sits right before Footer to tease the next
- *  wave of features (Academy + affiliate marketing) without
- *  disrupting the conversion CTA above it.
+ *  IntegratedPlatform sits right under the Hero so the
+ *  "what is Taahud, exactly?" answer is immediately visible.
+ *  GuaranteeStrip slots between Plans and the conversion CTA to
+ *  soften the pricing reveal with the refund promise.
+ *  GetStarted replaces the older UpcomingFeatures block —
+ *  same audience (Academy + affiliate) but interactive:
+ *  email-capture on Academy, sign-up CTA on Affiliate.
  * ============================================================ */
 
 export default function LandingPage() {
@@ -31,13 +35,15 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <IntegratedPlatform />
         <Services />
         <FeaturedProjects />
         <Arenas />
         <Testimonials />
         <Plans />
+        <GuaranteeStrip />
         <CtaBanner />
-        <UpcomingFeatures />
+        <GetStarted />
       </main>
       <Footer />
     </>
