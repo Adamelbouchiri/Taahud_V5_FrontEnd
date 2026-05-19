@@ -9,6 +9,24 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import arDict from '../../i18n/dictionaries/ar';
+import enDict from '../../i18n/dictionaries/en';
+import zhDict from '../../i18n/dictionaries/zh';
+
+// Direct dictionary access — needed for array-valued keys (tags
+// list). The shared t() helper only resolves leaf strings and
+// returns undefined for arrays, so it falls back to the key
+// string itself and arrays disappear from the rendered output.
+const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+function lookupArray(lang, path) {
+  const parts = path.split('.');
+  let cur = DICTS[lang] || DICTS.ar;
+  for (const p of parts) {
+    if (cur && typeof cur === 'object' && p in cur) cur = cur[p];
+    else return [];
+  }
+  return Array.isArray(cur) ? cur : [];
+}
 
 /* ============================================================
  *  GetStarted — "جاهز تبدأ مع تعاهد؟"
@@ -232,12 +250,13 @@ function AcademyCard({ t }) {
  * ============================================================ */
 function AffiliateCard({ t }) {
   const navigate = useNavigate();
-  const { dir } = useTranslation();
+  const { dir, lang } = useTranslation();
   const accent = '#b8862a';
   const accentSoft = 'rgba(184,134,42,0.12)';
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
-  const tagsRaw = t('landing.getStarted.affiliate.tags');
-  const tags = Array.isArray(tagsRaw) ? tagsRaw : [];
+  // Read the tags array straight from the active dictionary —
+  // t() resolves leaves only and would return undefined here.
+  const tags = lookupArray(lang, 'landing.getStarted.affiliate.tags');
 
   return (
     <article

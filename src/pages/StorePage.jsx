@@ -18,6 +18,24 @@ import {
 import Navbar from '../components/landing/Navbar';
 import Footer from '../components/landing/Footer';
 import { useTranslation } from '../i18n/LanguageContext';
+import arDict from '../i18n/dictionaries/ar';
+import enDict from '../i18n/dictionaries/en';
+import zhDict from '../i18n/dictionaries/zh';
+
+// Direct dictionary access for array-valued keys. The shared
+// t() helper resolves leaf strings only and returns undefined
+// for arrays — which is why the categories list previously
+// rendered as the raw key string instead of pills.
+const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+function lookupArray(lang, path) {
+  const parts = path.split('.');
+  let cur = DICTS[lang] || DICTS.ar;
+  for (const p of parts) {
+    if (cur && typeof cur === 'object' && p in cur) cur = cur[p];
+    else return [];
+  }
+  return Array.isArray(cur) ? cur : [];
+}
 
 /* ============================================================
  *  StorePage — public coming-soon screen at /store.
@@ -43,7 +61,7 @@ const FEATURE_ICONS = [ShieldCheck, Tag, Truck, CreditCard];
 export default function StorePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, dir } = useTranslation();
+  const { t, dir, lang } = useTranslation();
   const [notified, setNotified] = useState(false);
 
   // Smooth-scroll the user to the top when they arrive — coming
@@ -68,10 +86,10 @@ export default function StorePage() {
   // Keep keys aligned with i18n entries store.features.{0..3}.
   const featureKeys = [0, 1, 2, 3];
 
-  // Category teaser — array provided by the dictionary so each
-  // language can write its own labels in natural script.
-  const categories = t('store.teaser.categoryItems');
-  const categoryArray = Array.isArray(categories) ? categories : [];
+  // Category teaser — array lives in the dictionary so each
+  // language can write its own labels. Pulled directly via
+  // lookupArray since t() only resolves leaf strings.
+  const categoryArray = lookupArray(lang, 'store.teaser.categoryItems');
   // Icons rotated through the category list; purely decorative.
   const CATEGORY_ICONS = [Wrench, PackageOpen, HardHat, ShoppingBag];
 
