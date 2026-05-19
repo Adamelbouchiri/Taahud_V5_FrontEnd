@@ -1591,7 +1591,7 @@ export default {
       label: 'Public arena',
       short: 'Numu',
       desc:
-        'Public opportunities aggregated from external sources (Etimad, Forsa, Muqawil...) — visible to suppliers, contractors, and engineering offices.',
+        'Public opportunities aggregated from external sources (Etimad, Forsa, Muqawil...) — visible to contractors and engineering offices.',
       lockReason: 'Public opportunities are aggregated automatically from external sources.',
     },
     private: {

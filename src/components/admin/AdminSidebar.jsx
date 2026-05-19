@@ -41,11 +41,19 @@ const NAV_ITEMS = [
 export default function AdminSidebar({ open, onClose }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { roles, logout, isSuperAdmin } = useUser();
+  const { user, roles, logout, isSuperAdmin } = useUser();
 
   const items = NAV_ITEMS.filter((it) =>
     it.roles.some((r) => roles.includes(r))
   );
+
+  // Hide the Store shortcut from admins whose underlying account_type
+  // is individual or developer — the marketplace targets
+  // contractors/engineering/suppliers and there's no procurement
+  // workflow for the other types.
+  const showStore =
+    !user?.account_type ||
+    ['entrepreneur', 'engineering', 'supplier'].includes(user.account_type);
 
   const handleLogout = async () => {
     try {
@@ -191,20 +199,22 @@ export default function AdminSidebar({ open, onClose }) {
             className="px-3 py-4 flex-shrink-0 flex flex-col gap-0.5"
             style={{ borderTop: '1px solid var(--border-soft)' }}
           >
-            <button
-              type="button"
-              className="nav-link w-full text-start"
-              onClick={() => {
-                navigate('/store', { state: { from: '/admin' } });
-                onClose?.();
-              }}
-            >
-              <ShoppingBag size={17} strokeWidth={1.75} />
-              <span className="flex-1 truncate">{t('nav.store')}</span>
-              <span className="admin-soon-pill">
-                {t('dashboard.sidebar.soon')}
-              </span>
-            </button>
+            {showStore && (
+              <button
+                type="button"
+                className="nav-link w-full text-start"
+                onClick={() => {
+                  navigate('/store', { state: { from: '/admin' } });
+                  onClose?.();
+                }}
+              >
+                <ShoppingBag size={17} strokeWidth={1.75} />
+                <span className="flex-1 truncate">{t('nav.store')}</span>
+                <span className="admin-soon-pill">
+                  {t('dashboard.sidebar.soon')}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               className="nav-link w-full text-start"

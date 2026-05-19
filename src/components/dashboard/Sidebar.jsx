@@ -64,13 +64,15 @@ const NAV_ITEMS = [
 
 const SOON_ITEMS = [
   // Store sits at the top of the Soon group because it's the
-  // most cross-cutting upcoming feature — surfaced from the
-  // landing navbar and both dashboards (user + admin).
+  // most cross-cutting upcoming feature. Hidden from individuals
+  // and developers — the upcoming marketplace targets contractors,
+  // engineering offices, and suppliers; individuals/developers
+  // have no procurement workflow that needs it.
   {
     to: '/store',
     labelKey: 'nav.store',
     icon: ShoppingBag,
-    accountTypes: ALL_TYPES,
+    accountTypes: ['entrepreneur', 'engineering', 'supplier'],
   },
   {
     to: '/dashboard/ai-analysis',

@@ -17,14 +17,30 @@ import { useTranslation } from '../../i18n/LanguageContext';
 /* Nav links — `href` starting with `#` triggers smooth-scroll to
    that section on the landing page; `route: true` flips the
    handler over to react-router navigation. The Store entry is the
-   only route-style link today; the rest are anchor scrolls.       */
+   only route-style link today; the rest are anchor scrolls.
+
+   Some links carry an `accountTypes` allowlist used at render time
+   to hide them for ineligible signed-in users. Guests (no
+   account_type yet) still see everything — they can't be classified.
+*/
 function navLinksFor(t) {
   return [
     { key: 'services', label: t('nav.services'), href: '#services' },
     { key: 'testimonials', label: t('nav.testimonials'), href: '#testimonials' },
     { key: 'arenas', label: t('nav.arenas'), href: '#arenas' },
     { key: 'plans', label: t('nav.plans'), href: '#plans' },
-    { key: 'store', label: t('nav.store'), to: '/store', route: true, icon: ShoppingBag, soon: true },
+    {
+      key: 'store',
+      label: t('nav.store'),
+      to: '/store',
+      route: true,
+      icon: ShoppingBag,
+      soon: true,
+      // Store targets contractors, engineering offices, and
+      // suppliers; hide for individuals + developers (signed-in
+      // only — guests still see it).
+      accountTypes: ['entrepreneur', 'engineering', 'supplier'],
+    },
   ];
 }
 
@@ -83,7 +99,14 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, status } = useLandingAuth();
   const isAuthed = status === 'authed';
-  const NAV_LINKS = navLinksFor(t);
+  // Filter out links the signed-in user shouldn't see. Guests
+  // and users mid-load see the full set — we only narrow once
+  // we know which account_type they have.
+  const NAV_LINKS = navLinksFor(t).filter((l) => {
+    if (!l.accountTypes) return true;
+    if (!isAuthed || !user?.account_type) return true;
+    return l.accountTypes.includes(user.account_type);
+  });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);

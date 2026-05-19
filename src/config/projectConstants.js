@@ -45,12 +45,16 @@ export const ARENAS = [
     value: 'public',
     label: 'الساحة العامة',
     shortLabel: 'نمو',
-    desc: 'فرص عامّة مجمّعة من مصادر خارجيّة (اعتماد، فرصة، مقاول...) تظهر للموردين والمقاولين والمكاتب الهندسيّة.',
+    desc: 'فرص عامّة مجمّعة من مصادر خارجيّة (اعتماد، فرصة، مقاول...) تظهر للمقاولين والمكاتب الهندسيّة.',
     color: '#2c2f7c',
     accentSoft: 'rgba(44,47,124,0.08)',
     postableBy: [],
     systemLocked: true,
-    viewableBy: ['supplier', 'entrepreneur', 'engineering'],
+    // Suppliers were excluded after a product-side decision —
+    // the public/نمو arena is now contractor + engineering-office
+    // only; the supplier-facing equivalent (Tendersalerts) is a
+    // separate system.
+    viewableBy: ['entrepreneur', 'engineering'],
     // Public is a future tendersalerts proxy — no bidding via this API.
     applicableBy: [],
     lockReason: 'الفرص العامّة تُجمَع تلقائيّاً من مصادر خارجيّة.',

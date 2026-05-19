@@ -147,9 +147,10 @@ function AppShell() {
         {/* ===== Project flows =====
             Full-screen, no sidebar.
             - Browse routes (/projects, /projects/:arena): auth only.
-              The page enforces arena viewability per the screenshot
-              matrix (suppliers can see /projects/public; others see
-              the arenas in their viewableBy).
+              The page enforces arena viewability per the V5 matrix
+              in config/projectConstants.js (suppliers no longer see
+              the public arena — Tendersalerts is their separate
+              system).
             - Write routes (new, :id/apply): blocked for suppliers,
               who don't have a project flow yet. */}
         <Route

@@ -1562,7 +1562,7 @@ export default {
     public: {
       label: '公共场域',
       short: 'Numu',
-      desc: '来自外部来源（Etimad、Forsa、Muqawil…）汇总的公开机会 — 面向供应商、承包商与工程事务所。',
+      desc: '来自外部来源（Etimad、Forsa、Muqawil…）汇总的公开机会 — 面向承包商与工程事务所。',
       lockReason: '公开机会是从外部来源自动汇总的。',
     },
     private: {
