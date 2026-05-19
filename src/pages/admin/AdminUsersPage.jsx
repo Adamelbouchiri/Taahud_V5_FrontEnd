@@ -32,6 +32,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [accountType, setAccountType] = useState('');
   const [suspended, setSuspended] = useState('');
+  const [role, setRole] = useState('');
   const [page, setPage] = useState(1);
   const [data, setData] = useState({ rows: [], meta: null });
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,7 @@ export default function AdminUsersPage() {
         search: search || undefined,
         account_type: accountType || undefined,
         suspended: suspended === '' ? undefined : suspended,
+        role: role || undefined,
         per_page: 25,
         page,
       });
@@ -67,7 +69,7 @@ export default function AdminUsersPage() {
   // could end up on an out-of-range page after narrowing the result set.
   useEffect(() => {
     setPage(1);
-  }, [search, accountType, suspended]);
+  }, [search, accountType, suspended, role]);
 
   const columns = useMemo(
     () => [
@@ -190,12 +192,16 @@ export default function AdminUsersPage() {
       <FilterBar
         title={t('admin.common.filtersTitle')}
         activeCount={
-          (search ? 1 : 0) + (accountType ? 1 : 0) + (suspended ? 1 : 0)
+          (search ? 1 : 0) +
+          (accountType ? 1 : 0) +
+          (suspended ? 1 : 0) +
+          (role ? 1 : 0)
         }
         onReset={() => {
           setSearch('');
           setAccountType('');
           setSuspended('');
+          setRole('');
         }}
         resetLabel={t('admin.common.reset')}
         searchValue={search}
@@ -222,6 +228,20 @@ export default function AdminUsersPage() {
             { value: '', label: t('admin.users.filters.suspendedAll') },
             { value: '0', label: t('admin.users.filters.suspendedActive') },
             { value: '1', label: t('admin.users.filters.suspendedSuspended') },
+          ]}
+        />
+        <FilterSelect
+          label={t('admin.users.filters.role')}
+          value={role}
+          onChange={setRole}
+          options={[
+            { value: '', label: t('admin.users.filters.roleAny') },
+            { value: 'admin', label: t('admin.users.filters.roleAdmin') },
+            {
+              value: 'super-admin',
+              label: t('admin.users.filters.roleSuperAdmin'),
+            },
+            { value: 'none', label: t('admin.users.filters.roleNone') },
           ]}
         />
       </FilterBar>

@@ -130,12 +130,17 @@ export const admin = {
    * USERS
    * ============================================================ */
   users: {
-    /** GET /admin/users */
+    /** GET /admin/users
+     *  Filters AND together on the BE. `role` accepts admin /
+     *  super-admin / none — the 'none' option lets staff find
+     *  regular users that haven't been granted any admin role.
+     */
     async list(filters = {}) {
       const params = strip({
         search: filters.search,
         account_type: filters.account_type,
         suspended: filters.suspended,
+        role: filters.role,
         per_page: filters.per_page,
         page: filters.page,
       });
@@ -188,16 +193,40 @@ export const admin = {
    * PROJECTS
    * ============================================================ */
   projects: {
-    /** GET /admin/projects */
+    /** GET /admin/projects
+     *  Admin sees every project across every arena, including
+     *  soft-deleted ones when `with_trashed`/`only_trashed` is set.
+     *
+     *  Filter set:
+     *    - search          fuzzy LIKE on name OR city
+     *    - arena / status  enum filters
+     *    - type            exact match on project type
+     *    - city            exact match on city (precise vs fuzzy
+     *                      search)
+     *    - owner_id        all projects owned by a given user
+     *                      (investigative)
+     *    - created_by_admin       0/1 — proxy-created only
+     *    - created_by_admin_id    audit trail by admin id
+     */
     async list(filters = {}) {
       const params = strip({
+        search: filters.search,
         arena: filters.arena,
         status: filters.status,
+        type: filters.type,
+        city: filters.city,
+        owner_id: filters.owner_id,
+        created_by_admin:
+          filters.created_by_admin === true
+            ? 1
+            : filters.created_by_admin === false
+            ? undefined
+            : filters.created_by_admin,
+        created_by_admin_id: filters.created_by_admin_id,
         with_trashed: filters.with_trashed ? 1 : undefined,
         only_trashed: filters.only_trashed ? 1 : undefined,
         per_page: filters.per_page,
         page: filters.page,
-        search: filters.search,
       });
       return unwrapPage(await http.get('/admin/projects', { params }));
     },

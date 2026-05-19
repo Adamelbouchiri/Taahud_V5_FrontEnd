@@ -93,6 +93,7 @@ export default {
     plans: 'الباقات',
     contact: 'تواصل',
     testimonials: 'آراء العملاء',
+    store: 'المتجر',
     login: 'تسجيل الدخول',
     register: 'إنشاء حساب',
     dashboard: 'لوحة التحكّم',
@@ -102,6 +103,35 @@ export default {
     openMenu: 'فتح القائمة',
     closeMenu: 'إغلاق القائمة',
     backHome: 'الرئيسية',
+  },
+
+  store: {
+    eyebrow: 'المتجر',
+    pill: 'قريباً',
+    title: 'متجر مصمّم للقطاع الإنشائي',
+    subtitle:
+      'مصادر المواد والمعدّات والأدوات من موردين سعوديين موثوقين — قريباً ضمن منصّة تعاهد.',
+    description:
+      'نبني سوقاً موحّداً يستطيع فيه المقاولون والمكاتب الهندسيّة والمطوّرون شراء كل ما يحتاجونه لمشاريعهم — مع موردين مُعتمَدين، تسعير شفّاف، وتوصيل مدمج.',
+    features: {
+      0: 'موردون مُعتمَدون من تعاهد — لا قوائم مجهولة المصدر.',
+      1: 'تسعير مباشر بشرائح كميّات وعروض على مستوى المشروع.',
+      2: 'مرتبط بمشاريعك: اطلب على ميزانية المشروع وتابع التوصيل.',
+      3: 'وسائل دفع سعوديّة (مدى، Apple Pay، تحويل بنكي) مدمجة.',
+    },
+    notify: 'أعلِمني عند الإطلاق',
+    notifyDone: 'تم تفعيل الإشعار',
+    back: 'رجوع',
+    backHome: 'العودة للرئيسية',
+    backDashboard: 'العودة إلى لوحة التحكّم',
+    previewLabel: 'معاينة تصوّر — التصميم قيد العمل',
+    teaser: {
+      categories: 'الأقسام',
+      categoryItems: ['الحديد والتسليح', 'الإسمنت والركام', 'الأدوات', 'معدّات السلامة'],
+      featured: 'موردون مميّزون',
+      placeholderSupplier: 'مورد موثوق',
+      placeholderItem: 'اسم المنتج',
+    },
   },
 
   landing: {
@@ -1770,6 +1800,11 @@ export default {
         suspendedAll: 'كل الحسابات',
         suspendedActive: 'النشطة فقط',
         suspendedSuspended: 'الموقوفة فقط',
+        role: 'الدور',
+        roleAny: 'كل الأدوار',
+        roleAdmin: 'مشرف',
+        roleSuperAdmin: 'مشرف عام',
+        roleNone: 'بدون صلاحية إشراف',
       },
       columns: {
         user: 'المستخدم',
@@ -1850,6 +1885,13 @@ export default {
       filters: {
         withTrashed: 'تضمين المؤرشفة',
         onlyTrashed: 'المؤرشفة فقط',
+        search: 'بحث',
+        searchPlaceholder: 'بحث باسم المشروع أو المدينة…',
+        type: 'النوع',
+        city: 'المدينة',
+        ownerId: 'معرّف المالك',
+        createdByAdmin: 'المُنشَأة نيابةً فقط',
+        createdByAdminId: 'مُنشَأ بواسطة المشرف',
       },
       columns: {
         project: 'المشروع',
@@ -1973,6 +2015,7 @@ export default {
         admin: 'مشرف',
         'super-admin': 'مشرف عام',
       },
+      hasRole: 'يملك دوراً',
       columns: {
         user: 'المستخدم',
         email: 'البريد',

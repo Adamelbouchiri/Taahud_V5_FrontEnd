@@ -116,17 +116,29 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
     };
   }, [arena, city, type, sort, blocked]);
 
+  // Client-side filter. The BE only supports `arena` / `status` /
+  // `mine` / pagination (FRONTEND_INTEGRATION.md §10.2) — `city`,
+  // `type`, and the free-text `search` are applied here against
+  // the array returned from /api/projects. Keep this filter chain
+  // in sync with the UI controls in <Toolbar />.
   const visible = useMemo(() => {
-    if (!search.trim()) return items;
     const q = search.trim().toLowerCase();
-    return items.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.type.toLowerCase().includes(q) ||
-        p.city.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
-    );
-  }, [items, search]);
+    return items.filter((p) => {
+      if (city !== 'all' && (p.city || '').toLowerCase() !== city.toLowerCase()) {
+        return false;
+      }
+      if (type !== 'all' && (p.type || '').toLowerCase() !== type.toLowerCase()) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.type || '').toLowerCase().includes(q) ||
+        (p.city || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+      );
+    });
+  }, [items, search, city, type]);
 
   const clearFilters = () => {
     setSearch('');

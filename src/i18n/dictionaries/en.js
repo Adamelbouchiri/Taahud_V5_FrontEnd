@@ -92,6 +92,7 @@ export default {
     plans: 'Plans',
     contact: 'Contact',
     testimonials: 'Testimonials',
+    store: 'Store',
     login: 'Sign in',
     register: 'Sign up',
     dashboard: 'Dashboard',
@@ -101,6 +102,35 @@ export default {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     backHome: 'Home',
+  },
+
+  store: {
+    eyebrow: 'Marketplace',
+    pill: 'Coming soon',
+    title: 'A storefront made for construction',
+    subtitle:
+      'Source materials, equipment, and tools from trusted Saudi suppliers — soon to be part of Taahud.',
+    description:
+      "We're building a unified marketplace where contractors, engineering offices, and developers can buy everything they need for a project — with verified suppliers, transparent pricing, and integrated delivery.",
+    features: {
+      0: 'Verified suppliers vetted by Taahud — no anonymous listings.',
+      1: 'Live pricing with bulk-quantity tiers and project-level quotes.',
+      2: 'Tied to your projects: order against a project budget and track delivery.',
+      3: 'Saudi payment methods (Mada, Apple Pay, bank transfer) built in.',
+    },
+    notify: 'Notify me at launch',
+    notifyDone: 'Notification enabled',
+    back: 'Back',
+    backHome: 'Back to home',
+    backDashboard: 'Back to dashboard',
+    previewLabel: 'Concept preview — design in progress',
+    teaser: {
+      categories: 'Categories',
+      categoryItems: ['Steel & rebar', 'Cement & aggregates', 'Tools', 'Safety gear'],
+      featured: 'Featured suppliers',
+      placeholderSupplier: 'Verified supplier',
+      placeholderItem: 'Item name',
+    },
   },
 
   landing: {
@@ -1773,6 +1803,11 @@ export default {
         suspendedAll: 'All accounts',
         suspendedActive: 'Active only',
         suspendedSuspended: 'Suspended only',
+        role: 'Role',
+        roleAny: 'Any role',
+        roleAdmin: 'Admin',
+        roleSuperAdmin: 'Super-admin',
+        roleNone: 'No admin role',
       },
       columns: {
         user: 'User',
@@ -1853,6 +1888,13 @@ export default {
       filters: {
         withTrashed: 'Include archived',
         onlyTrashed: 'Archived only',
+        search: 'Search',
+        searchPlaceholder: 'Search by project name or city…',
+        type: 'Type',
+        city: 'City',
+        ownerId: 'Owner ID',
+        createdByAdmin: 'Proxy-created only',
+        createdByAdminId: 'Created by admin ID',
       },
       columns: {
         project: 'Project',
@@ -1978,6 +2020,7 @@ export default {
         admin: 'Admin',
         'super-admin': 'Super-admin',
       },
+      hasRole: 'Has role',
       columns: {
         user: 'User',
         email: 'Email',

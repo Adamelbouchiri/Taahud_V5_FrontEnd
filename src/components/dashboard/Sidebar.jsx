@@ -17,6 +17,7 @@ import {
   Target,
   Landmark,
   Briefcase,
+  ShoppingBag,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -62,6 +63,15 @@ const NAV_ITEMS = [
 ];
 
 const SOON_ITEMS = [
+  // Store sits at the top of the Soon group because it's the
+  // most cross-cutting upcoming feature — surfaced from the
+  // landing navbar and both dashboards (user + admin).
+  {
+    to: '/store',
+    labelKey: 'nav.store',
+    icon: ShoppingBag,
+    accountTypes: ALL_TYPES,
+  },
   {
     to: '/dashboard/ai-analysis',
     labelKey: 'dashboard.sidebar.items.ai',
@@ -406,6 +416,15 @@ export default function Sidebar({ open, onClose }) {
                       <NavLink
                         to={item.to}
                         onClick={onClose}
+                        // Pass `from` state so off-dashboard pages
+                        // (currently just /store) know to send the
+                        // user back here via navigate(-1) instead
+                        // of falling through to /.
+                        state={
+                          item.to.startsWith('/dashboard')
+                            ? undefined
+                            : { from: '/dashboard' }
+                        }
                         className={({ isActive }) =>
                           `nav-link${isActive ? ' nav-link-active' : ''}`
                         }

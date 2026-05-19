@@ -92,6 +92,7 @@ export default {
     plans: '套餐',
     contact: '联系',
     testimonials: '客户评价',
+    store: '商城',
     login: '登录',
     register: '注册',
     dashboard: '控制台',
@@ -101,6 +102,35 @@ export default {
     openMenu: '打开菜单',
     closeMenu: '关闭菜单',
     backHome: '首页',
+  },
+
+  store: {
+    eyebrow: '商城',
+    pill: '即将上线',
+    title: '为建筑行业打造的商城',
+    subtitle:
+      '从可信赖的沙特供应商采购材料、设备和工具 — 即将集成到 Taahud 平台。',
+    description:
+      '我们正在打造一个统一的市场,承包商、工程办公室和开发商可以在这里购买项目所需的一切 — 经过认证的供应商、透明的定价、集成的配送。',
+    features: {
+      0: '由 Taahud 审核的认证供应商 — 不接受匿名商家。',
+      1: '实时定价,大宗数量分级,可生成项目级报价单。',
+      2: '与项目联动:按项目预算下单,跟踪配送状态。',
+      3: '内置沙特本地支付方式(Mada、Apple Pay、银行转账)。',
+    },
+    notify: '上线时通知我',
+    notifyDone: '已开启通知',
+    back: '返回',
+    backHome: '返回首页',
+    backDashboard: '返回控制台',
+    previewLabel: '概念预览 — 设计中',
+    teaser: {
+      categories: '分类',
+      categoryItems: ['钢材与钢筋', '水泥与骨料', '工具', '安全装备'],
+      featured: '精选供应商',
+      placeholderSupplier: '认证供应商',
+      placeholderItem: '商品名称',
+    },
   },
 
   landing: {
@@ -1744,6 +1774,11 @@ export default {
         suspendedAll: '所有账号',
         suspendedActive: '仅活跃',
         suspendedSuspended: '仅停用',
+        role: '角色',
+        roleAny: '所有角色',
+        roleAdmin: '管理员',
+        roleSuperAdmin: '超级管理员',
+        roleNone: '无管理员角色',
       },
       columns: {
         user: '用户',
@@ -1824,6 +1859,13 @@ export default {
       filters: {
         withTrashed: '包含归档',
         onlyTrashed: '仅归档',
+        search: '搜索',
+        searchPlaceholder: '按项目名称或城市搜索…',
+        type: '类型',
+        city: '城市',
+        ownerId: '所有者 ID',
+        createdByAdmin: '仅代建项目',
+        createdByAdminId: '由管理员创建 (ID)',
       },
       columns: {
         project: '项目',
@@ -1947,6 +1989,7 @@ export default {
         admin: '管理员',
         'super-admin': '超级管理员',
       },
+      hasRole: '拥有角色',
       columns: {
         user: '用户',
         email: '邮箱',

@@ -28,6 +28,22 @@ import {
 
 const ROLE_OPTIONS = ['admin', 'super-admin'];
 
+/* The /admin/roles/users endpoint returns role entries as objects:
+ *   { name: 'admin', display_name: 'Administrator' }
+ * but other admin endpoints (and the login/register response) emit
+ * roles as plain strings:
+ *   ['admin']
+ * Normalize both shapes to a flat array of role-name strings so the
+ * downstream membership checks and badge rendering don't have to
+ * branch. Defensive against malformed entries (returns []).
+ */
+function normalizeRoles(roles) {
+  if (!Array.isArray(roles)) return [];
+  return roles
+    .map((r) => (typeof r === 'string' ? r : r?.name))
+    .filter(Boolean);
+}
+
 export default function AdminRolesPage() {
   const { t } = useTranslation();
   const [roleFilter, setRoleFilter] = useState('');
@@ -45,12 +61,68 @@ export default function AdminRolesPage() {
   const [actionError, setActionError] = useState('');
   const [toast, setToast] = useState('');
 
+  /* The BE currently omits the `roles` array on rows from
+   * /admin/roles/users — see the FE workaround in the badge cell.
+   * To recover the per-row role info without an N+1 burst of
+   * /admin/users/:id requests, we issue ONE request per role we
+   * care about (`?role=admin` then `?role=super-admin`) and tag
+   * each row client-side based on which response it came from.
+   * Both requests fire in parallel; results are merged into a
+   * single rows array. Pagination metadata is dropped here since
+   * we may be combining pages from two queries — admin counts are
+   * small in practice and the BE caps per_page at 25.
+   *
+   * When the user picks a specific role in the filter we only
+   * issue that one request, preserving the meta for pagination.
+   */
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await admin.roles.listUsers(roleFilter || undefined);
-      setData({ rows: res.data, meta: res.meta });
+      if (roleFilter) {
+        const res = await admin.roles.listUsers(roleFilter);
+        const tagged = res.data.map((row) => ({
+          ...row,
+          _resolvedRoles: normalizeRoles(row.roles).length
+            ? normalizeRoles(row.roles)
+            : [roleFilter],
+        }));
+        setData({ rows: tagged, meta: res.meta });
+        return;
+      }
+
+      // No filter → fetch both role pools in parallel and merge.
+      const [adminsRes, supersRes] = await Promise.all([
+        admin.roles.listUsers('admin'),
+        admin.roles.listUsers('super-admin'),
+      ]);
+      const byId = new Map();
+      // Order matters: super-admins last so dual-role users end
+      // up tagged with both `admin` AND `super-admin`.
+      adminsRes.data.forEach((row) => {
+        const baseRoles = normalizeRoles(row.roles);
+        byId.set(row.id, {
+          ...row,
+          _resolvedRoles: baseRoles.length ? baseRoles : ['admin'],
+        });
+      });
+      supersRes.data.forEach((row) => {
+        const baseRoles = normalizeRoles(row.roles);
+        const existing = byId.get(row.id);
+        if (existing) {
+          const merged = new Set([
+            ...(existing._resolvedRoles || []),
+            ...(baseRoles.length ? baseRoles : ['super-admin']),
+          ]);
+          byId.set(row.id, { ...existing, _resolvedRoles: [...merged] });
+        } else {
+          byId.set(row.id, {
+            ...row,
+            _resolvedRoles: baseRoles.length ? baseRoles : ['super-admin'],
+          });
+        }
+      });
+      setData({ rows: [...byId.values()], meta: null });
     } catch (err) {
       setError(err.message || t('admin.common.loadError'));
       setData({ rows: [], meta: null });
@@ -127,23 +199,40 @@ export default function AdminRolesPage() {
         key: 'roles',
         label: t('admin.roles.columns.roles'),
         render: (row) => {
-          const roles = Array.isArray(row.roles) ? row.roles : [];
-          return (
-            <div className="flex flex-wrap gap-1">
-              {roles.length ? (
-                roles.map((r) => (
+          // Three sources, in priority order:
+          //   1. Real `roles` array from the BE (currently missing
+          //      due to BE bug, but works once they ship the fix).
+          //   2. `_resolvedRoles` injected by load() from filtered
+          //      requests — reliable workaround.
+          //   3. Fallback to the active filter / neutral chip.
+          const roles =
+            normalizeRoles(row.roles).length
+              ? normalizeRoles(row.roles)
+              : Array.isArray(row._resolvedRoles)
+              ? row._resolvedRoles
+              : [];
+          if (roles.length > 0) {
+            return (
+              <div className="flex flex-wrap gap-1">
+                {roles.map((r) => (
                   <Badge
                     key={r}
                     tone={r === 'super-admin' ? 'warning' : 'primary'}
                   >
                     {t(`admin.roles.roleNames.${r}`) || r}
                   </Badge>
-                ))
-              ) : (
-                <span style={{ color: 'var(--text-muted)' }}>—</span>
-              )}
-            </div>
-          );
+                ))}
+              </div>
+            );
+          }
+          if (roleFilter) {
+            return (
+              <Badge tone={roleFilter === 'super-admin' ? 'warning' : 'primary'}>
+                {t(`admin.roles.roleNames.${roleFilter}`) || roleFilter}
+              </Badge>
+            );
+          }
+          return <Badge tone="muted">{t('admin.roles.hasRole')}</Badge>;
         },
       },
       {
@@ -152,11 +241,20 @@ export default function AdminRolesPage() {
         headerStyle: { textAlign: 'end' },
         cellStyle: { textAlign: 'end' },
         render: (row) => {
-          const roles = Array.isArray(row.roles) ? row.roles : [];
-          // Only allow revoke on the 'admin' role; super-admin
-          // demotion isn't supported by the API.
-          const canRevoke = roles.includes('admin') && !roles.includes('super-admin');
-          return canRevoke ? (
+          // Hide Revoke when we know the user is super-admin-only —
+          // the API rejects revoking that role anyway. We trust
+          // either the BE-provided `roles` field or the
+          // _resolvedRoles tag from our paired-request fallback.
+          const roles =
+            normalizeRoles(row.roles).length
+              ? normalizeRoles(row.roles)
+              : Array.isArray(row._resolvedRoles)
+              ? row._resolvedRoles
+              : [];
+          const isKnownSuperAdmin =
+            roles.includes('super-admin') && !roles.includes('admin');
+          if (isKnownSuperAdmin) return null;
+          return (
             <button
               type="button"
               className="btn-secondary"
@@ -168,7 +266,7 @@ export default function AdminRolesPage() {
             >
               {t('admin.roles.revokeAction')}
             </button>
-          ) : null;
+          );
         },
       },
     ],

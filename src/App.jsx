@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import OtpPage from './pages/OtpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import StorePage from './pages/StorePage';
 
 // Legal pages — public, no guards
 import TermsPage from './pages/legal/TermsPage';
@@ -97,6 +98,11 @@ function AppShell() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
+        {/* /store is publicly accessible — same URL is linked from
+            the landing navbar (for guests) and from both the user
+            and admin sidebars (for authenticated users). The page
+            itself shows a coming-soon screen for now. */}
+        <Route path="/store" element={<StorePage />} />
 
         {/* ===== Guest-only (auth pages) =====
             If a logged-in user lands here, bounce them to /dashboard. */}

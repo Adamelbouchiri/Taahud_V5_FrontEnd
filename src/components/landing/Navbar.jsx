@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu,
   X,
@@ -7,18 +7,24 @@ import {
   ChevronDown,
   UserCircle,
   LogOut,
+  ShoppingBag,
 } from 'lucide-react';
 import Logo from '../Logo';
 import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 import { auth } from '../../services';
 import { useTranslation } from '../../i18n/LanguageContext';
 
+/* Nav links — `href` starting with `#` triggers smooth-scroll to
+   that section on the landing page; `route: true` flips the
+   handler over to react-router navigation. The Store entry is the
+   only route-style link today; the rest are anchor scrolls.       */
 function navLinksFor(t) {
   return [
     { key: 'services', label: t('nav.services'), href: '#services' },
     { key: 'testimonials', label: t('nav.testimonials'), href: '#testimonials' },
     { key: 'arenas', label: t('nav.arenas'), href: '#arenas' },
     { key: 'plans', label: t('nav.plans'), href: '#plans' },
+    { key: 'store', label: t('nav.store'), to: '/store', route: true, icon: ShoppingBag, soon: true },
   ];
 }
 
@@ -71,6 +77,7 @@ function useLandingAuth() {
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -89,6 +96,15 @@ export default function Navbar() {
     setOpen(false);
     const id = href.replace('#', '');
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleLinkClick = (link) => {
+    setOpen(false);
+    if (link.route) {
+      navigate(link.to, { state: { from: location.pathname || '/' } });
+    } else if (link.href) {
+      goToSection(link.href);
+    }
   };
 
   return (
@@ -115,13 +131,31 @@ export default function Navbar() {
         {/* Center links */}
         <ul className="hidden lg:flex items-center gap-9 m-0 p-0">
           {NAV_LINKS.map((l) => (
-            <li key={l.href} className="list-none">
+            <li key={l.key} className="list-none">
               <a
-                onClick={() => goToSection(l.href)}
-                className="text-[14px] font-medium hover:text-primary transition-colors cursor-pointer"
+                onClick={() => handleLinkClick(l)}
+                className="inline-flex items-center gap-1.5 text-[14px] font-medium hover:text-primary transition-colors cursor-pointer"
                 style={{ color: 'var(--text-ink-soft)' }}
               >
+                {l.icon && <l.icon size={14} strokeWidth={1.9} />}
                 {l.label}
+                {l.soon && (
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      padding: '2px 6px',
+                      borderRadius: 999,
+                      background: 'rgba(184,134,42,0.14)',
+                      color: '#b8862a',
+                      border: '1px solid rgba(184,134,42,0.22)',
+                    }}
+                  >
+                    {t('dashboard.sidebar.soon')}
+                  </span>
+                )}
               </a>
             </li>
           ))}
@@ -212,15 +246,33 @@ export default function Navbar() {
           <div className="px-6 py-5 flex flex-col gap-1">
             {NAV_LINKS.map((l) => (
               <a
-                key={l.href}
-                onClick={() => goToSection(l.href)}
-                className="py-3 text-[15px] font-medium cursor-pointer border-b last:border-0"
+                key={l.key}
+                onClick={() => handleLinkClick(l)}
+                className="py-3 inline-flex items-center gap-2 text-[15px] font-medium cursor-pointer border-b last:border-0"
                 style={{
                   color: 'var(--text-ink-soft)',
                   borderColor: 'var(--border-default)',
                 }}
               >
-                {l.label}
+                {l.icon && <l.icon size={15} strokeWidth={1.9} />}
+                <span className="flex-1">{l.label}</span>
+                {l.soon && (
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      padding: '2px 7px',
+                      borderRadius: 999,
+                      background: 'rgba(184,134,42,0.14)',
+                      color: '#b8862a',
+                      border: '1px solid rgba(184,134,42,0.22)',
+                    }}
+                  >
+                    {t('dashboard.sidebar.soon')}
+                  </span>
+                )}
               </a>
             ))}
 

@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   LogOut,
   X,
+  ShoppingBag,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -183,11 +184,27 @@ export default function AdminSidebar({ open, onClose }) {
 
           {/* Footer — switch back to the user dashboard sits next to
               the logout button, mirroring the user sidebar's layout
-              so admins always find the actions where they expect them. */}
+              so admins always find the actions where they expect them.
+              Store is exposed here too so admins can pop into the
+              upcoming marketplace from any operations screen. */}
           <div
             className="px-3 py-4 flex-shrink-0 flex flex-col gap-0.5"
             style={{ borderTop: '1px solid var(--border-soft)' }}
           >
+            <button
+              type="button"
+              className="nav-link w-full text-start"
+              onClick={() => {
+                navigate('/store', { state: { from: '/admin' } });
+                onClose?.();
+              }}
+            >
+              <ShoppingBag size={17} strokeWidth={1.75} />
+              <span className="flex-1 truncate">{t('nav.store')}</span>
+              <span className="admin-soon-pill">
+                {t('dashboard.sidebar.soon')}
+              </span>
+            </button>
             <button
               type="button"
               className="nav-link w-full text-start"
@@ -274,6 +291,20 @@ export default function AdminSidebar({ open, onClose }) {
           }
           .taahud-admin-sidebar .nav-link-active:hover {
             background: rgba(44,47,124,0.10);
+          }
+
+          .taahud-admin-sidebar .admin-soon-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #b8862a;
+            background: rgba(184,134,42,0.12);
+            border: 1px solid rgba(184,134,42,0.22);
+            flex-shrink: 0;
           }
         `}</style>
       </aside>

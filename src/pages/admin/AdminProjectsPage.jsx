@@ -10,6 +10,7 @@ import {
   FilterBar,
   FilterSelect,
   FilterCheckbox,
+  FilterText,
   DataTable,
   Pagination,
   Badge,
@@ -55,8 +56,14 @@ function statusTone(status) {
 export default function AdminProjectsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [search, setSearch] = useState('');
   const [arena, setArena] = useState('');
   const [status, setStatus] = useState('');
+  const [type, setType] = useState('');
+  const [city, setCity] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [createdByAdmin, setCreatedByAdmin] = useState(false);
+  const [createdByAdminId, setCreatedByAdminId] = useState('');
   const [withTrashed, setWithTrashed] = useState(false);
   const [onlyTrashed, setOnlyTrashed] = useState(false);
   const [page, setPage] = useState(1);
@@ -69,8 +76,14 @@ export default function AdminProjectsPage() {
     setError('');
     try {
       const res = await admin.projects.list({
+        search: search || undefined,
         arena: arena || undefined,
         status: status || undefined,
+        type: type || undefined,
+        city: city || undefined,
+        owner_id: ownerId || undefined,
+        created_by_admin: createdByAdmin || undefined,
+        created_by_admin_id: createdByAdminId || undefined,
         with_trashed: withTrashed,
         only_trashed: onlyTrashed,
         per_page: 25,
@@ -83,15 +96,42 @@ export default function AdminProjectsPage() {
     } finally {
       setLoading(false);
     }
-  }, [arena, status, withTrashed, onlyTrashed, page, t]);
+  }, [
+    search,
+    arena,
+    status,
+    type,
+    city,
+    ownerId,
+    createdByAdmin,
+    createdByAdminId,
+    withTrashed,
+    onlyTrashed,
+    page,
+    t,
+  ]);
 
+  // Debounce the load — primarily for the fuzzy `search` and the
+  // free-text inputs so each keystroke doesn't fire a request.
   useEffect(() => {
-    load();
+    const id = setTimeout(load, 300);
+    return () => clearTimeout(id);
   }, [load]);
 
   useEffect(() => {
     setPage(1);
-  }, [arena, status, withTrashed, onlyTrashed]);
+  }, [
+    search,
+    arena,
+    status,
+    type,
+    city,
+    ownerId,
+    createdByAdmin,
+    createdByAdminId,
+    withTrashed,
+    onlyTrashed,
+  ]);
 
   const columns = useMemo(
     () => [
@@ -221,15 +261,33 @@ export default function AdminProjectsPage() {
       <FilterBar
         title={t('admin.common.filtersTitle')}
         activeCount={
-          (arena ? 1 : 0) + (status ? 1 : 0) + (withTrashed ? 1 : 0) + (onlyTrashed ? 1 : 0)
+          (search ? 1 : 0) +
+          (arena ? 1 : 0) +
+          (status ? 1 : 0) +
+          (type ? 1 : 0) +
+          (city ? 1 : 0) +
+          (ownerId ? 1 : 0) +
+          (createdByAdmin ? 1 : 0) +
+          (createdByAdminId ? 1 : 0) +
+          (withTrashed ? 1 : 0) +
+          (onlyTrashed ? 1 : 0)
         }
         onReset={() => {
+          setSearch('');
           setArena('');
           setStatus('');
+          setType('');
+          setCity('');
+          setOwnerId('');
+          setCreatedByAdmin(false);
+          setCreatedByAdminId('');
           setWithTrashed(false);
           setOnlyTrashed(false);
         }}
         resetLabel={t('admin.common.reset')}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('admin.projects.filters.searchPlaceholder')}
       >
         <FilterSelect
           label={t('admin.projects.columns.arena')}
@@ -248,6 +306,33 @@ export default function AdminProjectsPage() {
             { value: '', label: t('admin.common.anyStatus') },
             ...STATUSES.map((s) => ({ value: s, label: t(`admin.statuses.${s}`) })),
           ]}
+        />
+        <FilterText
+          label={t('admin.projects.filters.type')}
+          value={type}
+          onChange={setType}
+        />
+        <FilterText
+          label={t('admin.projects.filters.city')}
+          value={city}
+          onChange={setCity}
+        />
+        <FilterText
+          label={t('admin.projects.filters.ownerId')}
+          value={ownerId}
+          onChange={setOwnerId}
+          type="number"
+        />
+        <FilterText
+          label={t('admin.projects.filters.createdByAdminId')}
+          value={createdByAdminId}
+          onChange={setCreatedByAdminId}
+          type="number"
+        />
+        <FilterCheckbox
+          label={t('admin.projects.filters.createdByAdmin')}
+          checked={createdByAdmin}
+          onChange={setCreatedByAdmin}
         />
         <FilterCheckbox
           label={t('admin.projects.filters.withTrashed')}
