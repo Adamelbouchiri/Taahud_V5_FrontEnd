@@ -107,7 +107,7 @@ const ARENA_ICONS = {
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, loading, logout } = useUser();
+  const { user, loading, logout, isAdmin } = useUser();
   const accountType = user?.account_type;
   // إسناد is paywalled — only show its sidebar link to users who
   // have actually paid for the upgrade. Field comes from the backend
@@ -251,6 +251,56 @@ export default function Sidebar({ open, onClose }) {
 
           {/* Nav links */}
           <nav className="flex-1 overflow-y-auto px-3 py-5">
+            {/* Admin shortcut — pinned at the top of the nav so
+                staff can flip back into the admin console with one
+                click. Only rendered for users whose persisted roles
+                snapshot contains admin or super-admin. The banner
+                style (vs. a regular nav link) is intentional: this
+                is a context switch, not just another sub-page. */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/admin');
+                  onClose?.();
+                }}
+                className="w-full text-start flex items-center gap-2.5 mb-4"
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 11,
+                  background: 'rgba(44,47,124,0.08)',
+                  border: '1px solid rgba(44,47,124,0.22)',
+                  color: 'var(--accent-primary)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  transition: 'background 0.18s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(44,47,124,0.14)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(44,47,124,0.08)')}
+              >
+                <ShieldCheck size={16} strokeWidth={2} />
+                <span className="flex-1 truncate">
+                  {t('admin.sidebar.items.overview')}
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                    borderRadius: 999,
+                    background: 'var(--accent-primary)',
+                    color: 'white',
+                  }}
+                >
+                  {t('admin.role.admin')}
+                </span>
+              </button>
+            )}
+
             <div
               className="px-3 mb-2 font-semibold uppercase"
               style={{

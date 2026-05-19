@@ -50,10 +50,22 @@ export default function LoginPage() {
         remember_me: remember,
       });
       const verified = res?.user?.is_phone_verified !== false;
+      // Admins land on the admin console after sign-in — unless
+      // the user was redirected here from a specific protected
+      // route, in which case honor that intent so they get back
+      // to where they were going.
+      const roles = Array.isArray(res?.roles) ? res.roles : [];
+      const isAdmin = roles.includes('admin') || roles.includes('super-admin');
+      const redirectTarget =
+        redirectAfterLogin && redirectAfterLogin !== '/dashboard'
+          ? redirectAfterLogin
+          : isAdmin
+          ? '/admin'
+          : '/dashboard';
       if (!verified) {
         navigate('/otp');
       } else {
-        navigate(redirectAfterLogin, { replace: true });
+        navigate(redirectTarget, { replace: true });
       }
     } catch (err) {
       setError(err.message || t('auth.login.errorGeneric'));

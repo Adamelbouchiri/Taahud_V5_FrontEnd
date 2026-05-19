@@ -44,6 +44,19 @@ import RequireAuth from './components/RequireAuth';
 import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
+import { RequireAdmin, RequireSuperAdmin } from './components/RequireAdmin';
+
+// Admin layout + pages — gated by RequireAdmin / RequireSuperAdmin.
+import AdminLayout from './components/admin/AdminLayout';
+import AdminOverviewPage from './pages/admin/AdminOverviewPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
+import AdminProjectsPage from './pages/admin/AdminProjectsPage';
+import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage';
+import AdminProjectCreatePage from './pages/admin/AdminProjectCreatePage';
+import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
+import AdminRolesPage from './pages/admin/AdminRolesPage';
+import AdminActivityPage from './pages/admin/AdminActivityPage';
 
 
 /* ============================================================
@@ -230,6 +243,42 @@ function AppShell() {
           <Route path="reports" element={<ComingSoonPage variant="reports" />} />
           <Route path="messages" element={<ComingSoonPage variant="messages" />} />
           <Route path="notifications" element={<ComingSoonPage variant="notifications" />} />
+        </Route>
+
+        {/* ===== Admin console =====
+            Two layered guards: RequireAuth checks the token, and
+            RequireAdmin gates on the roles snapshot persisted at
+            login (see services/auth.js). Super-admin-only routes
+            stack RequireSuperAdmin on top.
+
+            The BE enforces the same rules — these guards just
+            keep the UI from rendering "forbidden" shells. */}
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <RequireAdmin>
+                <AdminLayout />
+              </RequireAdmin>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<AdminOverviewPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="users/:id" element={<AdminUserDetailPage />} />
+          <Route path="projects" element={<AdminProjectsPage />} />
+          <Route path="projects/new" element={<AdminProjectCreatePage />} />
+          <Route path="projects/:id" element={<AdminProjectDetailPage />} />
+          <Route path="applications" element={<AdminApplicationsPage />} />
+          <Route path="activity" element={<AdminActivityPage />} />
+          <Route
+            path="roles"
+            element={
+              <RequireSuperAdmin>
+                <AdminRolesPage />
+              </RequireSuperAdmin>
+            }
+          />
         </Route>
 
         {/* ===== Legacy redirects ===== */}

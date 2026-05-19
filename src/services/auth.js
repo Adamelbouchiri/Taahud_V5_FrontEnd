@@ -32,6 +32,7 @@ import http from './http';
  * ============================================================ */
 
 const TOKEN_KEY = 'token';
+const ROLES_KEY = 'taahud:roles';
 
 /* Save the bearer token to the right storage based on persistence
    intent. When persistent, use localStorage; otherwise sessionStorage.
@@ -48,11 +49,54 @@ function saveToken(token, persistent) {
   }
 }
 
+/* Mirror the roles claim that comes with /login + /register to the
+   same storage bucket as the token, so RequireAdmin / RequireSuperAdmin
+   can answer synchronously without waiting on /auth/me. The roles
+   array stays authoritative on the BE — http.js's 401 path will clear
+   both keys, and useUser().refresh() rewrites them from /auth/me. */
+function saveRoles(roles, persistent) {
+  const json = JSON.stringify(Array.isArray(roles) ? roles : []);
+  if (persistent) {
+    localStorage.setItem(ROLES_KEY, json);
+    sessionStorage.removeItem(ROLES_KEY);
+  } else {
+    sessionStorage.setItem(ROLES_KEY, json);
+    localStorage.removeItem(ROLES_KEY);
+  }
+}
+
+export function readRoles() {
+  const raw =
+    localStorage.getItem(ROLES_KEY) || sessionStorage.getItem(ROLES_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function hasRole(role) {
+  return readRoles().includes(role);
+}
+
+export function isAdmin() {
+  const roles = readRoles();
+  return roles.includes('admin') || roles.includes('super-admin');
+}
+
+export function isSuperAdmin() {
+  return readRoles().includes('super-admin');
+}
+
 /* Clear from both buckets — used on logout, password change, and
    password reset (which revoke the token server-side). */
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(ROLES_KEY);
+  sessionStorage.removeItem(ROLES_KEY);
 }
 
 /* Reads the device label sent with login/register. Useful so you
@@ -105,8 +149,9 @@ export const auth = {
       // localStorage; users can sign out after if they don't want to
       // stay logged in.
       saveToken(res.token, true);
+      saveRoles(res.roles, true);
     }
-    return res; // { user, token, message }
+    return res; // { user, token, roles, message }
   },
 
   /* ============================================================
@@ -137,8 +182,9 @@ export const auth = {
       //   remember_me=true  → localStorage  (BE TTL: 30 days)
       //   remember_me=false → sessionStorage (BE TTL: 24h, dies with tab)
       saveToken(res.token, rememberMe);
+      saveRoles(res.roles, rememberMe);
     }
-    return res; // { user, token, ... }
+    return res; // { user, token, roles, ... }
   },
 
   /* ============================================================

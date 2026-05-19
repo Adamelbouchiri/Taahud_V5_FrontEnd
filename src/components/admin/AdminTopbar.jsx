@@ -1,23 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, ChevronDown, UserCircle, LogOut, Settings, ShieldCheck } from 'lucide-react';
+import { Menu, ChevronDown, UserCircle, LogOut, ArrowLeftRight } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 
 /* ============================================================
- *  Topbar — sits above the main content area.
- *  - On mobile, hosts the sidebar toggle.
- *  - Always shows the user avatar with a small dropdown.
- *  - Also hosts the language + theme switcher pair so dashboard
- *    users can change locale / dark mode anywhere in the app.
- *
- *  Props:
- *    onMenuToggle  → opens the mobile sidebar
- *    title         → optional page title shown next to the logo
+ *  AdminTopbar — mirrors the dashboard Topbar but rendered from
+ *  the AdminLayout. Hosts the mobile menu toggle, language/theme
+ *  switcher, and an admin user menu that includes a quick switch
+ *  back to the regular user dashboard.
  * ============================================================ */
 
-export default function Topbar({ onMenuToggle, title }) {
+export default function AdminTopbar({ onMenuToggle, title }) {
   const { t } = useTranslation();
   return (
     <header
@@ -29,7 +24,6 @@ export default function Topbar({ onMenuToggle, title }) {
     >
       <div className="flex items-center justify-between h-[96px] px-5 lg:px-8">
         <div className="flex items-center gap-3 min-w-0">
-          {/* Mobile menu toggle */}
           <button
             type="button"
             onClick={onMenuToggle}
@@ -66,19 +60,16 @@ export default function Topbar({ onMenuToggle, title }) {
 
         <div className="flex items-center gap-2">
           <LanguageThemeSwitcher compact />
-          <UserMenu />
+          <AdminUserMenu />
         </div>
       </div>
     </header>
   );
 }
 
-/* ============================================================
- *  UserMenu — avatar + dropdown
- * ============================================================ */
-function UserMenu() {
+function AdminUserMenu() {
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useUser();
+  const { user, logout, isSuperAdmin } = useUser();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -102,9 +93,9 @@ function UserMenu() {
   };
 
   const initial = (user?.name || '·').trim().charAt(0);
-  const roleLabel = user?.account_type
-    ? t(`accountType.${user.account_type}`)
-    : '';
+  const roleLabel = isSuperAdmin
+    ? t('admin.role.superAdmin')
+    : t('admin.role.admin');
 
   return (
     <div className="relative" ref={ref}>
@@ -121,10 +112,6 @@ function UserMenu() {
           border: '1px solid var(--border-default)',
           cursor: 'pointer',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-canvas)')}
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.background = open ? 'var(--bg-canvas)' : 'transparent')
-        }
       >
         <div
           className="flex items-center justify-center font-display font-bold flex-shrink-0"
@@ -132,7 +119,7 @@ function UserMenu() {
             width: 30,
             height: 30,
             borderRadius: '50%',
-            background: '#2c2f7c',
+            background: isSuperAdmin ? '#b8862a' : '#2c2f7c',
             color: 'white',
             fontSize: 13,
           }}
@@ -167,7 +154,6 @@ function UserMenu() {
             overflow: 'hidden',
           }}
         >
-          {/* Profile summary */}
           <div
             className="px-4 py-3.5"
             style={{ borderBottom: '1px solid var(--border-soft)' }}
@@ -178,48 +164,26 @@ function UserMenu() {
             >
               {user?.name || t('nav.profile')}
             </div>
-            {roleLabel && (
-              <div
-                className="font-medium mt-0.5"
-                style={{ fontSize: 12, color: 'var(--text-muted)' }}
-              >
-                {roleLabel}
-              </div>
-            )}
-          </div>
-
-          {/* Admin shortcut — surfaces the operations console from
-              the avatar menu for staff who roll into the user view
-              from the sidebar shortcut. Mirrors the link on the
-              AdminTopbar that lets them swap the other direction. */}
-          {isAdmin && (
             <div
-              className="py-1"
-              style={{ borderBottom: '1px solid var(--border-soft)' }}
+              className="font-medium mt-0.5"
+              style={{ fontSize: 12, color: 'var(--text-muted)' }}
             >
-              <MenuItem
-                icon={ShieldCheck}
-                label={t('admin.sidebar.items.overview')}
-                onClick={() => {
-                  setOpen(false);
-                  navigate('/admin');
-                }}
-              />
+              {roleLabel}
             </div>
-          )}
+          </div>
 
           <div className="py-1">
             <MenuItem
-              icon={UserCircle}
-              label={t('dashboard.userMenu.profile')}
+              icon={ArrowLeftRight}
+              label={t('admin.sidebar.switchToUser')}
               onClick={() => {
                 setOpen(false);
-                navigate('/dashboard/profile');
+                navigate('/dashboard');
               }}
             />
             <MenuItem
-              icon={Settings}
-              label={t('dashboard.userMenu.settings')}
+              icon={UserCircle}
+              label={t('dashboard.userMenu.profile')}
               onClick={() => {
                 setOpen(false);
                 navigate('/dashboard/profile');

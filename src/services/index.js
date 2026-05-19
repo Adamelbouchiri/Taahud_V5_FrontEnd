@@ -17,4 +17,5 @@ export { auth } from './auth';
 export { projects } from './projects';
 export { applications } from './applications';
 export { contact } from './contact';
+export { admin } from './admin';
 export { default as http } from './http';
