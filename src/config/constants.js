@@ -11,6 +11,11 @@ export const SALES_EMAIL = 'info@taahud.sa';
 export const SUPPORT_EMAIL = 'support@taahud.sa';
 export const SALES_PHONE_E164 = '+966537372053';
 
+/* Feature flag — when false, the post-register / post-login OTP step
+   is bypassed entirely and the user goes straight to the dashboard.
+   Re-enable once an SMS provider is wired up on the backend. */
+export const OTP_ENABLED = false;
+
 /* ============================================================
  *  ACCOUNT TYPES vs UI CATEGORIES
  *  ----------------------------------------------------------------

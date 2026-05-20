@@ -141,6 +141,10 @@ export default {
   },
 
   landing: {
+    partners: {
+      eyebrow: '我们的合作伙伴',
+      title: '信任我们的合作伙伴',
+    },
     hero: {
       pill: 'æ²™ç‰¹æŒç‰Œå¹³å°',
       titleLine1: 'ç®¡ç†å»ºç­‘å·¥ç¨‹',

@@ -6,6 +6,7 @@ import Field from '../components/form/Field';
 import PasswordField from '../components/form/PasswordField';
 import PhoneField from '../components/form/PhoneField';
 import { auth } from '../services';
+import { OTP_ENABLED } from '../config/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function LoginPage() {
@@ -62,7 +63,10 @@ export default function LoginPage() {
           : isAdmin
           ? '/admin'
           : '/dashboard';
-      if (!verified) {
+      // OTP_ENABLED is the kill switch — until SMS is wired up
+      // we always continue past the verification step, even when
+      // the BE flags the phone as unverified.
+      if (OTP_ENABLED && !verified) {
         navigate('/otp');
       } else {
         navigate(redirectTarget, { replace: true });

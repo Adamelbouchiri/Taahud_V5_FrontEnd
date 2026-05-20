@@ -141,6 +141,10 @@ export default {
   },
 
   landing: {
+    partners: {
+      eyebrow: 'Our partners',
+      title: 'Partners who trust us',
+    },
     hero: {
       pill: 'Licensed Saudi platform',
       titleLine1: 'Everything you need to run',

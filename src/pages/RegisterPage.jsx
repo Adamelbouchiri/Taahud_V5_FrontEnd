@@ -10,6 +10,7 @@ import {
   ACCOUNT_CATEGORIES,
   SERVICE_PROVIDER_ROLES,
   CITIES,
+  OTP_ENABLED,
   getSpecialties,
   hasSpecialty,
 } from '../config/constants';
@@ -91,7 +92,7 @@ export default function RegisterPage() {
       const digits = phone.replace(/\D/g, '').replace(/^0+/, '');
       const normalizedPhone = `+966${digits}`;
 
-      await auth.register({
+      const res = await auth.register({
         account_type: accountType,
         specialty: specialty || null,
         name,
@@ -100,7 +101,14 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
       });
-      navigate('/otp');
+      // OTP_ENABLED is the kill switch — until an SMS provider is
+      // wired up we skip the /otp step entirely and drop the user
+      // on the dashboard. When the flag flips back to true, also
+      // honor the BE's verification flag: only send the user to
+      // /otp if the BE explicitly says they're not verified yet.
+      const verified = res?.user?.is_phone_verified !== false;
+      const skipOtp = !OTP_ENABLED || verified;
+      navigate(skipOtp ? '/dashboard' : '/otp');
     } catch (err) {
       setSubmitError(err.message || t('auth.register.errorGeneric'));
     } finally {

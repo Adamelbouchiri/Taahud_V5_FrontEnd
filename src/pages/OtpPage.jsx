@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, RefreshCw, Check } from 'lucide-react';
 import AuthShell from '../components/auth/AuthShell';
 import { auth } from '../services';
+import { OTP_ENABLED } from '../config/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
@@ -39,18 +40,31 @@ export default function OtpPage() {
   const [phone, setPhone] = useState('');
   const inputs = useRef([]);
 
+  // OTP is disabled in the FE for now (no SMS provider yet) — any
+  // direct hit on /otp bounces to the dashboard. When the
+  // OTP_ENABLED flag flips back to true the original behavior
+  // (fetch the user, redirect only when already verified) returns.
   useEffect(() => {
+    if (!OTP_ENABLED) {
+      navigate('/dashboard', { replace: true });
+      return undefined;
+    }
     let cancelled = false;
     auth
       .me()
       .then((user) => {
-        if (!cancelled && user?.phone) setPhone(user.phone);
+        if (cancelled) return;
+        if (user?.is_phone_verified !== false) {
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        if (user?.phone) setPhone(user.phone);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (seconds <= 0) return;

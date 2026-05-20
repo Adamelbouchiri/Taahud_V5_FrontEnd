@@ -12,7 +12,12 @@
       "PowerShell($PWD.Path)",
       "PowerShell(git add *)",
       "PowerShell($path = \"C:\\\\react-projects\\\\Taahud_v5_frontend\\\\src\\\\i18n\\\\dictionaries\\\\zh.js\"; $content = [System.IO.File]::ReadAllText\\($path, [System.Text.Encoding]::UTF8\\); $idx = $content.IndexOf\\(\"companyName\"\\); if \\($idx -lt 0\\) { \"MISSING\" } else { $content.Substring\\($idx, 120\\) })",
-      "PowerShell(Remove-Item *)"
+      "PowerShell(Remove-Item *)",
+      "PowerShell(git commit *)",
+      "PowerShell(git push *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\user\\\\Downloads\" | Where-Object { $_.Name -match \"\\\\.\\(svg|png|jpg|jpeg|PNG|JPG|JPEG|SVG\\)$\" } | Sort-Object Name | Select-Object Name, Length)",
+      "PowerShell(Get-ChildItem -LiteralPath \"C:\\\\Users\\\\user\\\\Downloads\" -File | Where-Object { $_.Name -match \"\\\\.\\(svg|png|jpg|jpeg|PNG|JPG|JPEG|SVG\\)$\" } | Sort-Object Name | ForEach-Object { \"{0,-90} {1}\" -f $_.Name, $_.Length })",
+      "PowerShell(Get-Item *)"
     ]
   }
 }

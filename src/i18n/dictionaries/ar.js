@@ -142,6 +142,10 @@ export default {
   },
 
   landing: {
+    partners: {
+      eyebrow: 'شركاؤنا',
+      title: 'شركاء يثقون بنا',
+    },
     hero: {
       pill: 'منصة سعودية مرخّصة',
       titleLine1: 'مشاريع أكثر.',

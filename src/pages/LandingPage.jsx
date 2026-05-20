@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../components/landing/Navbar';
 import Hero from '../components/landing/Hero';
+import Partners from '../components/landing/Partners';
 import IntegratedPlatform from '../components/landing/IntegratedPlatform';
 import FeaturedProjects from '../components/landing/FeaturedProjects';
 import Arenas from '../components/landing/Arenas';
@@ -16,9 +17,9 @@ import Footer from '../components/landing/Footer';
  *  LandingPage — public marketing page
  *  ----------------------------------------------------------------
  *  Order:
- *    Hero → IntegratedPlatform → FeaturedProjects → Arenas
- *      → Testimonials → Plans → GuaranteeStrip → CtaBanner
- *      → GetStarted → Footer
+ *    Hero → Partners → IntegratedPlatform → FeaturedProjects
+ *      → Arenas → Testimonials → Plans → GuaranteeStrip
+ *      → CtaBanner → GetStarted → Footer
  *
  *  Services and Contact were extracted out to dedicated routes
  *  (/services and /contact) — reached via the navbar mega menu
@@ -45,6 +46,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <Partners />
         <IntegratedPlatform />
         <FeaturedProjects />
         <Arenas />
