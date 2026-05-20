@@ -3,7 +3,14 @@
     "allow": [
       "PowerShell($routes = @\\('/', '/projects', '/projects/public', '/projects/private', '/projects/solidarity', '/projects/arena', '/projects/assignment', '/projects/new'\\); foreach \\($r in $routes\\) { try { $resp = Invoke-WebRequest -Uri \"http://127.0.0.1:5181$r\" -UseBasicParsing -TimeoutSec 5; \"{0,-26} {1}  {2} bytes\" -f $r, $resp.StatusCode, $resp.RawContent.Length } catch { \"{0,-26} ERR  {1}\" -f $r, $_.Exception.Message } })",
       "WebFetch(domain:unsplash.com)",
-      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Services.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Plans.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Testimonials.jsx\" | Measure-Object -Line\\).Lines)"
+      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Services.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Plans.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\user\\\\Downloads\\\\taahud-frontend\\\\src\\\\components\\\\landing\\\\Testimonials.jsx\" | Measure-Object -Line\\).Lines)",
+      "PowerShell(\\(Get-Content C:\\\\react-projects\\\\taahud-frontend\\\\src\\\\i18n\\\\dictionaries\\\\zh.js | Measure-Object -Line\\).Lines)",
+      "PowerShell(Select-String -Path \"c:\\\\Users\\\\user\\\\Downloads\\\\Taahud_V5_Stats.postman_collection.json\" -Pattern '\"name\"|\"raw\"' | Select-Object -First 30 | ForEach-Object { \"{0}: {1}\" -f $_.LineNumber, $_.Line.Trim\\(\\) })",
+      "PowerShell(cd C:\\\\react-projects\\\\taahud-frontend; \\(Get-Content package.json | Out-String\\) -match 'recharts' ; node -e \"console.log\\(require\\('recharts/package.json'\\).version\\)\" 2>&1)",
+      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\user\\\\Downloads\\\\FRONTEND_INTEGRATION \\(1\\).md\" | Measure-Object -Line\\).Lines)",
+      "PowerShell(Select-String -Path \"c:\\\\Users\\\\user\\\\Downloads\\\\FRONTEND_INTEGRATION \\(1\\).md\" -Pattern '^##|filter|Filter|Query params|query parameter' -SimpleMatch | Select-Object -First 50 | ForEach-Object { \"{0}: {1}\" -f $_.LineNumber, $_.Line.Trim\\(\\) })",
+      "PowerShell($PWD.Path)",
+      "PowerShell(git add *)"
     ]
   }
 }

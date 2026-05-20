@@ -88,9 +88,16 @@ export default {
 
   nav: {
     home: 'الرئيسية',
+    about: 'من نحن',
     services: 'الخدمات',
+    servicesAll: 'كل الخدمات',
     arenas: 'الساحات',
-    plans: 'الباقات',
+    plans: 'الاشتراكات',
+    programs: 'برامج تعاهد',
+    programsItems: {
+      academy: 'أكاديمية تعاهد',
+      affiliate: 'وسيط التسويق بالعمولة',
+    },
     contact: 'تواصل',
     testimonials: 'آراء العملاء',
     store: 'المتجر',

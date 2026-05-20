@@ -89,7 +89,7 @@ export default {
     home: 'é¦–é¡µ',
     services: 'æœåŠ¡',
     arenas: 'åœºåŸŸ',
-    plans: 'å¥—é¤',
+    plans: '订阅',
     contact: 'è”ç³»',
     testimonials: 'å®¢æˆ·è¯„ä»·',
     store: 'å•†åŸŽ',
@@ -101,6 +101,13 @@ export default {
     settings: 'è®¾ç½®',
     openMenu: 'æ‰“å¼€èœå•',
     closeMenu: 'å…³é—­èœå•',
+    about: '关于我们',
+    servicesAll: '所有服务',
+    programs: 'Taahud 计划',
+    programsItems: {
+      academy: 'Taahud 学院',
+      affiliate: '联盟营销中介',
+    },
     backHome: 'é¦–é¡µ',
   },
 

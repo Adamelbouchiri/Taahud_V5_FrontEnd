@@ -86,19 +86,11 @@ export default function BrandPanel() {
             </span>
           </div>
 
-          <h1
-            className="font-display"
-            style={{
-              fontSize: 'clamp(72px, 8vw, 104px)',
-              fontWeight: 700,
-              lineHeight: 0.95,
-              margin: 0,
-              marginBottom: 26,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {t('auth.brand.name')}
-          </h1>
+          <Logo
+            variant="white"
+            height={140}
+            style={{ display: 'block', marginBottom: 26 }}
+          />
 
           <p
             style={{

@@ -19,15 +19,65 @@ import { useTranslation } from '../../i18n/LanguageContext';
    handler over to react-router navigation. The Store entry is the
    only route-style link today; the rest are anchor scrolls.
 
+   A link can also carry `items` (simple dropdown) or `mega`
+   (multi-column dropdown). Items in those menus can themselves
+   carry `href`, `to`/`route`, or `soon: true` for placeholder
+   pages that aren't built yet.
+
    Some links carry an `accountTypes` allowlist used at render time
    to hide them for ineligible signed-in users. Guests (no
    account_type yet) still see everything — they can't be classified.
 */
 function navLinksFor(t) {
   return [
-    { key: 'services', label: t('nav.services'), href: '#services' },
-    { key: 'testimonials', label: t('nav.testimonials'), href: '#testimonials' },
-    { key: 'arenas', label: t('nav.arenas'), href: '#arenas' },
+    { key: 'about', label: t('nav.about'), href: '#platform' },
+    {
+      key: 'programs',
+      label: t('nav.programs'),
+      items: [
+        { key: 'academy', label: t('nav.programsItems.academy'), soon: true },
+        { key: 'affiliate', label: t('nav.programsItems.affiliate'), soon: true },
+      ],
+    },
+    {
+      key: 'services',
+      label: t('nav.services'),
+      mega: {
+        href: '#services',
+        columns: [
+          {
+            title: t('landing.services.tabs.contractors'),
+            items: [
+              'hub', 'private', 'solidarity', 'contractGen', 'contractCheck',
+              'analyzer', 'tracker', 'ai', 'docs',
+            ].map((k) => ({
+              key: k,
+              label: t(`landing.services.cards.contractors.${k}.title`),
+            })),
+          },
+          {
+            title: t('landing.services.tabs.suppliers'),
+            items: [
+              'market', 'rfq', 'demand', 'delivery', 'payment',
+              'contracts', 'reputation', 'inventory', 'aiSales',
+            ].map((k) => ({
+              key: k,
+              label: t(`landing.services.cards.suppliers.${k}.title`),
+            })),
+          },
+          {
+            title: t('landing.services.tabs.developers'),
+            items: [
+              'network', 'tenders', 'portfolio', 'escrow', 'financing',
+              'analytics', 'qualify', 'investorReports', 'ai',
+            ].map((k) => ({
+              key: k,
+              label: t(`landing.services.cards.developers.${k}.title`),
+            })),
+          },
+        ],
+      },
+    },
     { key: 'plans', label: t('nav.plans'), href: '#plans' },
     {
       key: 'store',
@@ -142,50 +192,38 @@ export default function Navbar() {
         borderBottom: scrolled ? '1px solid var(--border-default)' : '1px solid transparent',
       }}
     >
-      <nav className="max-w-[1280px] mx-auto px-6 lg:px-12 h-[96px] flex items-center justify-between">
+      <nav className="max-w-[1360px] mx-auto px-6 lg:px-14 h-[116px] flex items-center justify-between gap-6">
         {/* Logo */}
         <a
           onClick={() => navigate('/')}
-          className="cursor-pointer flex items-center gap-2"
+          className="cursor-pointer flex items-center gap-2 shrink-0"
         >
-          <Logo height={68} />
+          <Logo height={88} />
         </a>
 
         {/* Center links */}
-        <ul className="hidden lg:flex items-center gap-9 m-0 p-0">
+        <ul className="hidden lg:flex items-center gap-10 m-0 p-0">
           {NAV_LINKS.map((l) => (
             <li key={l.key} className="list-none">
-              <a
-                onClick={() => handleLinkClick(l)}
-                className="inline-flex items-center gap-1.5 text-[14px] font-medium hover:text-primary transition-colors cursor-pointer"
-                style={{ color: 'var(--text-ink-soft)' }}
-              >
-                {l.icon && <l.icon size={14} strokeWidth={1.9} />}
-                {l.label}
-                {l.soon && (
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      padding: '2px 6px',
-                      borderRadius: 999,
-                      background: 'rgba(184,134,42,0.14)',
-                      color: '#b8862a',
-                      border: '1px solid rgba(184,134,42,0.22)',
-                    }}
-                  >
-                    {t('dashboard.sidebar.soon')}
-                  </span>
-                )}
-              </a>
+              {l.items || l.mega ? (
+                <NavDropdown link={l} onNavigate={handleLinkClick} t={t} />
+              ) : (
+                <a
+                  onClick={() => handleLinkClick(l)}
+                  className="inline-flex items-center gap-1.5 text-[14px] font-medium hover:text-primary transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-ink-soft)' }}
+                >
+                  {l.icon && <l.icon size={14} strokeWidth={1.9} />}
+                  {l.label}
+                  {l.soon && <SoonBadge t={t} />}
+                </a>
+              )}
             </li>
           ))}
         </ul>
 
         {/* Right side: switcher + CTAs OR user menu */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-3 shrink-0">
           <LanguageThemeSwitcher compact />
           {status === 'loading' ? (
             <AuthSkeleton />
@@ -268,35 +306,12 @@ export default function Navbar() {
         >
           <div className="px-6 py-5 flex flex-col gap-1">
             {NAV_LINKS.map((l) => (
-              <a
+              <MobileNavItem
                 key={l.key}
-                onClick={() => handleLinkClick(l)}
-                className="py-3 inline-flex items-center gap-2 text-[15px] font-medium cursor-pointer border-b last:border-0"
-                style={{
-                  color: 'var(--text-ink-soft)',
-                  borderColor: 'var(--border-default)',
-                }}
-              >
-                {l.icon && <l.icon size={15} strokeWidth={1.9} />}
-                <span className="flex-1">{l.label}</span>
-                {l.soon && (
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      padding: '2px 7px',
-                      borderRadius: 999,
-                      background: 'rgba(184,134,42,0.14)',
-                      color: '#b8862a',
-                      border: '1px solid rgba(184,134,42,0.22)',
-                    }}
-                  >
-                    {t('dashboard.sidebar.soon')}
-                  </span>
-                )}
-              </a>
+                link={l}
+                onNavigate={handleLinkClick}
+                t={t}
+              />
             ))}
 
             <div className="flex gap-2 mt-4">
@@ -346,6 +361,313 @@ export default function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+/* ============================================================
+ *  Shared "قريباً / Soon" pill used by nav links and dropdown items.
+ * ============================================================ */
+function SoonBadge({ t }) {
+  return (
+    <span
+      style={{
+        fontSize: 9.5,
+        fontWeight: 700,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        padding: '2px 6px',
+        borderRadius: 999,
+        background: 'rgba(184,134,42,0.14)',
+        color: '#b8862a',
+        border: '1px solid rgba(184,134,42,0.22)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {t('dashboard.sidebar.soon')}
+    </span>
+  );
+}
+
+/* ============================================================
+ *  NavDropdown — desktop dropdown for `items` (simple list) or
+ *  `mega` (multi-column). Click-toggle with outside-click + ESC
+ *  to dismiss, mirroring UserChip below.
+ * ============================================================ */
+function NavDropdown({ link, onNavigate, t }) {
+  const { dir } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const handleItem = (item) => {
+    setOpen(false);
+    if (item.soon) return; // placeholder — no nav target yet
+    onNavigate(item);
+  };
+
+  const isMega = !!link.mega;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 text-[14px] font-medium hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0"
+        style={{ color: 'var(--text-ink-soft)', fontFamily: 'inherit' }}
+      >
+        {link.label}
+        <ChevronDown
+          size={14}
+          style={{
+            transition: 'transform 0.18s',
+            transform: open ? 'rotate(180deg)' : 'none',
+          }}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute z-50 animate-fade-in"
+          style={{
+            top: 'calc(100% + 14px)',
+            ...(isMega
+              ? {
+                  insetInlineStart: '50%',
+                  // CSS `transform: translateX(-50%)` is direction-
+                  // agnostic — it always shifts left in pixel-space.
+                  // In RTL we need to shift right to land back under
+                  // the trigger button.
+                  transform:
+                    dir === 'rtl' ? 'translateX(50%)' : 'translateX(-50%)',
+                }
+              : { insetInlineStart: 0 }),
+            minWidth: isMega ? 720 : 240,
+            background: 'var(--bg-surface)',
+            borderRadius: 14,
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-elevated)',
+            overflow: 'hidden',
+          }}
+        >
+          {isMega ? (
+            <>
+              <div
+                className="grid gap-6 p-6"
+                style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}
+              >
+                {link.mega.columns.map((col) => (
+                  <div key={col.title}>
+                    <div
+                      className="font-bold mb-3"
+                      style={{
+                        fontSize: 11,
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      {col.title}
+                    </div>
+                    <ul className="m-0 p-0 flex flex-col gap-1">
+                      {col.items.map((item) => (
+                        <li key={item.key} className="list-none">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleItem({ href: link.mega.href })
+                            }
+                            className="w-full text-start transition-colors"
+                            style={{
+                              padding: '7px 10px',
+                              borderRadius: 8,
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: 'var(--text-ink-soft)',
+                              fontFamily: 'inherit',
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.background =
+                                'var(--bg-surface-soft)')
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.background = 'transparent')
+                            }
+                          >
+                            {item.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div
+                className="px-6 py-3"
+                style={{
+                  borderTop: '1px solid var(--border-soft)',
+                  background: 'var(--bg-surface-soft)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleItem({ href: link.mega.href })}
+                  className="text-[13px] font-semibold transition-colors bg-transparent border-0 p-0 cursor-pointer"
+                  style={{ color: '#2c2f7c', fontFamily: 'inherit' }}
+                >
+                  {t('nav.servicesAll')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <ul className="m-0 p-2 flex flex-col gap-0.5">
+              {link.items.map((item) => (
+                <li key={item.key} className="list-none">
+                  <button
+                    type="button"
+                    onClick={() => handleItem(item)}
+                    role="menuitem"
+                    className="w-full flex items-center gap-2 text-start transition-colors"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: item.soon ? 'default' : 'pointer',
+                      fontSize: 13.5,
+                      fontWeight: 500,
+                      color: 'var(--text-ink-soft)',
+                      fontFamily: 'inherit',
+                      opacity: item.soon ? 0.8 : 1,
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background =
+                        'var(--bg-surface-soft)')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = 'transparent')
+                    }
+                  >
+                    <span className="flex-1">{item.label}</span>
+                    {item.soon && <SoonBadge t={t} />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+ *  MobileNavItem — flat link or expandable group for the mobile
+ *  drawer. Mega menus collapse to a single flat list (no columns)
+ *  to keep the drawer tidy.
+ * ============================================================ */
+function MobileNavItem({ link, onNavigate, t }) {
+  const [open, setOpen] = useState(false);
+  const hasChildren = !!(link.items || link.mega);
+
+  if (!hasChildren) {
+    return (
+      <a
+        onClick={() => onNavigate(link)}
+        className="py-3 inline-flex items-center gap-2 text-[15px] font-medium cursor-pointer border-b last:border-0"
+        style={{
+          color: 'var(--text-ink-soft)',
+          borderColor: 'var(--border-default)',
+        }}
+      >
+        {link.icon && <link.icon size={15} strokeWidth={1.9} />}
+        <span className="flex-1">{link.label}</span>
+        {link.soon && <SoonBadge t={t} />}
+      </a>
+    );
+  }
+
+  const childItems = link.items
+    ? link.items
+    : link.mega.columns.flatMap((col) =>
+        col.items.map((it) => ({ ...it, href: link.mega.href }))
+      );
+
+  return (
+    <div
+      className="border-b last:border-0"
+      style={{ borderColor: 'var(--border-default)' }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full py-3 inline-flex items-center gap-2 text-[15px] font-medium cursor-pointer bg-transparent border-0 text-start"
+        style={{ color: 'var(--text-ink-soft)', fontFamily: 'inherit' }}
+      >
+        <span className="flex-1">{link.label}</span>
+        <ChevronDown
+          size={16}
+          style={{
+            transition: 'transform 0.18s',
+            transform: open ? 'rotate(180deg)' : 'none',
+          }}
+        />
+      </button>
+      {open && (
+        <ul
+          className="m-0 pb-2 ps-2 flex flex-col gap-0.5"
+          style={{ listStyle: 'none', padding: 0 }}
+        >
+          {childItems.map((it) => (
+            <li key={it.key} className="list-none">
+              <button
+                type="button"
+                onClick={() => {
+                  if (it.soon) return;
+                  onNavigate(it);
+                }}
+                className="w-full flex items-center gap-2 text-start"
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: it.soon ? 'default' : 'pointer',
+                  fontSize: 13.5,
+                  fontWeight: 500,
+                  color: 'var(--text-ink-soft)',
+                  fontFamily: 'inherit',
+                  opacity: it.soon ? 0.8 : 1,
+                }}
+              >
+                <span className="flex-1">{it.label}</span>
+                {it.soon && <SoonBadge t={t} />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

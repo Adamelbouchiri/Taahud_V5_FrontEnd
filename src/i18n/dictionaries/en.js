@@ -87,9 +87,16 @@ export default {
 
   nav: {
     home: 'Home',
+    about: 'About us',
     services: 'Services',
+    servicesAll: 'All services',
     arenas: 'Arenas',
-    plans: 'Plans',
+    plans: 'Subscriptions',
+    programs: 'Taahud Programs',
+    programsItems: {
+      academy: 'Taahud Academy',
+      affiliate: 'Affiliate Marketing',
+    },
     contact: 'Contact',
     testimonials: 'Testimonials',
     store: 'Store',
