@@ -149,7 +149,7 @@ export default {
       titleLine1: 'Everything you need to run',
       titleLine2: 'construction projects',
       subtitle:
-        'An end-to-end platform that connects clients with contractors, engineering offices, and suppliers â€” one organized, secure experience.',
+        'Taahud connects project owners with contractors, engineering offices, suppliers, and real-estate developers through a smart digital experience that simplifies contracting, execution, and project management â€” higher efficiency, fewer problems.',
       ctaPrimary: 'Get started free',
       ctaSecondary: 'Browse projects',
       stats: {
