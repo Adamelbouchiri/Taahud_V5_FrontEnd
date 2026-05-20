@@ -16,8 +16,23 @@ import {
   Handshake,
   TrendingUp,
 } from 'lucide-react';
-import Illustration from './ProjectIllustrations';
 import { useTranslation } from '../../i18n/LanguageContext';
+
+import arenaImg from '../../assets/arenas/arena.png';
+import privateImg from '../../assets/arenas/private.png';
+import publicImg from '../../assets/arenas/public.png';
+import storeImg from '../../assets/arenas/store.png';
+import isnadImg from '../../assets/arenas/isnad.png';
+import solidarityImg from '../../assets/arenas/solidarity.png';
+
+const ARENA_IMAGES = {
+  arena: arenaImg,
+  private: privateImg,
+  public: publicImg,
+  store: storeImg,
+  isnad: isnadImg,
+  solidarity: solidarityImg,
+};
 
 /* ============================================================
  *  Arenas — six pools, six showcase cards
@@ -27,7 +42,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
  *  FeaturedProjects, tinted by arena), and footer link.
  *
  *  All copy comes from i18n; only the visual identity (icons,
- *  band colors, illustration name, CTA route) lives in this file.
+ *  band colors, arena image, CTA route) lives in this file.
  *  Add a language by translating the `landing.arenasSection.cards.*`
  *  subtree — no code change needed.
  * ============================================================ */
@@ -40,7 +55,6 @@ const ARENAS = [
     href: '/projects/arena',
     preview: {
       bandBg: '#d4ecda',
-      illustration: 'land',
       badgeTone: 'gold',
       typeColor: '#0d5538',
       price: '42M',
@@ -56,7 +70,6 @@ const ARENAS = [
     href: '/projects/private',
     preview: {
       bandBg: '#e9e6fb',
-      illustration: 'complex',
       badgeTone: 'gold',
       typeColor: '#3a3d99',
       price: '62M',
@@ -71,7 +84,6 @@ const ARENAS = [
     href: '/projects/public',
     preview: {
       bandBg: '#d4ecda',
-      illustration: 'highway',
       badgeTone: 'gold',
       typeColor: '#0d5538',
       price: '8.2M',
@@ -86,7 +98,6 @@ const ARENAS = [
     href: '/store',
     preview: {
       bandBg: '#fbeec1',
-      illustration: 'bricks',
       badgeTone: 'sand',
       badgeLeadingStar: false,
       typeColor: '#7a5a14',
@@ -104,7 +115,6 @@ const ARENAS = [
     href: '/projects/isnad',
     preview: {
       bandBg: '#fbeec1',
-      illustration: 'bank',
       badgeTone: 'gold',
       typeColor: '#7a5a14',
       price: '120M',
@@ -119,7 +129,6 @@ const ARENAS = [
     href: '/projects/solidarity',
     preview: {
       bandBg: '#f8dde5',
-      illustration: 'crane',
       badgeTone: 'gold',
       typeColor: '#b8276a',
       price: '18M',
@@ -269,6 +278,7 @@ function ArenaCard({ arena, delay, onBottomLink }) {
 function PreviewCard({ arena, kBase, t }) {
   const { preview } = arena;
   const badgeStyles = badgePill(preview.badgeTone);
+  const imgSrc = ARENA_IMAGES[arena.id];
 
   return (
     <div
@@ -282,6 +292,16 @@ function PreviewCard({ arena, kBase, t }) {
         className="relative overflow-hidden"
         style={{ background: preview.bandBg, height: 130 }}
       >
+        {imgSrc && (
+          <img
+            src={imgSrc}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+
         <span
           className="absolute inline-flex items-center gap-1 font-bold rounded-full"
           style={{
@@ -299,10 +319,6 @@ function PreviewCard({ arena, kBase, t }) {
           )}
           {t(`${kBase}.previewBadge`)}
         </span>
-
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Illustration name={preview.illustration} />
-        </div>
       </div>
 
       <div className="px-4 pt-3.5 pb-4">
