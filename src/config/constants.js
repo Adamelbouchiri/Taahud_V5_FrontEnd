@@ -7,7 +7,6 @@ export const SALES_WHATSAPP_URL = 'https://wa.me/966537372053';
 
 /* Customer-facing contact channels. Imported by ContactUs, Footer,
    and anywhere else that needs to surface a "talk to us" link. */
-export const SALES_EMAIL = 'info@taahud.sa';
 export const SUPPORT_EMAIL = 'support@taahud.sa';
 export const SALES_PHONE_E164 = '+966537372053';
 

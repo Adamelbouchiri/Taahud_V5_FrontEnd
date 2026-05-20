@@ -779,12 +779,6 @@ export default {
           desc: 'الأسرع للحصول على رد فوري من فريق المبيعات.',
           action: 'محادثة الآن',
         },
-        email: {
-          title: 'البريد الإلكتروني',
-          value: 'info@taahud.sa',
-          desc: 'للاستفسارات العامّة والاقتراحات والشراكات.',
-          action: 'مراسلة',
-        },
         support: {
           title: 'الدعم الفنّي',
           value: 'support@taahud.sa',

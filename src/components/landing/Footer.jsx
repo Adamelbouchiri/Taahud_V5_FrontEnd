@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Mail, LifeBuoy, Globe, MapPin, Instagram } from 'lucide-react';
+import { MessageCircle, LifeBuoy, Globe, MapPin, Instagram } from 'lucide-react';
 import Logo from '../Logo';
 import { useTranslation } from '../../i18n/LanguageContext';
-import { SALES_EMAIL, SUPPORT_EMAIL } from '../../config/constants';
+import { SUPPORT_EMAIL } from '../../config/constants';
 
 /* ============================================================
  *  Footer — landing page footer
@@ -112,15 +112,6 @@ export default function Footer() {
               <span style={{ direction: 'ltr', display: 'inline-block' }}>
                 {t('landing.footer.contactRows.whatsapp')}
               </span>
-            </ContactRow>
-            <ContactRow Icon={Mail}>
-              <a
-                href={`mailto:${SALES_EMAIL}`}
-                className="hover:text-white transition-colors"
-                style={{ color: 'inherit', textDecoration: 'none' }}
-              >
-                {SALES_EMAIL}
-              </a>
             </ContactRow>
             <ContactRow Icon={LifeBuoy}>
               <a

@@ -1,5 +1,5 @@
 ﻿/* eslint-disable */
-// English dictionary â€” mirrors ar.js key-for-key.
+// English dictionary — mirrors ar.js key-for-key.
 
 export default {
   common: {
@@ -116,11 +116,11 @@ export default {
     pill: 'Coming soon',
     title: 'A storefront made for construction',
     subtitle:
-      'Source materials, equipment, and tools from trusted Saudi suppliers â€” soon to be part of Taahud.',
+      'Source materials, equipment, and tools from trusted Saudi suppliers — soon to be part of Taahud.',
     description:
-      "We're building a unified marketplace where contractors, engineering offices, and developers can buy everything they need for a project â€” with verified suppliers, transparent pricing, and integrated delivery.",
+      "We're building a unified marketplace where contractors, engineering offices, and developers can buy everything they need for a project — with verified suppliers, transparent pricing, and integrated delivery.",
     features: {
-      0: 'Verified suppliers vetted by Taahud â€” no anonymous listings.',
+      0: 'Verified suppliers vetted by Taahud — no anonymous listings.',
       1: 'Live pricing with bulk-quantity tiers and project-level quotes.',
       2: 'Tied to your projects: order against a project budget and track delivery.',
       3: 'Saudi payment methods (Mada, Apple Pay, bank transfer) built in.',
@@ -130,7 +130,7 @@ export default {
     back: 'Back',
     backHome: 'Back to home',
     backDashboard: 'Back to dashboard',
-    previewLabel: 'Concept preview â€” design in progress',
+    previewLabel: 'Concept preview — design in progress',
     teaser: {
       categories: 'Categories',
       categoryItems: ['Steel & rebar', 'Cement & aggregates', 'Tools', 'Safety gear'],
@@ -149,7 +149,7 @@ export default {
       titleLine1: 'Everything you need to run',
       titleLine2: 'construction projects',
       subtitle:
-        'Taahud connects project owners with contractors, engineering offices, suppliers, and real-estate developers through a smart digital experience that simplifies contracting, execution, and project management â€” higher efficiency, fewer problems.',
+        'Taahud connects project owners with contractors, engineering offices, suppliers, and real-estate developers through a smart digital experience that simplifies contracting, execution, and project management — higher efficiency, fewer problems.',
       ctaPrimary: 'Get started free',
       ctaSecondary: 'Browse projects',
       stats: {
@@ -169,11 +169,11 @@ export default {
       },
       audienceDescriptions: {
         contractors:
-          'For contractors and engineering offices that deliver and supervise projects â€” win more work, manage it professionally, and resolve legal & financial issues in seconds.',
+          'For contractors and engineering offices that deliver and supervise projects — win more work, manage it professionally, and resolve legal & financial issues in seconds.',
         suppliers:
-          'For building-material and equipment suppliers â€” Taahud connects you directly to thousands of active contractors and projects, and helps you manage orders efficiently.',
+          'For building-material and equipment suppliers — Taahud connects you directly to thousands of active contractors and projects, and helps you manage orders efficiently.',
         developers:
-          "For real-estate developers building the future â€” Taahud gives you the tools to find the best contractors, manage large projects, and access financing with ease.",
+          "For real-estate developers building the future — Taahud gives you the tools to find the best contractors, manage large projects, and access financing with ease.",
       },
       badges: {
         exclusive: 'Exclusive',
@@ -184,19 +184,19 @@ export default {
         contractors: {
           hub: {
             title: 'Open projects hub',
-            desc: 'Every project from Etimad, Forsa, Muqawil and the private sector in one place â€” with instant alerts for opportunities matching your classification.',
+            desc: 'Every project from Etimad, Forsa, Muqawil and the private sector in one place — with instant alerts for opportunities matching your classification.',
           },
           private: {
             title: 'Private arena',
-            desc: 'Curated projects from major strategic partners â€” exclusive to Isnad subscribers, with competitive sizes and values.',
+            desc: 'Curated projects from major strategic partners — exclusive to Isnad subscribers, with competitive sizes and values.',
           },
           solidarity: {
             title: 'Solidarity arena',
-            desc: 'Team up with other contractors to deliver projects bigger than your individual capacity â€” post your opportunity or join others.',
+            desc: 'Team up with other contractors to deliver projects bigger than your individual capacity — post your opportunity or join others.',
           },
           contractGen: {
             title: 'Smart contract generator',
-            desc: "Legally vetted contract templates â€” AI-driven customization + Nafath e-signature in under 5 minutes.",
+            desc: "Legally vetted contract templates — AI-driven customization + Nafath e-signature in under 5 minutes.",
           },
           contractCheck: {
             title: 'Contract auditor',
@@ -204,33 +204,33 @@ export default {
           },
           analyzer: {
             title: 'Project analyzer',
-            desc: 'Calculate profitability before bidding â€” costs, margin, cash flow, and risk assessment in seconds.',
+            desc: 'Calculate profitability before bidding — costs, margin, cash flow, and risk assessment in seconds.',
           },
           tracker: {
             title: 'Project tracker',
-            desc: 'Track execution phases, payments, and deliverables for every project â€” with alerts for delays and key events.',
+            desc: 'Track execution phases, payments, and deliverables for every project — with alerts for delays and key events.',
           },
           ai: {
             title: 'Specialized AI assistant',
-            desc: "A smart assistant that understands the Saudi contracting sector â€” ask about contracts, regulations, pricing, and legal issues.",
+            desc: "A smart assistant that understands the Saudi contracting sector — ask about contracts, regulations, pricing, and legal issues.",
           },
           docs: {
             title: 'Document management',
-            desc: 'Keep every project document â€” contracts, plans, handover reports, invoices â€” in a secure cloud vault.',
+            desc: 'Keep every project document — contracts, plans, handover reports, invoices — in a secure cloud vault.',
           },
         },
         suppliers: {
           market: {
             title: 'Direct supply market',
-            desc: 'Show your products and equipment to active contractors â€” direct orders without middlemen, with ratings and classification.',
+            desc: 'Show your products and equipment to active contractors — direct orders without middlemen, with ratings and classification.',
           },
           rfq: {
             title: 'Request for quotes (RFQ)',
-            desc: 'Get instant alerts for price requests from contractors in your specialty â€” submit your bid in minutes.',
+            desc: 'Get instant alerts for price requests from contractors in your specialty — submit your bid in minutes.',
           },
           demand: {
             title: 'Market demand analytics',
-            desc: 'A complete view of market trends â€” most-requested materials, active regions, and competitive pricing.',
+            desc: 'A complete view of market trends — most-requested materials, active regions, and competitive pricing.',
           },
           delivery: {
             title: 'Delivery management',
@@ -238,19 +238,19 @@ export default {
           },
           payment: {
             title: 'Guaranteed payment',
-            desc: 'A secure payment system with guarantees â€” get paid on time without delays or disputes.',
+            desc: 'A secure payment system with guarantees — get paid on time without delays or disputes.',
           },
           contracts: {
             title: 'Smart supply contracts',
-            desc: 'Accredited supply contract templates â€” covering quality, delivery, payment terms, and legal protection.',
+            desc: 'Accredited supply contract templates — covering quality, delivery, payment terms, and legal protection.',
           },
           reputation: {
             title: 'Your digital reputation',
-            desc: 'Build a strong reputation through contractor ratings â€” every successful delivery boosts visibility and sales.',
+            desc: 'Build a strong reputation through contractor ratings — every successful delivery boosts visibility and sales.',
           },
           inventory: {
             title: 'Inventory management',
-            desc: 'Control your stock, price updates, and special offers â€” all from a simple dashboard.',
+            desc: 'Control your stock, price updates, and special offers — all from a simple dashboard.',
           },
           aiSales: {
             title: 'AI sales assistant',
@@ -260,35 +260,35 @@ export default {
         developers: {
           network: {
             title: 'Accredited contractor network',
-            desc: 'A database of over 1,200 accredited contractors â€” with classifications, past experience, and real customer reviews.',
+            desc: 'A database of over 1,200 accredited contractors — with classifications, past experience, and real customer reviews.',
           },
           tenders: {
             title: 'Exclusive tenders',
-            desc: 'Post projects confidentially to a select group of contractors â€” receive thoughtful bids in record time.',
+            desc: 'Post projects confidentially to a select group of contractors — receive thoughtful bids in record time.',
           },
           portfolio: {
             title: 'Project portfolio management',
-            desc: 'A unified view across all your development projects â€” progress, budgets, timelines, and risks.',
+            desc: 'A unified view across all your development projects — progress, budgets, timelines, and risks.',
           },
           escrow: {
             title: 'Escrow & payment guarantees',
-            desc: 'A secure payment system backed by banks â€” full protection for your investments with milestone-based payouts.',
+            desc: 'A secure payment system backed by banks — full protection for your investments with milestone-based payouts.',
           },
           financing: {
             title: 'Financing gateway',
-            desc: "Direct links with Saudi banks and financiers â€” receive competitive financing offers for your projects.",
+            desc: "Direct links with Saudi banks and financiers — receive competitive financing offers for your projects.",
           },
           analytics: {
             title: 'Real-estate development analytics',
-            desc: 'Market data, historical pricing, feasibility forecasts â€” everything you need for smart investment decisions.',
+            desc: 'Market data, historical pricing, feasibility forecasts — everything you need for smart investment decisions.',
           },
           qualify: {
             title: 'Contractor qualification',
-            desc: 'Automated contractor screening â€” verify commercial registries, classifications, and prior projects before signing.',
+            desc: 'Automated contractor screening — verify commercial registries, classifications, and prior projects before signing.',
           },
           investorReports: {
             title: 'Investor reports',
-            desc: 'Professional financial and operational reports for your investors â€” generated automatically monthly or quarterly.',
+            desc: 'Professional financial and operational reports for your investors — generated automatically monthly or quarterly.',
           },
           ai: {
             title: 'AI development advisor',
@@ -305,7 +305,7 @@ export default {
         residential: {
           type: 'Residential',
           status: 'In execution',
-          title: 'Luxury residential complex â€” Al Yasmin, Riyadh',
+          title: 'Luxury residential complex — Al Yasmin, Riyadh',
           city: 'Riyadh',
           duration: '18 months',
           role: 'General contractor',
@@ -313,7 +313,7 @@ export default {
         commercial: {
           type: 'Commercial',
           status: 'Open for bids',
-          title: 'Office tower â€” Jeddah Corniche',
+          title: 'Office tower — Jeddah Corniche',
           city: 'Jeddah',
           duration: '24 months',
           role: 'Grade I',
@@ -321,7 +321,7 @@ export default {
         infrastructure: {
           type: 'Infrastructure',
           status: 'Open',
-          title: 'Roads & landscaping project â€” Dammam',
+          title: 'Roads & landscaping project — Dammam',
           city: 'Dammam',
           duration: '12 months',
           role: 'Certified contractor',
@@ -332,7 +332,7 @@ export default {
       eyebrow: 'Arenas',
       title: 'An arena for every role',
       subtitle:
-        '6 specialized arenas â€” preview a sample from each and discover what awaits.',
+        '6 specialized arenas — preview a sample from each and discover what awaits.',
       cards: {
         arena: {
           label: 'Arena pool',
@@ -341,9 +341,9 @@ export default {
           previewBadge: 'Featured',
           previewType: 'Residential development',
           previewStatus: 'Open',
-          previewTitle: 'Residential development plot â€” Khobar',
+          previewTitle: 'Residential development plot — Khobar',
           previewCity: 'Khobar',
-          previewArea: '8,400 mÂ²',
+          previewArea: '8,400 m²',
           cta: 'View',
         },
         private: {
@@ -353,7 +353,7 @@ export default {
           previewBadge: 'Exclusive',
           previewType: 'Premium commercial',
           previewStatus: 'Members only',
-          previewTitle: 'Integrated commercial complex â€” Riyadh',
+          previewTitle: 'Integrated commercial complex — Riyadh',
           previewCity: 'Riyadh',
           previewDuration: '30 months',
           cta: 'Details',
@@ -365,7 +365,7 @@ export default {
           previewBadge: 'Featured',
           previewType: 'Infrastructure',
           previewStatus: 'Open',
-          previewTitle: 'Roads & landscaping project â€” Dammam',
+          previewTitle: 'Roads & landscaping project — Dammam',
           previewCity: 'Dammam',
           previewDuration: '12 months',
           cta: 'Details',
@@ -377,7 +377,7 @@ export default {
           previewBadge: '15% off',
           previewType: 'Building materials',
           previewStatus: 'In stock',
-          previewTitle: '16 mm rebar â€” Dammam',
+          previewTitle: '16 mm rebar — Dammam',
           previewCity: 'Dammam',
           previewSupplier: 'Al Rajhi Steel',
           priceUnit: 'SAR / ton',
@@ -390,7 +390,7 @@ export default {
           previewBadge: 'Funded',
           previewType: 'Project finance',
           previewStatus: 'Open',
-          previewTitle: 'Medical complex development partnership â€” Riyadh',
+          previewTitle: 'Medical complex development partnership — Riyadh',
           previewCity: 'Riyadh',
           previewProgress: '35% complete',
           cta: 'Details',
@@ -402,7 +402,7 @@ export default {
           previewBadge: 'Alliance',
           previewType: 'Infrastructure',
           previewStatus: 'Open',
-          previewTitle: 'Road execution alliance â€” Jeddah',
+          previewTitle: 'Road execution alliance — Jeddah',
           previewCity: 'Jeddah',
           previewPartners: '3 contractors',
           cta: 'Join',
@@ -411,34 +411,34 @@ export default {
     },
     testimonials: {
       eyebrow: 'Testimonials',
-      title: 'Trusted â€” and recommended',
+      title: 'Trusted — and recommended',
       subtitle:
         'What leaders from government, industry, contracting, and investment say about Taahud',
       items: [
         'Taahud helped us manage projects and track execution phases from one place, with clearer tasks and completion rates.',
         'Taahud gave us a practical environment to organize decor projects, receive bids, and coordinate teams more easily and professionally.',
-        'Taahud is a meaningful step forward in digitizing contracting project management â€” from posting a project to tracking execution and party communication.',
+        'Taahud is a meaningful step forward in digitizing contracting project management — from posting a project to tracking execution and party communication.',
         'A professional platform that supports operational project organization, work follow-up, and flexible documentation of project phases.',
         'Taahud is among the tech solutions that give teams more clarity in project management, request tracking, and internal communication.',
         'The platform saved us a lot of time on daily follow-ups and made communication between owners and service providers smoother along a clear path.',
-        'Taahud gives real-estate developers a clearer view of projects, contracts, and completion â€” and helps follow execution more efficiently.',
+        'Taahud gives real-estate developers a clearer view of projects, contracts, and completion — and helps follow execution more efficiently.',
         'A flexible operating experience that helps organize requests, connect teams, and follow project phases inside one platform.',
         'A practical platform that reduces chaos in project management and supports organized tracking of bids, tasks, and accomplishments.',
         "What sets Taahud apart most is ease of use, organized communication, and gathering project details for all parties in one place.",
-        'Taahud is a strong move toward digitizing the contracting and supply sector â€” from request management to coordination with suppliers and execution follow-up.',
+        'Taahud is a strong move toward digitizing the contracting and supply sector — from request management to coordination with suppliers and execution follow-up.',
         'The platform provides an organized environment for managing projects and operations, raising follow-up efficiency and supporting decision-making.',
         'Taahud is a clear example of using technology to improve project management, organize communication, and raise team efficiency.',
         'The platform helped us improve field-work follow-up, coordinate tasks among execution teams, and better document project phases.',
-        'A standout experience and a promising platform that supports professional project management â€” from receiving bids to tracking execution and operations.',
+        'A standout experience and a promising platform that supports professional project management — from receiving bids to tracking execution and operations.',
         'Taahud represents a leap in project management because it brings bids, contracts, communication, and follow-up into one more transparent path.',
         'A platform that adds real value to companies by organizing operations, tracking projects, and easing coordination with suppliers and service providers.',
         'Taahud centralized information and made project details easy to reach, helping us follow workflows more efficiently.',
-        'The platform has strong capabilities serving multiple sectors â€” especially project management, operations, and coordination between teams and suppliers.',
-        'A professional tech experience that raises organization and communication inside projects, easing follow-up from a projectâ€™s start through execution.',
+        'The platform has strong capabilities serving multiple sectors — especially project management, operations, and coordination between teams and suppliers.',
+        'A professional tech experience that raises organization and communication inside projects, easing follow-up from a project’s start through execution.',
         "Among Taahud's standout traits: clear follow-up, easy daily-work management, and well-organized communication between users on the platform.",
         'A strong platform that supports the contracting and supply sector with a modern approach, easing order/bid management and execution-phase follow-up.',
         'Taahud helped us gather project details in one place, reduce scattered communication, and ease follow-up on tasks and bids.',
-        "A professional experience reflecting a clear understanding of the contracting and operations sector â€” especially in organizing projects and connecting different parties.",
+        "A professional experience reflecting a clear understanding of the contracting and operations sector — especially in organizing projects and connecting different parties.",
         'The platform gives real-estate developers better control of project follow-up, contract management, completion metrics, and communication with contractors and suppliers.',
       ],
     },
@@ -688,7 +688,7 @@ export default {
     cta: {
       pill: 'Join today',
       title: 'More projects are waiting for you',
-      subtitle: 'Sign up for free now â€” start using every Taahud service within minutes.',
+      subtitle: 'Sign up for free now — start using every Taahud service within minutes.',
       register: 'Sign up free for 14 days',
       contact: 'Contact us',
     },
@@ -696,19 +696,19 @@ export default {
       eyebrow: 'Coming soon on Taahud',
       title: 'New features in development',
       subtitle:
-        'We are expanding Taahud with features that complement your experience â€” stay tuned.',
+        'We are expanding Taahud with features that complement your experience — stay tuned.',
       academy: {
         eyebrow: 'Learning & qualification',
         label: 'Taahud Academy',
         desc:
-          'Specialized courses and accredited certifications in project management, contracts, quality, and safety â€” taught by industry experts to upskill contractors, engineering offices, and suppliers.',
+          'Specialized courses and accredited certifications in project management, contracts, quality, and safety — taught by industry experts to upskill contractors, engineering offices, and suppliers.',
         cta: 'Explore the Academy',
       },
       affiliate: {
         eyebrow: 'Partner program',
         label: 'Affiliate marketing',
         desc:
-          'A partnership program that rewards you a percentage on every deal that comes through your referral â€” ready-made marketing assets, tracking links, and a transparent commissions dashboard.',
+          'A partnership program that rewards you a percentage on every deal that comes through your referral — ready-made marketing assets, tracking links, and a transparent commissions dashboard.',
         cta: 'Join the program',
       },
     },
@@ -780,12 +780,6 @@ export default {
           desc: 'Fastest way to get an instant reply from our sales team.',
           action: 'Chat now',
         },
-        email: {
-          title: 'Email',
-          value: 'info@taahud.sa',
-          desc: 'For general inquiries, suggestions, and partnerships.',
-          action: 'Send a message',
-        },
         support: {
           title: 'Support',
           value: 'support@taahud.sa',
@@ -802,7 +796,7 @@ export default {
     },
     footer: {
       tagline:
-        'A leading Saudi platform connecting contractors, suppliers, and real-estate developers â€” building a more transparent, efficient construction sector.',
+        'A leading Saudi platform connecting contractors, suppliers, and real-estate developers — building a more transparent, efficient construction sector.',
       columns: {
         platform: 'Platform',
         users: 'For users',
@@ -819,7 +813,7 @@ export default {
         addressValue: 'Riyadh, Saudi Arabia',
       },
       copyright:
-        'Â© {year} Taahud â€” All rights reserved. More projects, fewer problems.',
+        '© {year} Taahud — All rights reserved. More projects, fewer problems.',
       links: 'Quick links',
       legal: 'Legal',
       contact: 'Contact',
@@ -859,7 +853,7 @@ export default {
       emailLabel: 'Email',
       emailPlaceholder: 'name@example.com',
       password: 'Password',
-      passwordPlaceholder: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
+      passwordPlaceholder: '••••••••',
       remember: 'Remember me',
       forgotPassword: 'Forgot password?',
       submit: 'Sign in',
@@ -892,7 +886,7 @@ export default {
       password: 'Password',
       passwordPlaceholder: 'At least 8 characters',
       passwordConfirm: 'Confirm password',
-      passwordConfirmPlaceholder: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
+      passwordConfirmPlaceholder: '••••••••',
       termsText: 'I agree to the {terms} and {privacy}, and confirm the information is correct.',
       terms: 'Terms of Use',
       privacy: 'Privacy Policy',
@@ -989,7 +983,7 @@ export default {
         cities: { n: '48 cities', l: 'Coverage' },
         rating: { n: '4.9', l: 'Customer rating' },
       },
-      copyright: 'Â© 2026 Taahud',
+      copyright: '© 2026 Taahud',
       footer: {
         privacy: 'Privacy',
         terms: 'Terms',
@@ -1078,7 +1072,7 @@ export default {
       titleSubmittedOnly: 'My bids',
       titleReceivedOnly: 'Received bids',
       subtitle:
-        "Every bid you've submitted on other people's projects and every bid received on yours â€” in one place.",
+        "Every bid you've submitted on other people's projects and every bid received on yours — in one place.",
       subtitleSubmittedOnly:
         "Every bid you've submitted on open projects, with its current status.",
       subtitleReceivedOnly:
@@ -1114,7 +1108,7 @@ export default {
       logout: 'Sign out',
     },
     comingSoon: {
-      previewLabel: 'Early preview â€” in development',
+      previewLabel: 'Early preview — in development',
       notify: 'Notify me at launch',
       notifyDone: 'Notification enabled',
       backToDashboard: 'Back to dashboard',
@@ -1147,7 +1141,7 @@ export default {
         eyebrow: 'Messages',
         title: 'Messages & chats',
         description:
-          'A unified communication center with your partners inside the platform â€” no need to switch apps.',
+          'A unified communication center with your partners inside the platform — no need to switch apps.',
         features: [
           'Conversations organized per project.',
           'Direct file and document sharing.',
@@ -1196,13 +1190,13 @@ export default {
       nameLabelCompany: 'Company name',
       phone: 'Phone number',
       phoneChangeHint:
-        'Changing the phone number requires re-verification â€” contact support.',
+        'Changing the phone number requires re-verification — contact support.',
       email: 'Email',
       city: 'City',
       cityPlaceholder: 'Select a city',
       accountType: 'Account type',
       accountTypeChangeHint: 'Contact support to change it',
-      specialtyChangeHint: 'To change your specialty â€” contact support.',
+      specialtyChangeHint: 'To change your specialty — contact support.',
       editCta: 'Edit',
       saveCta: 'Save changes',
       savingCta: 'Saving...',
@@ -1257,7 +1251,7 @@ export default {
       blocked: 'Not available for your account',
       blockedAccount: 'This arena is not available for your account type ({role}).',
       blockedNoArena: 'No arenas are available for your account type right now.',
-      blockedIsnadTitle: '{arena} â€” optional upgrade',
+      blockedIsnadTitle: '{arena} — optional upgrade',
       blockedIsnadSubtitle:
         'Exclusive access to large projects and financing opportunities ({price}). Activate the upgrade from the Plans page to view this arena.',
       searchPlaceholder: 'Search open projects...',
@@ -1282,7 +1276,7 @@ export default {
       ownerFallback: 'Client',
       ownerGeneric: 'Project owner',
       viewDetails: 'View details',
-      appliedAndView: 'Bid submitted â€” view details',
+      appliedAndView: 'Bid submitted — view details',
       emptyTitle: 'No open projects right now',
       emptySearchTitle: 'No results match your search',
       emptySubtitle: 'Check back later for new projects, or reset the filters.',
@@ -1414,9 +1408,9 @@ export default {
           descriptionPlaceholder:
             'Write a detailed description of your project, goals, and relevant locations...',
           descriptionHint:
-            'Optional â€” but a good description helps partners understand your needs.',
+            'Optional — but a good description helps partners understand your needs.',
           isnadModal: {
-            titleSuffix: ' â€” optional upgrade',
+            titleSuffix: ' — optional upgrade',
             subtitle:
               'Exclusive access to large projects and financing opportunities over 100M SAR, with accredited funders and institutional projects.',
             bullets: [
@@ -1440,7 +1434,7 @@ export default {
             'e.g. valid contractor license, commercial registration, ZATCA certificate...',
           documentsHint: 'Free-text list of documents an applicant must provide.',
           filesTitle: 'Attachments',
-          filesSubtitle: 'Plans, photos, documents â€” up to 10 MB per file.',
+          filesSubtitle: 'Plans, photos, documents — up to 10 MB per file.',
           startedExternallyTitle: 'Project started outside the platform',
           startedExternallyDesc:
             'Enable this if work has already begun and you want a Taahud partner to continue it.',
@@ -1537,7 +1531,7 @@ export default {
       errorGeneric: "Couldn't save changes.",
       eyebrow: 'Edit project',
       subtitlePrefix:
-        'Status and progress are managed automatically by the server â€” they can\'t be edited here. Current arena: ',
+        'Status and progress are managed automatically by the server — they can\'t be edited here. Current arena: ',
       subtitleSuffix: '.',
       cancelAria: 'Cancel edit',
       cancelCta: 'Cancel',
@@ -1620,7 +1614,7 @@ export default {
       deliveryLabel: 'Delivery date',
       deliveryHint: 'Expected completion date for the project.',
       notice:
-        "Once sent, your bid stays pending until the client replies. You can't edit it later, but you can withdraw it from the â€œMy applicationsâ€ page.",
+        "Once sent, your bid stays pending until the client replies. You can't edit it later, but you can withdraw it from the “My applications” page.",
       cancel: 'Cancel',
       submit: 'Send bid',
       submitting: 'Sending...',
@@ -1664,7 +1658,7 @@ export default {
       errorGeneric: "Couldn't send the bid. Please try again.",
       files: {
         pickCta: 'Choose files to attach',
-        hint: 'PDF, JPG, PNG, DOC, XLS â€” up to 20 MB per file.',
+        hint: 'PDF, JPG, PNG, DOC, XLS — up to 20 MB per file.',
         typeRejected: 'Unsupported file type: {name}',
         sizeRejected: 'File "{name}" is larger than 20 MB.',
         removeAria: 'Remove {name}',
@@ -1681,7 +1675,7 @@ export default {
       dropTitle: 'Drop files here',
       dropOr: 'or',
       browseCta: 'Choose from your device',
-      hint: 'PDF, images, CAD, Excel â€” up to 10 MB per file.',
+      hint: 'PDF, images, CAD, Excel — up to 10 MB per file.',
       maxSize: 'Maximum file size: 10 MB.',
       typeRejected: 'Unsupported file type: {name}',
       sizeRejected: 'File "{name}" is larger than the allowed size.',
@@ -1695,13 +1689,13 @@ export default {
       label: 'Public arena — Numu',
       short: 'Numu',
       desc:
-        'Public opportunities aggregated from external sources (Etimad, Forsa, Muqawil...) â€” visible to contractors and engineering offices.',
+        'Public opportunities aggregated from external sources (Etimad, Forsa, Muqawil...) — visible to contractors and engineering offices.',
       lockReason: 'Public opportunities are aggregated automatically from external sources.',
     },
     private: {
       label: 'Private arena — Ahd',
       short: 'Ahd',
-      desc: "Exclusive projects from Taahud clients â€” shown to contractors and engineering offices.",
+      desc: "Exclusive projects from Taahud clients — shown to contractors and engineering offices.",
       lockReason: 'Available to Taahud clients only.',
     },
     solidarity: {
@@ -1761,17 +1755,17 @@ export default {
     ],
     duration: [
       'Less than a month',
-      '1â€“3 months',
-      '3â€“6 months',
-      '6â€“12 months',
-      '1â€“2 years',
+      '1–3 months',
+      '3–6 months',
+      '6–12 months',
+      '1–2 years',
       'Over 2 years',
     ],
     experience: [
-      'Beginner â€” under 3 years',
-      'Intermediate â€” 3â€“5 years',
-      'Expert â€” 5â€“10 years',
-      'Senior expert â€” over 10 years',
+      'Beginner — under 3 years',
+      'Intermediate — 3–5 years',
+      'Expert — 5–10 years',
+      'Senior expert — over 10 years',
     ],
   },
 
@@ -1799,7 +1793,7 @@ export default {
     },
     common: {
       search: 'Search',
-      searchPlaceholder: 'Search by name, email, phoneâ€¦',
+      searchPlaceholder: 'Search by name, email, phone…',
       filter: 'Filter',
       reset: 'Reset',
       apply: 'Apply',
@@ -1810,7 +1804,7 @@ export default {
       close: 'Close',
       next: 'Next',
       prev: 'Previous',
-      pageInfo: 'Showing {from}â€“{to} of {total}',
+      pageInfo: 'Showing {from}–{to} of {total}',
       yes: 'Yes',
       no: 'No',
       none: 'None',
@@ -1830,7 +1824,7 @@ export default {
       loadError: "Couldn't load data.",
       actionError: "The action failed. Please try again.",
       reasonLabel: 'Reason (visible to other admins in the audit log)',
-      reasonPlaceholder: 'Minimum 10 characters â€” what triggered this action?',
+      reasonPlaceholder: 'Minimum 10 characters — what triggered this action?',
       requiresReason: 'A reason is required.',
       filtersTitle: 'Filters',
     },
@@ -1848,9 +1842,9 @@ export default {
           suspended: 'Suspended accounts',
         },
         chart: {
-          users: 'User signups Â· last 12 months',
-          projects: 'Projects created Â· last 12 months',
-          applications: 'Applications submitted Â· last 12 months',
+          users: 'User signups · last 12 months',
+          projects: 'Projects created · last 12 months',
+          applications: 'Applications submitted · last 12 months',
           legendUsers: 'new users',
           legendProjects: 'new projects',
           legendApplications: 'new applications',
@@ -1890,7 +1884,7 @@ export default {
         roles: 'Roles',
         rolesDesc: 'Grant or revoke admin access. Super-admin only.',
         activity: 'Activity log',
-        activityDesc: 'Every admin action is recorded â€” review what happened and by whom.',
+        activityDesc: 'Every admin action is recorded — review what happened and by whom.',
       },
       apiStatus: {
         title: 'API health',
@@ -1899,7 +1893,7 @@ export default {
       },
     },
     users: {
-      eyebrow: 'Operations Â· Users',
+      eyebrow: 'Operations · Users',
       title: 'Users',
       subtitle: 'Find any account, review status, take moderation action.',
       filters: {
@@ -1978,7 +1972,7 @@ export default {
         forceReset: {
           title: 'Force password reset',
           description:
-            "A fresh password will be generated and shown here ONCE. Copy it and hand it over to the user through a secure channel â€” they won't be able to log in until you do.",
+            "A fresh password will be generated and shown here ONCE. Copy it and hand it over to the user through a secure channel — they won't be able to log in until you do.",
           confirm: 'Generate new password',
           newPasswordLabel: 'New password (shown once)',
           done: 'Password reset. Make sure to hand the new password to the user.',
@@ -1986,14 +1980,14 @@ export default {
       },
     },
     projects: {
-      eyebrow: 'Operations Â· Projects',
+      eyebrow: 'Operations · Projects',
       title: 'Projects',
-      subtitle: 'Every project across every arena â€” including soft-deleted ones.',
+      subtitle: 'Every project across every arena — including soft-deleted ones.',
       filters: {
         withTrashed: 'Include archived',
         onlyTrashed: 'Archived only',
         search: 'Search',
-        searchPlaceholder: 'Search by project name or cityâ€¦',
+        searchPlaceholder: 'Search by project name or city…',
         type: 'Type',
         city: 'City',
         ownerId: 'Owner ID',
@@ -2042,7 +2036,7 @@ export default {
         forceDelete: {
           title: 'Permanently delete project',
           description:
-            'This bypasses the soft-delete recovery window. The record will be gone â€” there is no undo. Super-admin only.',
+            'This bypasses the soft-delete recovery window. The record will be gone — there is no undo. Super-admin only.',
           confirm: 'Permanently delete',
           done: 'Project permanently deleted.',
         },
@@ -2076,13 +2070,13 @@ export default {
         description: 'Description',
         scope: 'Scope',
         submit: 'Create project',
-        submitting: 'Creatingâ€¦',
+        submitting: 'Creating…',
         done: 'Project created.',
         doneProxy: 'Project created on behalf of user {id}.',
       },
     },
     applications: {
-      eyebrow: 'Operations Â· Applications',
+      eyebrow: 'Operations · Applications',
       title: 'Applications',
       subtitle: 'Look up any bid across the platform and override decisions when something is off.',
       filters: {
@@ -2107,14 +2101,14 @@ export default {
         override: {
           title: 'Override application',
           description:
-            "Pending â†’ rejected (no cascade). Accepted â†’ rejected, and the project drops back to 'open_for_bids' with the partner cleared.",
+            "Pending → rejected (no cascade). Accepted → rejected, and the project drops back to 'open_for_bids' with the partner cleared.",
           confirm: 'Force reject',
           done: 'Application overridden.',
         },
       },
     },
     roles: {
-      eyebrow: 'Super-admin Â· Roles',
+      eyebrow: 'Super-admin · Roles',
       title: 'Roles',
       subtitle: 'Grant or revoke admin access. Tokens are revoked on every change, so the user has to sign in again with their new abilities.',
       filters: {
@@ -2149,7 +2143,7 @@ export default {
       revokeAction: 'Revoke',
     },
     activity: {
-      eyebrow: 'Operations Â· Audit',
+      eyebrow: 'Operations · Audit',
       title: 'Activity log',
       subtitle: 'Every moderator action, with the reason they provided, ordered most recent first.',
       filters: {

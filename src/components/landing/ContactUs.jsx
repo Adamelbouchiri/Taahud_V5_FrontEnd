@@ -1,9 +1,8 @@
 import React from 'react';
-import { MessageCircle, Mail, LifeBuoy, Phone } from 'lucide-react';
+import { MessageCircle, LifeBuoy, Phone } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import {
   SALES_WHATSAPP_URL,
-  SALES_EMAIL,
   SUPPORT_EMAIL,
   SALES_PHONE_E164,
 } from '../../config/constants';
@@ -29,13 +28,6 @@ const METHODS = [
     accentSoft: 'rgba(19,109,74,0.10)',
     href: SALES_WHATSAPP_URL,
     external: true,
-  },
-  {
-    key: 'email',
-    icon: Mail,
-    accent: '#2c2f7c',
-    accentSoft: 'rgba(44,47,124,0.10)',
-    href: `mailto:${SALES_EMAIL}`,
   },
   {
     key: 'support',
@@ -100,7 +92,7 @@ export default function ContactUs() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 max-w-[1200px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 max-w-[1100px] mx-auto">
           {METHODS.map((m, i) => (
             <MethodCard key={m.key} method={m} delay={i * 0.06} t={t} />
           ))}
