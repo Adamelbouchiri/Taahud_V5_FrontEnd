@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { SALES_WHATSAPP_URL } from '../../config/constants';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -445,7 +446,9 @@ export default function Plans() {
         <div className="mt-8 max-w-[900px] mx-auto">
           <button
             type="button"
-            onClick={() => navigate('/register')}
+            onClick={() =>
+              window.open(SALES_WHATSAPP_URL, '_blank', 'noopener,noreferrer')
+            }
             className="w-full inline-flex items-center justify-center gap-2 font-semibold transition-all"
             style={{
               padding: '15px 26px',

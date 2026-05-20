@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Mail, Globe, MapPin, Instagram } from 'lucide-react';
+import { MessageCircle, Mail, LifeBuoy, Globe, MapPin, Instagram } from 'lucide-react';
 import Logo from '../Logo';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { SALES_EMAIL, SUPPORT_EMAIL } from '../../config/constants';
 
 /* ============================================================
  *  Footer — landing page footer
@@ -18,10 +19,11 @@ import { useTranslation } from '../../i18n/LanguageContext';
  * ============================================================ */
 
 const NAV_PLATFORM = [
-  { id: 'services', href: '#services' },
+  { id: 'services', to: '/services' },
   { id: 'arenas', href: '#arenas' },
   { id: 'testimonials', href: '#testimonials' },
   { id: 'plans', href: '#plans' },
+  { id: 'contact', to: '/contact' },
 ];
 
 const LEGAL_LINKS = [
@@ -69,7 +71,11 @@ export default function Footer() {
           {/* === Column 2: Platform === */}
           <FooterColumn title={t('landing.footer.columns.platform')}>
             {NAV_PLATFORM.map((l) => (
-              <FooterLink key={l.id} href={l.href}>
+              <FooterLink
+                key={l.id}
+                href={l.href}
+                onClick={l.to ? () => navigate(l.to) : undefined}
+              >
                 {t(`nav.${l.id}`)}
               </FooterLink>
             ))}
@@ -109,11 +115,20 @@ export default function Footer() {
             </ContactRow>
             <ContactRow Icon={Mail}>
               <a
-                href="mailto:hello@taahud.sa"
+                href={`mailto:${SALES_EMAIL}`}
                 className="hover:text-white transition-colors"
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                hello@taahud.sa
+                {SALES_EMAIL}
+              </a>
+            </ContactRow>
+            <ContactRow Icon={LifeBuoy}>
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="hover:text-white transition-colors"
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                {SUPPORT_EMAIL}
               </a>
             </ContactRow>
             <ContactRow Icon={Globe}>

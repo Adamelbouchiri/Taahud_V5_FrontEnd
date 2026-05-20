@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   BarChart3,
-  FileText,
   MessageSquare,
   Bell,
   Wrench,
@@ -30,11 +29,6 @@ const VARIANTS = {
     icon: BarChart3,
     color: '#136d4a',
     accent: 'rgba(19,109,74,0.10)',
-  },
-  reports: {
-    icon: FileText,
-    color: '#b8862a',
-    accent: 'rgba(184,134,42,0.12)',
   },
   messages: {
     icon: MessageSquare,
@@ -271,7 +265,7 @@ export default function ComingSoonPage({ variant = 'ai' }) {
  *  PreviewMock — visual hint, pure CSS shapes, no copy.
  * ============================================================ */
 function PreviewMock({ variant, color, accent }) {
-  if (variant === 'analytics' || variant === 'reports') {
+  if (variant === 'analytics') {
     const bars = [55, 78, 42, 88, 64, 92, 70];
     return (
       <div>

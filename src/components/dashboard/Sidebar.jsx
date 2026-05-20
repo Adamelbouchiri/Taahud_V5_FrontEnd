@@ -7,7 +7,6 @@ import {
   LogOut,
   X,
   Sparkles,
-  BarChart3,
   TrendingUp,
   MessageCircle,
   Bell,
@@ -84,12 +83,6 @@ const SOON_ITEMS = [
     to: '/dashboard/analytics',
     labelKey: 'dashboard.sidebar.items.analytics',
     icon: TrendingUp,
-    accountTypes: ALL_TYPES,
-  },
-  {
-    to: '/dashboard/reports',
-    labelKey: 'dashboard.sidebar.items.reports',
-    icon: BarChart3,
     accountTypes: ALL_TYPES,
   },
   {

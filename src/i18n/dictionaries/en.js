@@ -765,6 +765,38 @@ export default {
         cta: 'Register your interest',
       },
     },
+    contact: {
+      eyebrow: 'Contact us',
+      title: 'Our team is here to help',
+      subtitle:
+        "Pick the channel that suits you best — we'll get back to you as soon as we can. Working days: Sunday to Thursday.",
+      methods: {
+        whatsapp: {
+          title: 'WhatsApp',
+          value: '+966 53 737 2053',
+          desc: 'Fastest way to get an instant reply from our sales team.',
+          action: 'Chat now',
+        },
+        email: {
+          title: 'Email',
+          value: 'info@taahud.sa',
+          desc: 'For general inquiries, suggestions, and partnerships.',
+          action: 'Send a message',
+        },
+        support: {
+          title: 'Support',
+          value: 'support@taahud.sa',
+          desc: 'Technical help and follow-up on support tickets.',
+          action: 'Contact support',
+        },
+        phone: {
+          title: 'Phone',
+          value: '+966 53 737 2053',
+          desc: 'Direct call during official working hours.',
+          action: 'Call us',
+        },
+      },
+    },
     footer: {
       tagline:
         'A leading Saudi platform connecting contractors, suppliers, and real-estate developers â€” building a more transparent, efficient construction sector.',
@@ -845,6 +877,8 @@ export default {
       serviceRoleLabel: 'Your role',
       name: 'Full name',
       namePlaceholder: 'e.g. Ahmad Mohammad',
+      companyName: 'Company name',
+      companyNamePlaceholder: 'e.g. Advanced Construction Co.',
       city: 'City',
       cityPlaceholder: 'Select a city',
       specialty: 'Specialty',
@@ -1030,8 +1064,7 @@ export default {
         applications: 'Applications',
         profile: 'Profile',
         ai: 'AI analytics',
-        analytics: 'Analytics',
-        reports: 'Reports',
+        analytics: 'Analytics & Reports',
         messages: 'Messages',
         notifications: 'Notifications',
       },
@@ -1096,26 +1129,14 @@ export default {
         ],
       },
       analytics: {
-        eyebrow: 'Analytics',
-        title: 'Analytics dashboard',
+        eyebrow: 'Analytics & Reports',
+        title: 'Analytics & Reports',
         description:
-          'A complete view of project performance: project counts, completion rates, budget distribution, and average phase duration.',
+          'A complete view of project performance with periodic, exportable reports — KPIs, budgets, and phases in one place.',
         features: [
-          'Live KPIs for every active project.',
-          'Performance comparisons across time periods.',
-          'Distribution analysis of bids received on your projects.',
-          'Tracking of average time-to-acceptance for bids.',
-        ],
-      },
-      reports: {
-        eyebrow: 'Reports',
-        title: 'Project reports',
-        description:
-          'Periodic, exportable reports as PDF or Excel summarizing everything you need on progress, budget, and phases.',
-        features: [
-          'Automatic monthly reports per project.',
-          'PDF & Excel exports ready to share.',
-          'Financial reports including budget and expenses.',
+          'Live KPIs for every active project, with comparisons across time periods.',
+          'Automatic monthly reports per project — PDF and Excel exports ready to share.',
+          'Financial analytics covering budget, expenses, and bid distribution.',
           'Scheduled report delivery via email.',
         ],
       },
@@ -1668,14 +1689,14 @@ export default {
 
   arena: {
     public: {
-      label: 'Public arena',
+      label: 'Public arena — Numu',
       short: 'Numu',
       desc:
         'Public opportunities aggregated from external sources (Etimad, Forsa, Muqawil...) â€” visible to contractors and engineering offices.',
       lockReason: 'Public opportunities are aggregated automatically from external sources.',
     },
     private: {
-      label: 'Private arena',
+      label: 'Private arena — Ahd',
       short: 'Ahd',
       desc: "Exclusive projects from Taahud clients â€” shown to contractors and engineering offices.",
       lockReason: 'Available to Taahud clients only.',

@@ -12,6 +12,7 @@ import {
 import Logo from '../Logo';
 import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 import { auth } from '../../services';
+import { SALES_WHATSAPP_URL } from '../../config/constants';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* Nav links — `href` starting with `#` triggers smooth-scroll to
@@ -43,7 +44,8 @@ function navLinksFor(t) {
       key: 'services',
       label: t('nav.services'),
       mega: {
-        href: '#services',
+        to: '/services',
+        route: true,
         columns: [
           {
             title: t('landing.services.tabs.contractors'),
@@ -78,7 +80,18 @@ function navLinksFor(t) {
         ],
       },
     },
-    { key: 'plans', label: t('nav.plans'), href: '#plans' },
+    {
+      key: 'plans',
+      label: t('nav.plans'),
+      href: SALES_WHATSAPP_URL,
+      external: true,
+    },
+    {
+      key: 'contact',
+      label: t('nav.contact'),
+      to: '/contact',
+      route: true,
+    },
     {
       key: 'store',
       label: t('nav.store'),
@@ -168,13 +181,23 @@ export default function Navbar() {
   const goToSection = (href) => {
     setOpen(false);
     const id = href.replace('#', '');
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Section lives on the landing page; we're on /services or
+      // /contact — bounce to "/" with the hash so LandingPage's
+      // hash-scroll effect can pick it up after render.
+      navigate('/' + href);
+    }
   };
 
   const handleLinkClick = (link) => {
     setOpen(false);
     if (link.route) {
       navigate(link.to, { state: { from: location.pathname || '/' } });
+    } else if (link.external && link.href) {
+      window.open(link.href, '_blank', 'noopener,noreferrer');
     } else if (link.href) {
       goToSection(link.href);
     }
@@ -492,7 +515,7 @@ function NavDropdown({ link, onNavigate, t }) {
                           <button
                             type="button"
                             onClick={() =>
-                              handleItem({ href: link.mega.href })
+                              handleItem(link.mega)
                             }
                             className="w-full text-start transition-colors"
                             style={{
@@ -531,7 +554,7 @@ function NavDropdown({ link, onNavigate, t }) {
               >
                 <button
                   type="button"
-                  onClick={() => handleItem({ href: link.mega.href })}
+                  onClick={() => handleItem(link.mega)}
                   className="text-[13px] font-semibold transition-colors bg-transparent border-0 p-0 cursor-pointer"
                   style={{ color: '#2c2f7c', fontFamily: 'inherit' }}
                 >
@@ -610,7 +633,13 @@ function MobileNavItem({ link, onNavigate, t }) {
   const childItems = link.items
     ? link.items
     : link.mega.columns.flatMap((col) =>
-        col.items.map((it) => ({ ...it, href: link.mega.href }))
+        col.items.map((it) => ({
+          ...it,
+          to: link.mega.to,
+          route: link.mega.route,
+          href: link.mega.href,
+          external: link.mega.external,
+        }))
       );
 
   return (

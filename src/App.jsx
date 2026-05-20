@@ -10,6 +10,8 @@ import RegisterPage from './pages/RegisterPage';
 import OtpPage from './pages/OtpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import StorePage from './pages/StorePage';
+import ServicesPage from './pages/ServicesPage';
+import ContactPage from './pages/ContactPage';
 
 // Legal pages — public, no guards
 import TermsPage from './pages/legal/TermsPage';
@@ -103,6 +105,8 @@ function AppShell() {
             and admin sidebars (for authenticated users). The page
             itself shows a coming-soon screen for now. */}
         <Route path="/store" element={<StorePage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         {/* ===== Guest-only (auth pages) =====
             If a logged-in user lands here, bounce them to /dashboard. */}
@@ -247,7 +251,9 @@ function AppShell() {
               sidebar links resolve to a real page (not a 404). */}
           <Route path="ai-analysis" element={<ComingSoonPage variant="ai" />} />
           <Route path="analytics" element={<ComingSoonPage variant="analytics" />} />
-          <Route path="reports" element={<ComingSoonPage variant="reports" />} />
+          {/* Reports was merged into analytics — keep the path as a redirect
+              so any existing bookmarks/links land on the unified page. */}
+          <Route path="reports" element={<Navigate to="/dashboard/analytics" replace />} />
           <Route path="messages" element={<ComingSoonPage variant="messages" />} />
           <Route path="notifications" element={<ComingSoonPage variant="notifications" />} />
         </Route>

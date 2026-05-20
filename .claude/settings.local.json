@@ -10,7 +10,9 @@
       "PowerShell(\\(Get-Content \"c:\\\\Users\\\\user\\\\Downloads\\\\FRONTEND_INTEGRATION \\(1\\).md\" | Measure-Object -Line\\).Lines)",
       "PowerShell(Select-String -Path \"c:\\\\Users\\\\user\\\\Downloads\\\\FRONTEND_INTEGRATION \\(1\\).md\" -Pattern '^##|filter|Filter|Query params|query parameter' -SimpleMatch | Select-Object -First 50 | ForEach-Object { \"{0}: {1}\" -f $_.LineNumber, $_.Line.Trim\\(\\) })",
       "PowerShell($PWD.Path)",
-      "PowerShell(git add *)"
+      "PowerShell(git add *)",
+      "PowerShell($path = \"C:\\\\react-projects\\\\Taahud_v5_frontend\\\\src\\\\i18n\\\\dictionaries\\\\zh.js\"; $content = [System.IO.File]::ReadAllText\\($path, [System.Text.Encoding]::UTF8\\); $idx = $content.IndexOf\\(\"companyName\"\\); if \\($idx -lt 0\\) { \"MISSING\" } else { $content.Substring\\($idx, 120\\) })",
+      "PowerShell(Remove-Item *)"
     ]
   }
 }

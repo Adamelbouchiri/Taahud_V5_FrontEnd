@@ -54,6 +54,11 @@ export default function RegisterPage() {
 
   const isServiceProviderCategory = categoryChoice === 'service_provider';
   const showSpecialtyDropdown = hasSpecialty(accountType);
+  // Contractors (entrepreneur) and engineering offices register as
+  // companies, not individuals — swap the "name" field to a
+  // "company name" label/placeholder for those two roles.
+  const isCompanyRole =
+    accountType === 'entrepreneur' || accountType === 'engineering';
 
   const validate = () => {
     const e = {};
@@ -195,9 +200,17 @@ export default function RegisterPage() {
 
         <div className="grid grid-cols-2 gap-3.5">
           <Field
-            label={t('auth.register.name')}
-            icon={User}
-            placeholder={t('auth.register.namePlaceholder')}
+            label={t(
+              isCompanyRole
+                ? 'auth.register.companyName'
+                : 'auth.register.name'
+            )}
+            icon={isCompanyRole ? Briefcase : User}
+            placeholder={t(
+              isCompanyRole
+                ? 'auth.register.companyNamePlaceholder'
+                : 'auth.register.namePlaceholder'
+            )}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}

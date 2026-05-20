@@ -1,5 +1,16 @@
 import { UserRound, HardHat, Truck, Building2, Compass } from 'lucide-react';
 
+/* Sales WhatsApp — used by the "الاشتراكات" nav link and the Plans
+   "subscribe" CTA. Local number 0537372053 → international 966537372053
+   (Saudi country code, leading zero dropped). */
+export const SALES_WHATSAPP_URL = 'https://wa.me/966537372053';
+
+/* Customer-facing contact channels. Imported by ContactUs, Footer,
+   and anywhere else that needs to surface a "talk to us" link. */
+export const SALES_EMAIL = 'info@taahud.sa';
+export const SUPPORT_EMAIL = 'support@taahud.sa';
+export const SALES_PHONE_E164 = '+966537372053';
+
 /* ============================================================
  *  ACCOUNT TYPES vs UI CATEGORIES
  *  ----------------------------------------------------------------

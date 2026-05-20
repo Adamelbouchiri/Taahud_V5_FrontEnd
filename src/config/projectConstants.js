@@ -93,11 +93,10 @@ export const ARENAS = [
     color: '#7a3aa3',
     accentSoft: 'rgba(122,58,163,0.10)',
     postableBy: ['developer'],
-    // Per FRONTEND_INTEGRATION.md §3 — non-owner viewers are entrepre-
-    // neurs and engineering offices. The developer owns the projects
-    // here and sees them via "my projects" (owner check), not as a
-    // marketplace browser.
-    viewableBy: ['entrepreneur', 'engineering'],
+    // Entrepreneurs and engineering offices bid here; developers
+    // also browse the arena (their own listings show in the feed
+    // alongside other developers') — they just can't apply to it.
+    viewableBy: ['entrepreneur', 'engineering', 'developer'],
     applicableBy: ['entrepreneur', 'engineering'],
     lockReason: 'مخصّصة للمطوّر العقاري.',
   },
