@@ -142,8 +142,7 @@ export default {
 
   landing: {
     partners: {
-      eyebrow: 'Our partners',
-      title: 'Partners who trust us',
+      title: 'Trusted us',
     },
     hero: {
       pill: 'Licensed Saudi platform',
@@ -495,7 +494,7 @@ export default {
           basic: {
             description:
               'A plan for contractors who need access to projects, opportunity analysis, bid preparation, and a trusted presence on Taahud.',
-            prices: { '1': '499', '6': '2,499', '12': '3,999' },
+            prices: { '1': '399', '6': '2,035', '12': '3,830' },
             features: [
               'Contractor dashboard',
               'Public Numu projects arena',
@@ -525,7 +524,7 @@ export default {
           premium: {
             description:
               'For contractors who need bigger opportunities, collaboration with other contractors, wider supplier access, and extra tools for higher-efficiency project and bid management.',
-            prices: { '1': '999', '6': '4,999', '12': '8,499' },
+            prices: { '1': '499', '6': '2,545', '12': '4,790' },
             features: [
               'Solidarity arena',
               'Ahd "Special" private arena (exclusive projects)',
@@ -546,7 +545,7 @@ export default {
           basic: {
             description:
               'A plan for engineering offices that need access to projects and tenders, opportunity analysis, technical & financial bid preparation, and a trusted presence on Taahud.',
-            prices: { '1': '549', '6': '2,699', '12': '4,299' },
+            prices: { '1': '499', '6': '2,545', '12': '4,790' },
             features: [
               'Engineering-office dashboard',
               'Public Numu arena',
@@ -579,7 +578,7 @@ export default {
           premium: {
             description:
               'For engineering offices that need bigger and more specialized opportunities, wider coordination with contractors and developers, and advanced tools for high-efficiency team, project, and approval management.',
-            prices: { '1': '1,099', '6': '5,999', '12': '9,999' },
+            prices: { '1': '599', '6': '3,055', '12': '5,750' },
             features: [
               'Ahd "Special" private arena (exclusive projects)',
               'Technical & financial bids (unlimited)',
@@ -603,7 +602,7 @@ export default {
           basic: {
             description:
               "A plan for real-estate developers who need to manage their projects, organize execution parties, track project phases, and document core operations inside Taahud.",
-            prices: { '1': '899', '6': '4,499', '12': '7,499' },
+            prices: { '1': '599', '6': '3,055', '12': '5,750' },
             features: [
               'Dedicated comprehensive dashboard',
               'Project portfolio management',
@@ -630,7 +629,7 @@ export default {
           premium: {
             description:
               'For developers who need more exclusive opportunities, smart support for development decisions, and financial/operational perks that strengthen project management and transactions in Taahud.',
-            prices: { '1': '1,899', '6': '9,999', '12': '16,999' },
+            prices: { '1': '699', '6': '3,565', '12': '6,710' },
             features: [
               'Exclusive tenders',
               'AI real-estate development analytics',
@@ -649,7 +648,7 @@ export default {
           basic: {
             description:
               'A plan for suppliers who need to showcase products to contractors and developers, receive price requests, and build a trusted digital reputation inside Taahud.',
-            prices: { '1': '399', '6': '1,999', '12': '3,299' },
+            prices: { '1': '299', '6': '1,525', '12': '2,870' },
             features: [
               'Direct supply market (product & equipment listings)',
               'Receive RFQ (request for quotes)',
@@ -673,7 +672,7 @@ export default {
           premium: {
             description:
               'For suppliers who need deeper market analysis, AI sales tools, wider customer visibility, and secure payment guarantees on their transactions.',
-            prices: { '1': '799', '6': '3,999', '12': '6,999' },
+            prices: { '1': '399', '6': '2,035', '12': '3,830' },
             features: [
               'Market demand analysis (most-requested materials, active regions, competitive pricing)',
               'AI sales assistant (customer analysis & opportunity suggestions)',
@@ -690,7 +689,7 @@ export default {
       pill: 'Join today',
       title: 'More projects are waiting for you',
       subtitle: 'Sign up for free now â€” start using every Taahud service within minutes.',
-      register: 'Sign up free',
+      register: 'Sign up free for 14 days',
       contact: 'Contact us',
     },
     upcoming: {

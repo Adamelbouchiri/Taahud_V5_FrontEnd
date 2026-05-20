@@ -322,7 +322,7 @@ function ApplyPage() {
                   size={17}
                   strokeWidth={1.7}
                   className="flex-shrink-0 mt-0.5"
-                  style={{ color: '#2c2f7c' }}
+                  style={{ color: 'var(--text-brand)' }}
                 />
                 <p
                   className="m-0"
@@ -505,7 +505,7 @@ function ProjectSummary({ project }) {
                 height: 38,
                 borderRadius: 10,
                 background: 'rgba(44,47,124,0.08)',
-                color: '#2c2f7c',
+                color: 'var(--text-brand)',
                 fontSize: 16,
               }}
             >

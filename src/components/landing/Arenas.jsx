@@ -254,7 +254,7 @@ function ArenaCard({ arena, delay, onBottomLink }) {
         style={{
           padding: '14px 16px',
           fontSize: 12.5,
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
           background: 'transparent',
           border: 'none',
           borderTop: '1px solid var(--border-soft)',

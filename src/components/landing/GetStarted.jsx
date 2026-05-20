@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   GraduationCap,
   Percent,
@@ -9,6 +8,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { SALES_WHATSAPP_URL } from '../../config/constants';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -62,7 +62,7 @@ export default function GetStarted() {
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.01em',
-              color: '#0f1147',
+              color: 'var(--text-brand-deep)',
             }}
           >
             {t('landing.getStarted.title')}
@@ -249,7 +249,6 @@ function AcademyCard({ t }) {
  *  AffiliateCard — partner program teaser
  * ============================================================ */
 function AffiliateCard({ t }) {
-  const navigate = useNavigate();
   const { dir, lang } = useTranslation();
   const accent = '#b8862a';
   const accentSoft = 'rgba(184,134,42,0.12)';
@@ -328,7 +327,9 @@ function AffiliateCard({ t }) {
 
         <button
           type="button"
-          onClick={() => navigate('/register')}
+          onClick={() =>
+            window.open(SALES_WHATSAPP_URL, '_blank', 'noopener,noreferrer')
+          }
           className="mt-auto inline-flex items-center gap-1.5 font-semibold self-start"
           style={{
             padding: '11px 18px',

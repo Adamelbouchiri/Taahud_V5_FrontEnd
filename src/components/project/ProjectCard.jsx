@@ -144,7 +144,7 @@ export default function ProjectCard({ project, onView }) {
               </div>
               <div
                 className="font-bold inline-flex items-center gap-1"
-                style={{ fontSize: 14, color: '#0f1129' }}
+                style={{ fontSize: 14, color: 'var(--text-brand)' }}
               >
                 <Wallet size={13} strokeWidth={1.7} className="text-secondary" />
                 {formatNumber(project.budget)}{' '}
@@ -185,7 +185,7 @@ export default function ProjectCard({ project, onView }) {
           bottom: 12,
           insetInlineStart: 12,
           fontSize: 11,
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
           fontWeight: 600,
         }}
       >

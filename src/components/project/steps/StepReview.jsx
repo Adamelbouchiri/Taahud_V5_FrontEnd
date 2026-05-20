@@ -30,7 +30,7 @@ export default function StepReview({ form, onJumpToStep }) {
           size={18}
           strokeWidth={1.7}
           className="flex-shrink-0 mt-0.5"
-          style={{ color: '#2c2f7c' }}
+          style={{ color: 'var(--text-brand)' }}
         />
         <div>
           <p

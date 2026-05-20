@@ -25,7 +25,7 @@ export default function SupplierComingSoon({ embedded = false }) {
           height: 80,
           borderRadius: 20,
           background: 'rgba(44,47,124,0.08)',
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
         }}
       >
         <Package size={36} strokeWidth={1.7} />

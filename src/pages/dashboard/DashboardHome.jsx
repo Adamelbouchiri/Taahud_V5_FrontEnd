@@ -265,7 +265,7 @@ function RecentProjects({ canBrowseProjects }) {
             className="inline-flex items-center gap-1 font-semibold transition-colors"
             style={{
               fontSize: 12.5,
-              color: '#2c2f7c',
+              color: 'var(--text-brand)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',

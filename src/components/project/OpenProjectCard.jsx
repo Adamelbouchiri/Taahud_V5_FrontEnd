@@ -74,7 +74,7 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
               height: 32,
               borderRadius: 9,
               background: 'rgba(44,47,124,0.08)',
-              color: '#2c2f7c',
+              color: 'var(--text-brand)',
               fontSize: 13,
             }}
           >

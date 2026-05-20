@@ -112,7 +112,7 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
           height: 36,
           borderRadius: 10,
           background: 'rgba(44,47,124,0.08)',
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
         }}
       >
         <Icon size={18} strokeWidth={1.7} />

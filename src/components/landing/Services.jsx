@@ -110,7 +110,7 @@ export default function Services() {
             className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full animate-fade-up"
             style={{
               background: 'rgba(58,61,153,0.08)',
-              color: '#1f2258',
+              color: 'var(--text-brand-deep)',
               fontSize: 11.5,
               fontWeight: 700,
               letterSpacing: '0.05em',

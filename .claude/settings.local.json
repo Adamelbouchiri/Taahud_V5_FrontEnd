@@ -17,7 +17,9 @@
       "PowerShell(git push *)",
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\user\\\\Downloads\" | Where-Object { $_.Name -match \"\\\\.\\(svg|png|jpg|jpeg|PNG|JPG|JPEG|SVG\\)$\" } | Sort-Object Name | Select-Object Name, Length)",
       "PowerShell(Get-ChildItem -LiteralPath \"C:\\\\Users\\\\user\\\\Downloads\" -File | Where-Object { $_.Name -match \"\\\\.\\(svg|png|jpg|jpeg|PNG|JPG|JPEG|SVG\\)$\" } | Sort-Object Name | ForEach-Object { \"{0,-90} {1}\" -f $_.Name, $_.Length })",
-      "PowerShell(Get-Item *)"
+      "PowerShell(Get-Item *)",
+      "PowerShell(npx vite build | Select-Object -Last 10)",
+      "PowerShell(npx vite build 2>&1 | Select-Object -Last 20)"
     ]
   }
 }

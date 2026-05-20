@@ -263,7 +263,7 @@ export default function CreateProjectPage() {
               className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full"
               style={{
                 background: 'rgba(44,47,124,0.08)',
-                color: '#1f2258',
+                color: 'var(--text-brand-deep)',
                 fontSize: 11.5,
                 fontWeight: 700,
                 letterSpacing: '0.05em',

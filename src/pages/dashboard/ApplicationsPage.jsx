@@ -219,7 +219,7 @@ function Header({ tab, showTabs, t }) {
         className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full"
         style={{
           background: 'rgba(44,47,124,0.08)',
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
           fontSize: 11.5,
           fontWeight: 700,
           letterSpacing: '0.05em',
@@ -598,7 +598,7 @@ function EmptyState({ tab, t }) {
           height: 56,
           borderRadius: 14,
           background: 'rgba(44,47,124,0.08)',
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
         }}
       >
         {tab === 'submitted' ? (

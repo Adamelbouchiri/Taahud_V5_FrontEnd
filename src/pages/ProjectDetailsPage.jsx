@@ -914,7 +914,7 @@ function OwnerCard({ owner }) {
             height: 44,
             borderRadius: 12,
             background: 'rgba(44,47,124,0.08)',
-            color: '#2c2f7c',
+            color: 'var(--text-brand)',
             fontSize: 18,
           }}
         >

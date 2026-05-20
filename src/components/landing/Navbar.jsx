@@ -12,7 +12,6 @@ import {
 import Logo from '../Logo';
 import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 import { auth } from '../../services';
-import { SALES_WHATSAPP_URL } from '../../config/constants';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* Nav links — `href` starting with `#` triggers smooth-scroll to
@@ -83,8 +82,7 @@ function navLinksFor(t) {
     {
       key: 'plans',
       label: t('nav.plans'),
-      href: SALES_WHATSAPP_URL,
-      external: true,
+      href: '#plans',
     },
     {
       key: 'contact',
@@ -556,7 +554,7 @@ function NavDropdown({ link, onNavigate, t }) {
                   type="button"
                   onClick={() => handleItem(link.mega)}
                   className="text-[13px] font-semibold transition-colors bg-transparent border-0 p-0 cursor-pointer"
-                  style={{ color: '#2c2f7c', fontFamily: 'inherit' }}
+                  style={{ color: 'var(--text-brand)', fontFamily: 'inherit' }}
                 >
                   {t('nav.servicesAll')}
                 </button>

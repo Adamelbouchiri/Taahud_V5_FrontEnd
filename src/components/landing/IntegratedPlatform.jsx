@@ -56,7 +56,7 @@ export default function IntegratedPlatform() {
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.015em',
-              color: '#0f1147',
+              color: 'var(--text-brand-deep)',
             }}
           >
             {t('landing.integrated.title')}

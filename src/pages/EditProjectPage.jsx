@@ -277,7 +277,7 @@ function EditProjectPage() {
               className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full"
               style={{
                 background: 'rgba(44,47,124,0.08)',
-                color: '#1f2258',
+                color: 'var(--text-brand-deep)',
                 fontSize: 11.5,
                 fontWeight: 700,
                 letterSpacing: '0.05em',
@@ -674,7 +674,7 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
           height: 34,
           borderRadius: 10,
           background: 'rgba(44,47,124,0.08)',
-          color: '#2c2f7c',
+          color: 'var(--text-brand)',
         }}
       >
         <Icon size={17} strokeWidth={1.7} />

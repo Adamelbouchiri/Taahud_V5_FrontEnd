@@ -45,19 +45,6 @@ export default function Partners() {
     >
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12 mb-8 lg:mb-10">
         <div className="text-center max-w-[680px] mx-auto">
-          <div
-            className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full animate-fade-up"
-            style={{
-              background: 'var(--bg-canvas)',
-              border: '1px solid var(--border-default)',
-              fontSize: 11.5,
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              color: 'var(--text-ink-soft)',
-            }}
-          >
-            {t('landing.partners.eyebrow')}
-          </div>
           <h2
             className="font-display m-0 animate-fade-up"
             style={{

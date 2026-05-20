@@ -110,7 +110,7 @@ export default function Plans() {
               fontWeight: 700,
               lineHeight: 1.15,
               letterSpacing: '-0.015em',
-              color: '#0f1147',
+              color: 'var(--text-brand-deep)',
             }}
           >
             {t('landing.plans.title')}
@@ -201,7 +201,7 @@ export default function Plans() {
                   style={{
                     fontSize: 24,
                     fontWeight: 700,
-                    color: '#0f1147',
+                    color: 'var(--text-brand-deep)',
                     lineHeight: 1.1,
                     margin: '2px 0',
                   }}
