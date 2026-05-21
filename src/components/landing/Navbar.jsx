@@ -76,6 +76,16 @@ function navLinksFor(t) {
               label: t(`landing.services.cards.developers.${k}.title`),
             })),
           },
+          {
+            title: t('landing.services.tabs.individuals'),
+            items: [
+              'postProject', 'findContractor', 'findEngineer', 'estimator',
+              'contractCheck', 'tracker', 'escrow', 'materials', 'ai',
+            ].map((k) => ({
+              key: k,
+              label: t(`landing.services.cards.individuals.${k}.title`),
+            })),
+          },
         ],
       },
     },
@@ -213,13 +223,18 @@ export default function Navbar() {
         borderBottom: scrolled ? '1px solid var(--border-default)' : '1px solid transparent',
       }}
     >
-      <nav className="max-w-[1360px] mx-auto px-6 lg:px-14 h-[116px] flex items-center justify-between gap-6">
+      <nav className="max-w-[1360px] mx-auto px-4 lg:px-14 h-[68px] lg:h-[116px] flex items-center justify-between gap-3 lg:gap-6">
         {/* Logo */}
         <a
           onClick={() => navigate('/')}
           className="cursor-pointer flex items-center gap-2 shrink-0"
         >
-          <Logo height={88} />
+          <span className="hidden lg:inline-block">
+            <Logo height={88} />
+          </span>
+          <span className="lg:hidden">
+            <Logo height={44} />
+          </span>
         </a>
 
         {/* Center links */}
@@ -302,9 +317,10 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile right cluster: switcher + menu toggle */}
-        <div className="lg:hidden flex items-center gap-2">
-          <LanguageThemeSwitcher compact />
+        {/* Mobile right cluster: menu toggle only.
+            Language + theme switchers move into the drawer below so
+            the top bar isn't fighting the logo for horizontal space. */}
+        <div className="lg:hidden flex items-center">
           <button
             className="p-2"
             style={{ color: 'var(--text-ink-soft)' }}
@@ -335,7 +351,13 @@ export default function Navbar() {
               />
             ))}
 
-            <div className="flex gap-2 mt-4">
+            {/* Language + theme controls live with the links on mobile —
+                see the comment in the mobile right cluster above. */}
+            <div className="flex items-center justify-end pt-4">
+              <LanguageThemeSwitcher />
+            </div>
+
+            <div className="flex gap-2 mt-2">
               {status === 'loading' ? (
                 <div
                   className="flex-1 rounded-[10px] animate-pulse"
@@ -480,7 +502,7 @@ function NavDropdown({ link, onNavigate, t }) {
                     dir === 'rtl' ? 'translateX(50%)' : 'translateX(-50%)',
                 }
               : { insetInlineStart: 0 }),
-            minWidth: isMega ? 720 : 240,
+            minWidth: isMega ? 920 : 240,
             background: 'var(--bg-surface)',
             borderRadius: 14,
             border: '1px solid var(--border-default)',
@@ -492,7 +514,9 @@ function NavDropdown({ link, onNavigate, t }) {
             <>
               <div
                 className="grid gap-6 p-6"
-                style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}
+                style={{
+                  gridTemplateColumns: `repeat(${link.mega.columns.length}, minmax(0, 1fr))`,
+                }}
               >
                 {link.mega.columns.map((col) => (
                   <div key={col.title}>
@@ -628,17 +652,20 @@ function MobileNavItem({ link, onNavigate, t }) {
     );
   }
 
+  const isMega = !!link.mega;
+  // Mega menus (Services) would balloon the drawer with 27 leaf items
+  // on mobile — collapse to one row per column heading, each linking
+  // to the same /services target. The full grid still lives on desktop.
   const childItems = link.items
     ? link.items
-    : link.mega.columns.flatMap((col) =>
-        col.items.map((it) => ({
-          ...it,
-          to: link.mega.to,
-          route: link.mega.route,
-          href: link.mega.href,
-          external: link.mega.external,
-        }))
-      );
+    : link.mega.columns.map((col) => ({
+        key: col.title,
+        label: col.title,
+        to: link.mega.to,
+        route: link.mega.route,
+        href: link.mega.href,
+        external: link.mega.external,
+      }));
 
   return (
     <div
@@ -692,6 +719,28 @@ function MobileNavItem({ link, onNavigate, t }) {
               </button>
             </li>
           ))}
+          {isMega && (
+            <li className="list-none mt-1">
+              <button
+                type="button"
+                onClick={() => onNavigate(link.mega)}
+                className="w-full flex items-center gap-2 text-start"
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  color: 'var(--text-brand)',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {t('nav.servicesAll')}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

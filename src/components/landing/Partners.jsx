@@ -79,6 +79,7 @@ export default function Partners() {
                 src={logo.src}
                 alt={logo.alt}
                 loading="lazy"
+                decoding="async"
                 draggable={false}
               />
             </div>
@@ -106,13 +107,9 @@ export default function Partners() {
           align-items: center;
           justify-content: center;
           padding: 8px 14px;
-          opacity: 0.75;
-          filter: grayscale(1);
-          transition: opacity 0.25s, filter 0.25s, transform 0.25s;
+          transition: transform 0.25s;
         }
         .partners-tile:hover {
-          opacity: 1;
-          filter: grayscale(0);
           transform: translateY(-2px);
         }
         .partners-tile img {

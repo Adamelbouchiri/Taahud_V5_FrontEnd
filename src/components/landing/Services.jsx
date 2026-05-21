@@ -27,6 +27,12 @@ import {
   PieChart,
   ShieldCheck,
   LineChart,
+  Home,
+  Hammer,
+  PencilRuler,
+  Calculator,
+  Package,
+  Megaphone,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -83,6 +89,21 @@ const AUDIENCES = [
       { key: 'qualify', icon: ShieldCheck, accent: '#136d4a' },
       { key: 'investorReports', icon: LineChart, accent: '#3a3d99' },
       { key: 'ai', icon: Bot, accent: '#c9a35a' },
+    ],
+  },
+  {
+    id: 'individuals',
+    icon: Home,
+    cards: [
+      { key: 'postProject', icon: Megaphone, accent: '#0f1147', badge: 'new', badgeTone: 'green' },
+      { key: 'findContractor', icon: Hammer, accent: '#136d4a' },
+      { key: 'findEngineer', icon: PencilRuler, accent: '#3a3d99' },
+      { key: 'estimator', icon: Calculator, accent: '#c9a35a' },
+      { key: 'contractCheck', icon: ScanSearch, accent: '#0f1147' },
+      { key: 'tracker', icon: ClipboardList, accent: '#136d4a' },
+      { key: 'escrow', icon: Lock, accent: '#3a3d99' },
+      { key: 'materials', icon: Package, accent: '#c9a35a' },
+      { key: 'ai', icon: Bot, accent: '#136d4a' },
     ],
   },
 ];

@@ -161,11 +161,12 @@ export default {
     },
     services: {
       eyebrow: 'Specialized services',
-      title: 'One platform. Three kinds of users.',
+      title: 'One platform. Four kinds of users.',
       tabs: {
         contractors: 'Contractors & engineering offices',
         suppliers: 'Suppliers',
         developers: 'Developers',
+        individuals: 'Individuals',
       },
       audienceDescriptions: {
         contractors:
@@ -174,6 +175,8 @@ export default {
           'For building-material and equipment suppliers — Taahud connects you directly to thousands of active contractors and projects, and helps you manage orders efficiently.',
         developers:
           "For real-estate developers building the future — Taahud gives you the tools to find the best contractors, manage large projects, and access financing with ease.",
+        individuals:
+          "For individuals taking on anything from a small repair to a full villa build — post your project openly or to our curated private arena, get bids from vetted contractors and engineers, and stay on top of costs, contracts, and milestones from one place.",
       },
       badges: {
         exclusive: 'Exclusive',
@@ -293,6 +296,44 @@ export default {
           ai: {
             title: 'AI development advisor',
             desc: 'A smart assistant that analyzes feasibility studies, suggests ideal locations, and helps you make informed decisions.',
+          },
+        },
+        individuals: {
+          findContractor: {
+            title: 'Find a contractor',
+            desc: 'Browse 1,200+ verified contractors — filter by specialty, region, budget, and real homeowner reviews.',
+          },
+          findEngineer: {
+            title: 'Engineering offices',
+            desc: 'Connect with licensed engineering offices for design, supervision, permits, and approvals.',
+          },
+          estimator: {
+            title: 'Build cost estimator',
+            desc: 'Get a realistic cost range for your build or renovation before you talk to any contractor.',
+          },
+          contractCheck: {
+            title: 'Contract auditor',
+            desc: 'Upload a contract and get an AI breakdown of risky clauses, hidden fees, and unfair penalties before you sign.',
+          },
+          tracker: {
+            title: 'Build tracker',
+            desc: 'Track progress, payments, deliveries, and milestones — with photo updates straight from the site.',
+          },
+          escrow: {
+            title: 'Milestone payments',
+            desc: 'Pay your contractor through bank-guaranteed milestones — funds only release when work is verified.',
+          },
+          materials: {
+            title: 'Materials marketplace',
+            desc: 'Browse prices for tiles, paint, fixtures, and equipment from verified suppliers near you.',
+          },
+          ai: {
+            title: 'Personal building advisor',
+            desc: "A smart assistant that answers questions about permits, regulations, contract terms, and what's fair in the Saudi market.",
+          },
+          postProject: {
+            title: 'Post your project',
+            desc: 'From a small renovation to a full villa build — post it openly to all contractors, or privately to our curated private arena, and let vetted contractors come to you with bids.',
           },
         },
       },

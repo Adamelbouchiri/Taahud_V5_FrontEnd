@@ -298,6 +298,7 @@ function PreviewCard({ arena, kBase, t }) {
             alt=""
             aria-hidden="true"
             loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover"
           />
         )}
