@@ -2,8 +2,7 @@
  *  Latin + CJK type — Google Fonts (must come before @font-face
  *  so the cascade order is right).
  *  ----------------------------------------------------------------
- *    Inter              — English body / UI sans
- *    DM Serif Display   — English display serif (headings)
+ *    Outfit             — English body + headings (single family)
  *    Noto Sans SC       — Simplified Chinese body sans
  *    Noto Serif SC      — Simplified Chinese display serif
  *
@@ -11,7 +10,7 @@
  *  further down. Arabic stays on the locally-bundled Thmanyah
  *  family below.
  * ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap');
 
 /* ============================================================
  *  Thmanyah Typeface (self-hosted)
@@ -285,9 +284,12 @@ html.dark .text-ink-soft {
  *  conditionals.
  * ============================================================ */
 html[lang='en'] {
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'DM Serif Display', 'Inter', Georgia, serif;
-  --font-serif: 'DM Serif Display', Georgia, serif;
+  /* Unified single-family stack — body, headings, and inline serif
+     all resolve to Outfit. Headings stay distinctive via weight
+     + size + tracking rather than a separate display serif. */
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-serif: 'Outfit', system-ui, sans-serif;
 }
 
 html[lang='zh'] {

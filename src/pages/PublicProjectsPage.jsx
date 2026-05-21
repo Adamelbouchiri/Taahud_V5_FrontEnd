@@ -166,14 +166,10 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
             <HubHeader desc={t(`arena.${arena}.desc`)} />
           )}
 
-          {!arenaSlug && !accountLoaded && <TabsSkeleton />}
-          {!arenaSlug && accountLoaded && (
-            <ArenaTabs
-              arenas={viewableArenas}
-              value={arena}
-              onChange={setArena}
-            />
-          )}
+          {/* Arena switching lives in the dashboard sidebar only —
+              browsing /projects shows whatever arena the URL targets
+              (or the default fallback in hub mode) without an
+              in-page tab strip that would let users hop sideways. */}
 
           {blocked ? (
             <ArenaBlocked
@@ -679,76 +675,3 @@ function ArenaBlocked({ arena, arenaSlug, accountType, hasIsnadUpgrade }) {
   );
 }
 
-/* ============================================================
- *  TabsSkeleton
- * ============================================================ */
-function TabsSkeleton() {
-  return (
-    <div className="flex gap-2 mb-6 overflow-hidden pb-1 -mx-1 px-1">
-      {[120, 110, 130].map((w, i) => (
-        <div
-          key={i}
-          className="animate-pulse rounded-[12px]"
-          style={{ width: w, height: 44, background: 'var(--border-soft)' }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ============================================================
- *  ArenaTabs
- * ============================================================ */
-function ArenaTabs({ arenas, value, onChange }) {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex gap-2 mb-6 overflow-x-auto pb-1 -mx-1 px-1 smooth-scroll"
-      style={{ scrollbarWidth: 'none' }}
-    >
-      {arenas.map((a) => {
-        const active = value === a.value;
-        return (
-          <button
-            type="button"
-            key={a.value}
-            onClick={() => onChange(a.value)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[12px] font-semibold transition-all whitespace-nowrap"
-            style={{
-              fontSize: 13.5,
-              background: active ? a.color : 'var(--bg-surface)',
-              color: active ? 'white' : 'var(--text-ink-soft)',
-              border: `1.5px solid ${active ? a.color : 'var(--border-default)'}`,
-              cursor: 'pointer',
-              boxShadow: active ? `0 6px 14px ${a.color}30` : 'none',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={(e) => {
-              if (!active) {
-                e.currentTarget.style.borderColor = a.color;
-                e.currentTarget.style.color = a.color;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!active) {
-                e.currentTarget.style.borderColor = 'var(--border-default)';
-                e.currentTarget.style.color = 'var(--text-ink-soft)';
-              }
-            }}
-          >
-            <span
-              className="rounded-full"
-              style={{
-                width: 8,
-                height: 8,
-                background: active ? 'white' : a.color,
-                opacity: active ? 1 : 0.85,
-              }}
-            />
-            {t(`arena.${a.value}.label`)}
-          </button>
-        );
-      })}
-    </div>
-  );
-}

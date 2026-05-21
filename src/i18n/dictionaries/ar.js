@@ -1313,6 +1313,7 @@ export default {
       budgetSealed: 'الميزانية مخفية',
       ownerFallback: 'عميل',
       ownerGeneric: 'صاحب المشروع',
+      identitySealed: 'الهوية مخفية حتى القبول',
       viewDetails: 'عرض التفاصيل',
       appliedAndView: 'تم تقديم طلبك — عرض التفاصيل',
       emptyTitle: 'لا توجد مشاريع مفتوحة حالياً',

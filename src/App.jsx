@@ -297,7 +297,9 @@ function AppShell() {
         {/* ===== Legacy redirects ===== */}
         <Route path="/dashboard/projects" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard/projects/new" element={<Navigate to="/projects/new" replace />} />
-        <Route path="/dashboard/browse" element={<Navigate to="/projects" replace />} />
+        {/* /dashboard/browse intentionally removed — browsing always
+            enters via the dashboard sidebar's arena-specific links so
+            users land in the arena that suits their account type. */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

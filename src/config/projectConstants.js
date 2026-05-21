@@ -157,6 +157,21 @@ export function defaultArenaFor(accountType) {
   return DEFAULT_ARENA_BY_ACCOUNT[accountType] || '';
 }
 
+/* Resolve the right "browse projects" route for this user. Generic
+   /projects shows a blocked state for individuals + suppliers (no
+   viewable arena) and is ambiguous for everyone else — instead, we
+   pick the first arena their account_type can view and route them
+   straight there. Falls back to /projects when the role is still
+   loading, and to /dashboard if the user can't view any arena. */
+export function defaultBrowseRouteFor(accountType, hasIsnadUpgrade) {
+  if (!accountType) return '/projects';
+  const arena = ARENAS.find((a) =>
+    canViewArena(a.value, accountType, hasIsnadUpgrade)
+  );
+  if (arena) return `/projects/${arena.value}`;
+  return '/dashboard';
+}
+
 /* True if the given account type is allowed to POST in this arena.
    Suppliers can't post anywhere (they don't see project creation
    in the UI). Public is system-locked — postableBy is empty, so
@@ -236,6 +251,26 @@ export function canSeeProjectBudget(project, userId) {
   if (project.user_id === userId) return true; // owner
   if (project.partner_id && project.partner_id === userId) return true; // accepted partner
   return false;
+}
+
+/* True if this user is allowed to see the project owner's real name.
+   Same gate as the budget: owners see themselves, the accepted
+   partner sees them after acceptance, everyone else sees a generic
+   role label. Applies symmetrically with `canSeeApplicantName`
+   below so neither side leaks identity until they collaborate. */
+export function canSeeProjectOwnerName(project, userId) {
+  if (!project || !userId) return false;
+  if (project.user_id === userId) return true; // owner
+  if (project.partner_id && project.partner_id === userId) return true; // accepted partner
+  return false;
+}
+
+/* True if the applicant's real name on this application is allowed
+   to be shown. Only accepted applications expose the applicant
+   identity — pending/rejected/withdrawn stay anonymized. */
+export function canSeeApplicantName(application) {
+  if (!application) return false;
+  return application.is_accepted === true || application.status === 'accepted';
 }
 
 /* Short reason string to show under a locked arena card. */

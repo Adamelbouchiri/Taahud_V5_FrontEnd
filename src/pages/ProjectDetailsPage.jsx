@@ -22,6 +22,7 @@ import {
   FileSpreadsheet,
   FileArchive,
   LayoutDashboard,
+  Lock,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
@@ -30,6 +31,8 @@ import {
   arenaConfig,
   canApplyArena,
   canSeeProjectBudget,
+  canSeeProjectOwnerName,
+  canSeeApplicantName,
 } from '../config/projectConstants';
 import { UserProvider, useUser } from '../contexts/UserContext';
 import StatusBadge from '../components/project/StatusBadge';
@@ -230,7 +233,7 @@ function ProjectDetailsPage() {
 
           <aside className="space-y-5">
             <FactsCard project={project} />
-            <OwnerCard owner={project.owner} />
+            <OwnerCard owner={project.owner} project={project} viewerId={user?.id} />
             {project.is_accepted === true && project.partner_id && (
               <PartnerCard partnerId={project.partner_id} />
             )}
@@ -643,8 +646,10 @@ function OwnerApplications({ projectId, onAfterAccept }) {
                   className="font-semibold mb-0.5"
                   style={{ fontSize: 14, color: 'var(--text-ink)' }}
                 >
-                  {a.applicant?.name ||
-                    t('projects.details.applications.applicant')}
+                  {canSeeApplicantName(a)
+                    ? a.applicant?.name ||
+                      t('projects.details.applications.applicant')
+                    : t('projects.details.applications.applicant')}
                 </div>
                 <div
                   className="flex items-center gap-2 flex-wrap"
@@ -882,12 +887,13 @@ function FactsCard({ project }) {
   );
 }
 
-function OwnerCard({ owner }) {
+function OwnerCard({ owner, project, viewerId }) {
   const { t } = useTranslation();
   if (!owner) return null;
   const role = owner.account_type
     ? t(`accountType.${owner.account_type}`)
     : t('projects.list.ownerGeneric');
+  const showName = canSeeProjectOwnerName(project, viewerId);
   return (
     <div
       className="rounded-[14px] p-5"
@@ -918,25 +924,38 @@ function OwnerCard({ owner }) {
             fontSize: 18,
           }}
         >
-          {owner.name?.[0] || '·'}
+          {showName ? (
+            owner.name?.[0] || '·'
+          ) : (
+            <User size={18} strokeWidth={1.9} />
+          )}
         </div>
         <div className="min-w-0">
           <div
             className="font-bold truncate"
             style={{ fontSize: 14, color: 'var(--text-ink)' }}
           >
-            {owner.name}
+            {showName ? owner.name : role}
           </div>
           <div
             className="flex items-center gap-1 truncate"
             style={{ fontSize: 12, color: 'var(--text-muted)' }}
           >
-            <User size={11} strokeWidth={1.8} />
-            {role}
-            {owner.city && (
+            {showName ? (
               <>
-                <span>·</span>
-                <span>{owner.city}</span>
+                <User size={11} strokeWidth={1.8} />
+                {role}
+                {owner.city && (
+                  <>
+                    <span>·</span>
+                    <span>{owner.city}</span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <Lock size={11} strokeWidth={2} />
+                {t('projects.list.identitySealed')}
               </>
             )}
           </div>

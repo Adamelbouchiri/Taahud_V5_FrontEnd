@@ -14,6 +14,7 @@ import {
   AlertCircle,
   ListChecks,
   User,
+  Lock,
   Paperclip,
   X as XIcon,
   UploadCloud,
@@ -24,7 +25,11 @@ import TextareaField from '../components/form/TextareaField';
 import { projects as projectsApi, applications as applicationsApi } from '../services';
 import { useTranslation } from '../i18n/LanguageContext';
 import { UserProvider, useUser } from '../contexts/UserContext';
-import { canApplyArena } from '../config/projectConstants';
+import {
+  canApplyArena,
+  canSeeProjectOwnerName,
+  defaultBrowseRouteFor,
+} from '../config/projectConstants';
 
 /* ============================================================
  *  ApplyPage — /projects/:id/apply
@@ -43,6 +48,10 @@ function ApplyPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useUser();
+  const browseRoute = defaultBrowseRouteFor(
+    user?.account_type,
+    user?.has_isnad_upgrade
+  );
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -162,7 +171,7 @@ function ApplyPage() {
   if (loadError)
     return (
       <Shell>
-        <ErrorState message={loadError} onBack={() => navigate('/projects')} />
+        <ErrorState message={loadError} onBack={() => navigate(browseRoute)} />
       </Shell>
     );
   if (submitted)
@@ -170,7 +179,7 @@ function ApplyPage() {
       <Shell>
         <SuccessState
           project={project}
-          onBrowse={() => navigate('/projects')}
+          onBrowse={() => navigate(browseRoute)}
           onMyApps={() => navigate('/dashboard')}
         />
       </Shell>
@@ -183,7 +192,7 @@ function ApplyPage() {
           className="flex items-center gap-2 mb-6"
           style={{ fontSize: 13, color: 'var(--text-muted)' }}
         >
-          <Link to="/projects" className="link" style={{ fontWeight: 500 }}>
+          <Link to={browseRoute} className="link" style={{ fontWeight: 500 }}>
             {t('projects.apply.breadcrumbBrowse')}
           </Link>
           <ArrowLeft size={13} style={{ color: 'var(--text-muted)' }} />
@@ -340,7 +349,7 @@ function ApplyPage() {
             <div className="flex justify-between items-center mt-5 flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/projects')}
+                onClick={() => navigate(browseRoute)}
                 disabled={submitting}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] font-semibold transition-all"
                 style={{
@@ -397,6 +406,11 @@ function ApplyPage() {
 function Shell({ children }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useUser();
+  const browseRoute = defaultBrowseRouteFor(
+    user?.account_type,
+    user?.has_isnad_upgrade
+  );
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -420,7 +434,7 @@ function Shell({ children }) {
           <div className="flex items-center gap-2">
             <LanguageThemeSwitcher compact />
             <button
-              onClick={() => navigate('/projects')}
+              onClick={() => navigate(browseRoute)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-medium transition-colors"
               style={{
                 fontSize: 13,
@@ -452,6 +466,8 @@ function Shell({ children }) {
  * ============================================================ */
 function ProjectSummary({ project }) {
   const { t, lang } = useTranslation();
+  const { user } = useUser();
+  const showOwnerName = canSeeProjectOwnerName(project, user?.id);
   const ownerLabel = (() => {
     const at = project.owner?.account_type;
     if (at === 'developer') return t('accountType.developer');
@@ -509,21 +525,34 @@ function ProjectSummary({ project }) {
                 fontSize: 16,
               }}
             >
-              {project.owner.name?.[0] || '·'}
+              {showOwnerName ? (
+                project.owner.name?.[0] || '·'
+              ) : (
+                <User size={16} strokeWidth={1.9} />
+              )}
             </div>
             <div className="min-w-0">
               <div
                 className="font-semibold truncate"
                 style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
               >
-                {project.owner.name}
+                {showOwnerName ? project.owner.name : ownerLabel}
               </div>
               <div
                 className="flex items-center gap-1"
                 style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
               >
-                <User size={11} strokeWidth={1.8} />
-                {ownerLabel}
+                {showOwnerName ? (
+                  <>
+                    <User size={11} strokeWidth={1.8} />
+                    {ownerLabel}
+                  </>
+                ) : (
+                  <>
+                    <Lock size={10} strokeWidth={2} />
+                    {t('projects.list.identitySealed')}
+                  </>
+                )}
               </div>
             </div>
           </div>

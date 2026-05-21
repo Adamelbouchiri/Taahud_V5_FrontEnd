@@ -55,15 +55,25 @@ export default function CreateProjectPage() {
   const [uploadProgress, setUploadProgress] = useState(null);
 
   const [accountType, setAccountType] = useState(null);
+  // Tracked separately from `accountType` because the resolved value
+  // can legitimately be null (anonymous / missing role). The picker
+  // uses this to swap in a skeleton until the call settles — otherwise
+  // arenas render as if everything is postable for a frame, then snap
+  // into their locked state once auth.me() resolves.
+  const [accountLoaded, setAccountLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     auth
       .me()
       .then((u) => {
-        if (!cancelled) setAccountType(u?.account_type || null);
+        if (cancelled) return;
+        setAccountType(u?.account_type || null);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setAccountLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -333,6 +343,7 @@ export default function CreateProjectPage() {
                 update={update}
                 errors={errors}
                 accountType={accountType}
+                accountLoaded={accountLoaded}
               />
             )}
             {step === 1 && (

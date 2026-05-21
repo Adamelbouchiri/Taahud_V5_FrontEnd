@@ -22,7 +22,13 @@ import {
 import { CITIES } from '../../../config/constants';
 import { useTranslation } from '../../../i18n/LanguageContext';
 
-export default function StepDetails({ form, update, errors, accountType }) {
+export default function StepDetails({
+  form,
+  update,
+  errors,
+  accountType,
+  accountLoaded = true,
+}) {
   const { t } = useTranslation();
   const k = 'projects.create.steps.details';
 
@@ -33,6 +39,7 @@ export default function StepDetails({ form, update, errors, accountType }) {
         onChange={(val) => update('arena', val)}
         error={errors.arena}
         accountType={accountType}
+        accountLoaded={accountLoaded}
       />
 
       <Field
@@ -83,10 +90,12 @@ export default function StepDetails({ form, update, errors, accountType }) {
 /* ============================================================
  *  ArenaPicker
  * ============================================================ */
-function ArenaPicker({ value, onChange, error, accountType }) {
+function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
   const { t } = useTranslation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [notified, setNotified] = useState(false);
+
+  if (!accountLoaded) return <ArenaPickerSkeleton t={t} />;
 
   return (
     <div>
@@ -288,6 +297,67 @@ function ArenaPicker({ value, onChange, error, accountType }) {
           onNotify={() => setNotified(true)}
         />
       )}
+    </div>
+  );
+}
+
+/* ============================================================
+ *  ArenaPickerSkeleton — shown until auth.me() resolves so the
+ *  arena tiles don't flash from "all open" to "locked per role".
+ *  Mirrors the real grid's column count and tile height for a
+ *  visually-stable swap-in.
+ * ============================================================ */
+function ArenaPickerSkeleton({ t }) {
+  return (
+    <div>
+      <label className="field-label">
+        {t('projects.create.steps.details.arenaSectionTitle')}
+      </label>
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5"
+        aria-hidden="true"
+      >
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="animate-pulse relative overflow-hidden"
+            style={{
+              minHeight: 96,
+              borderRadius: 12,
+              border: '1.5px solid var(--border-soft)',
+              background: 'var(--bg-canvas)',
+              padding: '14px 16px',
+            }}
+          >
+            <div
+              style={{
+                height: 12,
+                width: '45%',
+                background: 'var(--border-soft)',
+                borderRadius: 6,
+                marginBottom: 10,
+              }}
+            />
+            <div
+              style={{
+                height: 10,
+                width: '90%',
+                background: 'var(--border-soft)',
+                borderRadius: 6,
+                marginBottom: 6,
+              }}
+            />
+            <div
+              style={{
+                height: 10,
+                width: '70%',
+                background: 'var(--border-soft)',
+                borderRadius: 6,
+              }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

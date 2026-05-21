@@ -20,7 +20,11 @@ import { useUser } from '../../contexts/UserContext';
 import { projects as projectsApi } from '../../services';
 import { isServiceProvider } from '../../config/constants';
 import StatusBadge from '../../components/project/StatusBadge';
-import { arenaConfig, canPostAnyArena } from '../../config/projectConstants';
+import {
+  arenaConfig,
+  canPostAnyArena,
+  defaultBrowseRouteFor,
+} from '../../config/projectConstants';
 import SupplierComingSoon from '../../components/SupplierComingSoon';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -125,6 +129,11 @@ function Greeting({ user }) {
 function QuickActions({ canPostProject, canBrowseProjects }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useUser();
+  const browseRoute = defaultBrowseRouteFor(
+    user?.account_type,
+    user?.has_isnad_upgrade
+  );
 
   const actions = [];
 
@@ -144,7 +153,7 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
       title: t('dashboard.actions.browseProjects'),
       desc: t('dashboard.actions.browseProjectsDesc'),
       color: '#2c2f7c',
-      onClick: () => navigate('/projects'),
+      onClick: () => navigate(browseRoute),
     });
   }
 
@@ -235,6 +244,11 @@ function ActionCard({ action, delay }) {
 function RecentProjects({ canBrowseProjects }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useUser();
+  const browseRoute = defaultBrowseRouteFor(
+    user?.account_type,
+    user?.has_isnad_upgrade
+  );
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -261,7 +275,7 @@ function RecentProjects({ canBrowseProjects }) {
         hasMore && canBrowseProjects && (
           <button
             type="button"
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate(browseRoute)}
             className="inline-flex items-center gap-1 font-semibold transition-colors"
             style={{
               fontSize: 12.5,
@@ -591,6 +605,10 @@ function formatRelativeDate(d, t) {
 function RecentAssociatedProjects({ user }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const browseRoute = defaultBrowseRouteFor(
+    user?.account_type,
+    user?.has_isnad_upgrade
+  );
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -621,7 +639,7 @@ function RecentAssociatedProjects({ user }) {
           title={t('dashboard.empty.noAssociated.title')}
           subtitle={t('dashboard.empty.noAssociated.subtitle')}
           ctaLabel={t('dashboard.empty.noAssociated.cta')}
-          onCta={() => navigate('/projects')}
+          onCta={() => navigate(browseRoute)}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">

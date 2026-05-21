@@ -19,6 +19,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import {
   canApplyAnyArena,
   canPostAnyArena,
+  canSeeApplicantName,
 } from '../../config/projectConstants';
 
 /* ============================================================
@@ -404,10 +405,12 @@ function ApplicationRow({
             className="flex items-center gap-3 flex-wrap"
             style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
           >
-            {isOwnerView && a.applicant?.name && (
+            {isOwnerView && (
               <span className="inline-flex items-center gap-1.5">
                 <User size={12} strokeWidth={1.8} />
-                {a.applicant.name}
+                {canSeeApplicantName(a) && a.applicant?.name
+                  ? a.applicant.name
+                  : t('projects.details.applications.applicant')}
               </span>
             )}
             {!isOwnerView && a.project?.arena && (

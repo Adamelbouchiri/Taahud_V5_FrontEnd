@@ -1319,6 +1319,7 @@ export default {
       budgetSealed: '预算保密',
       ownerFallback: '客户',
       ownerGeneric: '项目业主',
+      identitySealed: '录用前身份保密',
       viewDetails: '查看详情',
       appliedAndView: '已提交报价 — 查看详情',
       emptyTitle: '目前没有开放项目',

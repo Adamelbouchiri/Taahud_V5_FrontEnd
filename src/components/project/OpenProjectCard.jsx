@@ -8,9 +8,13 @@ import {
   Clock,
   Users,
   CheckCircle2,
+  User,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
-import { canSeeProjectBudget } from '../../config/projectConstants';
+import {
+  canSeeProjectBudget,
+  canSeeProjectOwnerName,
+} from '../../config/projectConstants';
 
 /**
  * Card used in the browse feed. Always opens the project details
@@ -27,6 +31,7 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
   const { t, lang } = useTranslation();
   const applied = project.has_applied;
   const showBudget = canSeeProjectBudget(project, currentUserId);
+  const showOwnerName = canSeeProjectOwnerName(project, currentUserId);
 
   const ownerLabel = (() => {
     const at = project.owner?.account_type;
@@ -78,17 +83,33 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
               fontSize: 13,
             }}
           >
-            {project.owner?.name?.[0] || '·'}
+            {showOwnerName ? (
+              project.owner?.name?.[0] || '·'
+            ) : (
+              <User size={14} strokeWidth={1.9} />
+            )}
           </div>
           <div className="min-w-0">
             <div
               className="font-semibold truncate"
               style={{ fontSize: 12.5, color: 'var(--text-ink)' }}
             >
-              {project.owner?.name || t('projects.list.ownerFallback')}
+              {showOwnerName
+                ? project.owner?.name || t('projects.list.ownerFallback')
+                : ownerLabel}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {ownerLabel}
+            <div
+              className="inline-flex items-center gap-1"
+              style={{ fontSize: 11, color: 'var(--text-muted)' }}
+            >
+              {showOwnerName ? (
+                ownerLabel
+              ) : (
+                <>
+                  <Lock size={9} strokeWidth={2} />
+                  {t('projects.list.identitySealed')}
+                </>
+              )}
             </div>
           </div>
         </div>

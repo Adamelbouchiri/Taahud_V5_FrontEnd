@@ -1316,6 +1316,7 @@ export default {
       budgetSealed: 'Budget sealed',
       ownerFallback: 'Client',
       ownerGeneric: 'Project owner',
+      identitySealed: 'Identity sealed until accept',
       viewDetails: 'View details',
       appliedAndView: 'Bid submitted — view details',
       emptyTitle: 'No open projects right now',
