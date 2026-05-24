@@ -977,6 +977,8 @@ export default {
       notReceived: '没有收到信息？',
       resendIn: '{seconds} 秒后可重新发送',
       resend: '重新发送',
+      expiresIn: '验证码将在 {time} 后过期',
+      expired: '验证码已过期。请重新发送以获取新验证码。',
       securityHint: '请勿与任何人分享此验证码。Taahud 团队绝不会通过电话或短信向您索取。',
       codeLabel: '验证码',
       errorGeneric: '验证码无效或已过期。',

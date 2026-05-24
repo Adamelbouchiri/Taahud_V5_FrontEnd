@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, RefreshCw, Check } from 'lucide-react';
 import AuthShell from '../components/auth/AuthShell';
 import { auth } from '../services';
-import { OTP_ENABLED } from '../config/constants';
+import { OTP_ENABLED, OTP_EXPIRY_MINUTES } from '../config/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
@@ -29,21 +29,20 @@ function maskPhone(phone) {
   return `+${cc} ${head} ${middleStars}${tail}`;
 }
 
+const EXPIRY_SECONDS = OTP_EXPIRY_MINUTES * 60;
+
 export default function OtpPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [seconds, setSeconds] = useState(45);
+  const [expirySeconds, setExpirySeconds] = useState(EXPIRY_SECONDS);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [phone, setPhone] = useState('');
   const inputs = useRef([]);
 
-  // OTP is disabled in the FE for now (no SMS provider yet) — any
-  // direct hit on /otp bounces to the dashboard. When the
-  // OTP_ENABLED flag flips back to true the original behavior
-  // (fetch the user, redirect only when already verified) returns.
   useEffect(() => {
     if (!OTP_ENABLED) {
       navigate('/dashboard', { replace: true });
@@ -71,6 +70,12 @@ export default function OtpPage() {
     const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [seconds]);
+
+  useEffect(() => {
+    if (expirySeconds <= 0) return;
+    const id = setTimeout(() => setExpirySeconds((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [expirySeconds]);
 
   useEffect(() => {
     inputs.current[0]?.focus();
@@ -120,6 +125,7 @@ export default function OtpPage() {
   const resend = async () => {
     if (seconds > 0) return;
     setSeconds(45);
+    setExpirySeconds(EXPIRY_SECONDS);
     setDigits(['', '', '', '', '', '']);
     setError(false);
     inputs.current[0]?.focus();
@@ -179,7 +185,7 @@ export default function OtpPage() {
       onBack={() => navigate('/register')}
     >
       <div
-        className="flex justify-between gap-2 mb-7"
+        className="flex justify-between gap-2 mb-3"
         style={{ direction: 'ltr' }}
       >
         {digits.map((d, i) => (
@@ -196,6 +202,22 @@ export default function OtpPage() {
           />
         ))}
       </div>
+
+      <p
+        className="text-center text-[13px] mb-5"
+        style={{
+          color:
+            expirySeconds > 0 ? 'var(--text-muted)' : 'var(--accent-danger)',
+        }}
+      >
+        {expirySeconds > 0
+          ? t('auth.otp.expiresIn', {
+              time: `${Math.floor(expirySeconds / 60)}:${String(
+                expirySeconds % 60,
+              ).padStart(2, '0')}`,
+            })
+          : t('auth.otp.expired')}
+      </p>
 
       {error && (
         <p

@@ -13,7 +13,13 @@ export const SALES_PHONE_E164 = '+966537372053';
 /* Feature flag — when false, the post-register / post-login OTP step
    is bypassed entirely and the user goes straight to the dashboard.
    Re-enable once an SMS provider is wired up on the backend. */
-export const OTP_ENABLED = false;
+export const OTP_ENABLED = true;
+
+/* How long a freshly-issued OTP stays valid, in minutes. Mirrors the
+   backend's TTL on /auth/otp/send so the UI can show a live "code
+   expires in MM:SS" countdown that actually matches when /verify
+   will start rejecting the code. */
+export const OTP_EXPIRY_MINUTES = 10;
 
 /* ============================================================
  *  ACCOUNT TYPES vs UI CATEGORIES

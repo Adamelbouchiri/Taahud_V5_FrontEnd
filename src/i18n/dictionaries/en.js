@@ -963,6 +963,8 @@ export default {
       notReceived: "Didn't receive the message?",
       resendIn: 'Resend in {seconds}s',
       resend: 'Resend',
+      expiresIn: 'Code expires in {time}',
+      expired: 'The code has expired. Resend to get a new one.',
       securityHint:
         'Never share this code with anyone. The Taahud team will never ask for it by phone or message.',
       codeLabel: 'Verification code',
