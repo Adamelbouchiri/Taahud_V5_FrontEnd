@@ -5,6 +5,32 @@ import Logo from '../Logo';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { SUPPORT_EMAIL } from '../../config/constants';
 
+// Pull every payment / authority logo at build time so the lists stay
+// in sync with whatever is on disk.
+const PAYMENT_MODULES = import.meta.glob(
+  '../../assets/payments/*.{png,jpg,jpeg,svg,webp}',
+  { eager: true, import: 'default' }
+);
+const AUTHORITY_MODULES = import.meta.glob(
+  '../../assets/authorities/*.{png,jpg,jpeg,svg,webp}',
+  { eager: true, import: 'default' }
+);
+
+const toLogoList = (modules) =>
+  Object.keys(modules)
+    .sort()
+    .map((path) => ({
+      src: modules[path],
+      alt: path
+        .split('/')
+        .pop()
+        .replace(/\.[^.]+$/, '')
+        .replace(/[-_]/g, ' '),
+    }));
+
+const PAYMENTS = toLogoList(PAYMENT_MODULES);
+const AUTHORITIES = toLogoList(AUTHORITY_MODULES);
+
 /* ============================================================
  *  Footer — landing page footer
  *  ----------------------------------------------------------------
@@ -140,6 +166,17 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Payments + authorities strip */}
+      <div
+        className="border-t"
+        style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+      >
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-12 py-8 space-y-6">
+          <LogoStrip logos={PAYMENTS} ariaLabel="Payment methods" />
+          <LogoStrip logos={AUTHORITIES} ariaLabel="Regulatory authorities" />
+        </div>
+      </div>
+
       {/* Bottom bar */}
       <div
         className="border-t"
@@ -246,6 +283,44 @@ function ContactRow({ Icon, children }) {
       />
       <span>{children}</span>
     </li>
+  );
+}
+
+function LogoStrip({ logos, ariaLabel }) {
+  if (!logos.length) return null;
+  return (
+    <ul
+      aria-label={ariaLabel}
+      className="m-0 p-0 list-none flex flex-wrap items-center justify-center gap-3"
+    >
+      {logos.map((logo) => (
+        <li
+          key={logo.src}
+          style={{
+            background: '#ffffff',
+            borderRadius: 8,
+            padding: '6px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 40,
+          }}
+        >
+          <img
+            src={logo.src}
+            alt={logo.alt}
+            loading="lazy"
+            decoding="async"
+            style={{
+              height: 24,
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 
