@@ -175,7 +175,7 @@ export default function Footer() {
           dir="ltr"
           className="max-w-[1280px] mx-auto px-6 lg:px-12 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
         >
-          <LogoStrip logos={PAYMENTS} ariaLabel="Payment methods" />
+          <LogoStrip logos={PAYMENTS} ariaLabel="Payment methods" height={16} />
           <LogoStrip logos={AUTHORITIES} ariaLabel="Regulatory authorities" />
         </div>
       </div>
@@ -289,24 +289,26 @@ function ContactRow({ Icon, children }) {
   );
 }
 
-function LogoStrip({ logos, ariaLabel }) {
+function LogoStrip({ logos, ariaLabel, height = 24 }) {
   if (!logos.length) return null;
+  const padY = Math.max(4, Math.round(height * 0.25));
+  const padX = Math.max(6, Math.round(height * 0.42));
   return (
     <ul
       aria-label={ariaLabel}
-      className="m-0 p-0 list-none flex flex-wrap items-center justify-center gap-3"
+      className="m-0 p-0 list-none flex flex-wrap items-center justify-center gap-2"
     >
       {logos.map((logo) => (
         <li
           key={logo.src}
           style={{
             background: '#ffffff',
-            borderRadius: 8,
-            padding: '6px 10px',
+            borderRadius: 6,
+            padding: `${padY}px ${padX}px`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 40,
+            minHeight: height + padY * 2,
           }}
         >
           <img
@@ -315,7 +317,7 @@ function LogoStrip({ logos, ariaLabel }) {
             loading="lazy"
             decoding="async"
             style={{
-              height: 24,
+              height,
               width: 'auto',
               objectFit: 'contain',
               display: 'block',
