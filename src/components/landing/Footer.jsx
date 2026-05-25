@@ -171,7 +171,10 @@ export default function Footer() {
         className="border-t"
         style={{ borderColor: 'rgba(255,255,255,0.08)' }}
       >
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-12 py-8 space-y-6">
+        <div
+          dir="ltr"
+          className="max-w-[1280px] mx-auto px-6 lg:px-12 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+        >
           <LogoStrip logos={PAYMENTS} ariaLabel="Payment methods" />
           <LogoStrip logos={AUTHORITIES} ariaLabel="Regulatory authorities" />
         </div>
