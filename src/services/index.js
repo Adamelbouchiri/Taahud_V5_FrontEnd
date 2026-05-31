@@ -18,4 +18,5 @@ export { projects } from './projects';
 export { applications } from './applications';
 export { contact } from './contact';
 export { admin } from './admin';
+export { subscriptions } from './subscriptions';
 export { default as http } from './http';

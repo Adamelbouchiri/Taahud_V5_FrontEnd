@@ -26,6 +26,11 @@ import CreateProjectPage from './pages/CreateProjectPage';
 import EditProjectPage from './pages/EditProjectPage';
 import ApplyPage from './pages/ApplyPage';
 
+// Subscription pages — plans picker + Stripe return URLs
+import SubscribePage from './pages/subscribe/SubscribePage';
+import SubscribeSuccessPage from './pages/subscribe/SubscribeSuccessPage';
+import SubscribeCancelPage from './pages/subscribe/SubscribeCancelPage';
+
 // Per-arena browse pages. Each owns its own access gate
 // (RequireArenaAccess) so the route blocks render until the user's
 // access is confirmed — no flash of restricted content on refresh.
@@ -48,6 +53,11 @@ import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
 import { RequireAdmin, RequireSuperAdmin } from './components/RequireAdmin';
+
+// SubscribePage needs the user context for account-type-aware copy
+// but it lives outside the dashboard layout (so it gets a full-bleed
+// Stripe-checkout-style page). Provide a local UserProvider for it.
+import { UserProvider } from './contexts/UserContext';
 
 // Admin layout + pages — gated by RequireAdmin / RequireSuperAdmin.
 import AdminLayout from './components/admin/AdminLayout';
@@ -227,6 +237,39 @@ function AppShell() {
               <RequireServiceProvider>
                 <ApplyPage />
               </RequireServiceProvider>
+            </RequireAuth>
+          }
+        />
+
+        {/* ===== Subscription flow =====
+            All routes require an authenticated user. The /subscribe
+            page itself is reachable even when has_access is false
+            so trial-expired users can still pick a plan. The success
+            and cancel URLs are the ones we hand to Stripe Checkout
+            via createCheckout({ success_url, cancel_url }). */}
+        <Route
+          path="/subscribe"
+          element={
+            <RequireAuth>
+              <UserProvider>
+                <SubscribePage />
+              </UserProvider>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/subscribe/success"
+          element={
+            <RequireAuth>
+              <SubscribeSuccessPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/subscribe/cancel"
+          element={
+            <RequireAuth>
+              <SubscribeCancelPage />
             </RequireAuth>
           }
         />

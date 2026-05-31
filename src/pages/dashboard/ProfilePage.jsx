@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   UserCircle,
@@ -15,13 +15,19 @@ import {
   CheckCircle2,
   User as UserIcon,
   Building2,
+  CreditCard,
+  Clock,
+  BadgeCheck,
+  Gem,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import {
   hasSpecialty,
   CITIES,
 } from '../../config/constants';
-import { auth } from '../../services';
+import { auth, subscriptions } from '../../services';
 import Field from '../../components/form/Field';
 import SelectField from '../../components/form/SelectField';
 import PasswordField from '../../components/form/PasswordField';
@@ -79,6 +85,7 @@ export default function ProfilePage() {
           await refresh();
         }}
       />
+      <SubscriptionCard user={user} navigate={navigate} />
       <SecurityCard onLogout={logout} navigate={navigate} />
     </div>
   );
@@ -555,6 +562,446 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
       </div>
     </form>
   );
+}
+
+/* ============================================================
+ *  Subscription card
+ *  ----------------------------------------------------------------
+ *  Reads /api/subscriptions/me on mount, then renders one of:
+ *    - "individual" tier → hidden entirely (free, no sub needed)
+ *    - active base sub → status row + cancel button
+ *    - on trial only → trial countdown + "choose a plan" CTA
+ *    - trial expired, no sub → red callout + "subscribe" CTA
+ *
+ *  The Isnad add-on shows as a secondary row when active.
+ * ============================================================ */
+function SubscriptionCard({ user, navigate }) {
+  const { t, lang } = useTranslation();
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [cancelInfo, setCancelInfo] = useState('');
+
+  const loadStatus = async () => {
+    setLoading(true);
+    try {
+      const s = await subscriptions.getStatus();
+      setStatus(s);
+    } catch {
+      setStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  // Individuals are on the free tier and don't see a subscription panel.
+  if (user.account_type === 'individual') return null;
+
+  if (loading) {
+    return (
+      <SectionCard title={t('subscribe.profile.sectionTitle')}>
+        <div
+          className="animate-pulse"
+          style={{
+            height: 88,
+            background: 'var(--bg-canvas)',
+            border: '1px solid var(--border-soft)',
+            borderRadius: 12,
+          }}
+        />
+      </SectionCard>
+    );
+  }
+
+  // Display ANY active subscription, preferring base (non-addon) when
+  // both exist. We can't strictly rely on `plan.is_addon` because the
+  // BE may return a trimmed `plan` object that omits the flag, so the
+  // detection has two passes: first find a sub explicitly marked
+  // non-addon, then fall back to the first sub regardless of shape.
+  const allActive = status?.active_subscriptions || [];
+  const baseSub =
+    allActive.find((s) => s.plan && s.plan.is_addon === false) ||
+    allActive.find((s) => !s.plan?.is_addon) ||
+    allActive[0] ||
+    null;
+  const onTrial = !!status?.on_trial;
+  const hasAccess = !!status?.has_access;
+  const hasIsnadAddon = !!status?.has_isnad_addon;
+  const daysLeft = status?.days_left_in_trial ?? 0;
+
+  const handleCancel = async () => {
+    if (!baseSub) return;
+    const ok = window.confirm(t('subscribe.profile.active.confirmCancel'));
+    if (!ok) return;
+    setCancelError('');
+    setCancelInfo('');
+    setCanceling(true);
+    try {
+      await subscriptions.cancel(baseSub.id);
+      setCancelInfo(t('subscribe.profile.active.canceledToast'));
+      // Webhook usually flips state within a few seconds; refresh
+      // after a short delay so the UI reflects the new canceled_at.
+      setTimeout(() => loadStatus(), 3000);
+    } catch (err) {
+      setCancelError(
+        err?.message || t('subscribe.profile.active.cancelError')
+      );
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  return (
+    <SectionCard
+      title={t('subscribe.profile.sectionTitle')}
+      action={
+        <button
+          type="button"
+          onClick={loadStatus}
+          aria-label="refresh"
+          className="inline-flex items-center justify-center transition-colors"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 9,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
+            cursor: 'pointer',
+          }}
+        >
+          <RefreshCw size={13} strokeWidth={1.9} />
+        </button>
+      }
+    >
+      {baseSub ? (
+        <ActiveSubRow
+          sub={baseSub}
+          lang={lang}
+          t={t}
+          canceling={canceling}
+          onCancel={handleCancel}
+          onManage={() => navigate('/subscribe')}
+          cancelError={cancelError}
+          cancelInfo={cancelInfo}
+        />
+      ) : onTrial ? (
+        <TrialRow daysLeft={daysLeft} t={t} navigate={navigate} />
+      ) : !hasAccess ? (
+        <NoAccessRow t={t} navigate={navigate} />
+      ) : (
+        <TrialRow daysLeft={daysLeft} t={t} navigate={navigate} expired />
+      )}
+
+      {hasIsnadAddon && <IsnadAddonRow t={t} />}
+    </SectionCard>
+  );
+}
+
+function ActiveSubRow({
+  sub,
+  lang,
+  t,
+  canceling,
+  onCancel,
+  onManage,
+  cancelError,
+  cancelInfo,
+}) {
+  const planName = pickPlanName(sub.plan, lang);
+  const renewDate = formatRenewDate(sub.current_period_ends_at, lang);
+  const isCanceled = !!sub.canceled_at;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            background: 'rgba(19,109,74,0.10)',
+            color: '#0d5538',
+          }}
+        >
+          <BadgeCheck size={18} strokeWidth={1.9} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <span
+              className="font-display font-bold"
+              style={{ fontSize: 14, color: 'var(--text-ink)' }}
+            >
+              {planName || t('subscribe.profile.active.label')}
+            </span>
+            <span
+              className="font-bold rounded-full"
+              style={{
+                fontSize: 10,
+                padding: '2px 8px',
+                background: 'rgba(19,109,74,0.10)',
+                color: '#0d5538',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {t('subscribe.profile.active.label')}
+            </span>
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+            {isCanceled
+              ? t('subscribe.profile.active.canceledPending')
+              : t('subscribe.profile.active.period', { date: renewDate })}
+          </div>
+        </div>
+      </div>
+
+      {cancelError && (
+        <div
+          className="flex items-start gap-2 px-3 py-2.5 rounded-[8px]"
+          style={{
+            background: 'rgba(185,28,28,0.06)',
+            border: '1px solid rgba(185,28,28,0.18)',
+            color: 'var(--accent-danger)',
+            fontSize: 13,
+          }}
+        >
+          <AlertCircle
+            size={14}
+            strokeWidth={2}
+            style={{ flexShrink: 0, marginTop: 2 }}
+          />
+          <span>{cancelError}</span>
+        </div>
+      )}
+
+      {cancelInfo && (
+        <div
+          className="flex items-start gap-2 px-3 py-2.5 rounded-[8px]"
+          style={{
+            background: 'rgba(19,109,74,0.06)',
+            border: '1px solid rgba(19,109,74,0.18)',
+            color: '#0d5538',
+            fontSize: 13,
+          }}
+        >
+          <CheckCircle2
+            size={14}
+            strokeWidth={2}
+            style={{ flexShrink: 0, marginTop: 2 }}
+          />
+          <span>{cancelInfo}</span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2.5 flex-wrap pt-2">
+        <button
+          type="button"
+          onClick={onManage}
+          className="inline-flex items-center gap-1.5 font-semibold transition-colors"
+          style={{
+            fontSize: 12.5,
+            padding: '8px 12px',
+            borderRadius: 9,
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
+            background: 'var(--bg-surface)',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          <Sparkles size={13} strokeWidth={1.9} />
+          {t('subscribe.profile.active.manageCta')}
+        </button>
+        {!isCanceled && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={canceling}
+            className="inline-flex items-center gap-1.5 font-semibold transition-colors"
+            style={{
+              fontSize: 12.5,
+              padding: '8px 12px',
+              borderRadius: 9,
+              border: '1px solid rgba(185,28,28,0.25)',
+              color: 'var(--accent-danger)',
+              background: 'transparent',
+              cursor: canceling ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              opacity: canceling ? 0.7 : 1,
+            }}
+          >
+            <X size={13} strokeWidth={2} />
+            {canceling
+              ? t('subscribe.profile.active.canceling')
+              : t('subscribe.profile.active.cancelCta')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TrialRow({ daysLeft, t, navigate, expired }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: 'rgba(44,47,124,0.08)',
+          color: '#2c2f7c',
+        }}
+      >
+        <Clock size={18} strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-display font-bold mb-0.5"
+          style={{ fontSize: 14, color: 'var(--text-ink)' }}
+        >
+          {expired
+            ? t('subscribe.profile.trialOnly.expired')
+            : t('subscribe.profile.trialOnly.label')}
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          {expired
+            ? t('subscribe.profile.trialOnly.expired')
+            : t('subscribe.profile.trialOnly.days', { days: daysLeft })}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/subscribe')}
+        className="inline-flex items-center gap-1.5 font-semibold flex-shrink-0"
+        style={{
+          fontSize: 12.5,
+          padding: '8px 14px',
+          borderRadius: 9,
+          background: 'var(--bg-ink-deep)',
+          color: 'white',
+          border: '1px solid var(--bg-ink-deep)',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          boxShadow: '0 6px 14px rgba(15,17,71,0.20)',
+        }}
+      >
+        <CreditCard size={13} strokeWidth={1.9} />
+        {t('subscribe.profile.trialOnly.cta')}
+      </button>
+    </div>
+  );
+}
+
+function NoAccessRow({ t, navigate }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: 'rgba(185,28,28,0.08)',
+          color: '#b91c1c',
+        }}
+      >
+        <AlertCircle size={18} strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-display font-bold mb-0.5"
+          style={{ fontSize: 14, color: 'var(--text-ink)' }}
+        >
+          {t('subscribe.profile.noAccess.label')}
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          {t('subscribe.profile.noAccess.body')}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/subscribe')}
+        className="inline-flex items-center gap-1.5 font-semibold flex-shrink-0"
+        style={{
+          fontSize: 12.5,
+          padding: '8px 14px',
+          borderRadius: 9,
+          background: 'var(--bg-ink-deep)',
+          color: 'white',
+          border: '1px solid var(--bg-ink-deep)',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          boxShadow: '0 6px 14px rgba(15,17,71,0.20)',
+        }}
+      >
+        <CreditCard size={13} strokeWidth={1.9} />
+        {t('subscribe.profile.noAccess.cta')}
+      </button>
+    </div>
+  );
+}
+
+function IsnadAddonRow({ t }) {
+  return (
+    <div
+      className="flex items-start gap-3 mt-4 pt-4"
+      style={{ borderTop: '1px solid var(--border-soft)' }}
+    >
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: 'rgba(184,134,42,0.12)',
+          color: '#8a6a1f',
+        }}
+      >
+        <Gem size={18} strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-display font-bold mb-0.5"
+          style={{ fontSize: 14, color: 'var(--text-ink)' }}
+        >
+          {t('subscribe.profile.isnadAddon.label')}
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          {t('subscribe.profile.isnadAddon.body')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function pickPlanName(plan, lang) {
+  if (!plan) return '';
+  if (lang === 'ar' && plan.name_ar) return plan.name_ar;
+  if (plan.name_en) return plan.name_en;
+  return plan.name_ar || plan.code || '';
+}
+
+function formatRenewDate(d, lang) {
+  if (!d) return '';
+  try {
+    const locale =
+      lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(d));
+  } catch {
+    return d;
+  }
 }
 
 /* ============================================================

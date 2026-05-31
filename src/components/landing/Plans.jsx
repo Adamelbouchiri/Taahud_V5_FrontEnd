@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Check,
@@ -9,9 +9,12 @@ import {
   Gem,
   ArrowLeft,
   ArrowRight,
+  BadgeCheck,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
-import { SALES_WHATSAPP_URL } from '../../config/constants';
+import { subscriptions } from '../../services';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -57,6 +60,7 @@ export default function Plans() {
   const [audience, setAudience] = useState('contractor');
   const [tier, setTier] = useState('basic');
   const [period, setPeriod] = useState('1');
+  const subStatus = useSubscriptionStatus();
 
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
 
@@ -126,6 +130,17 @@ export default function Plans() {
             {t('landing.plans.subtitle')}
           </p>
         </div>
+
+        {/* Subscription status banner — only renders for authenticated
+            users (uses /api/subscriptions/me). Three variants: active
+            base sub, trial in progress, trial expired. Guests see
+            nothing here and continue to the normal plans flow. */}
+        <SubscriptionStatusCard
+          subStatus={subStatus}
+          lang={lang}
+          t={t}
+          onNavigate={navigate}
+        />
 
         {/* Role tiles */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-7">
@@ -446,9 +461,7 @@ export default function Plans() {
         <div className="mt-8 max-w-[900px] mx-auto">
           <button
             type="button"
-            onClick={() =>
-              window.open(SALES_WHATSAPP_URL, '_blank', 'noopener,noreferrer')
-            }
+            onClick={() => navigate('/register')}
             className="w-full inline-flex items-center justify-center gap-2 font-semibold transition-all"
             style={{
               padding: '15px 26px',
@@ -634,4 +647,216 @@ function FeaturePanels({ audience, tier, features, t, lang }) {
       </article>
     </div>
   );
+}
+
+
+/* ============================================================
+ *  useSubscriptionStatus
+ *  ----------------------------------------------------------------
+ *  Best-effort, landing-page-friendly subscription lookup. Returns
+ *  one of:
+ *    { state: 'guest' }         no token in storage
+ *    { state: 'loading' }       request in flight
+ *    { state: 'error' }         token present but /me failed (e.g.
+ *                                expired token) — render as guest
+ *    { state: 'ready', data }   /me succeeded, raw response attached
+ *
+ *  We bail without calling the API when there's no token so guests
+ *  don't generate a 401 in the network log.
+ * ============================================================ */
+function useSubscriptionStatus() {
+  const [state, setState] = useState({ state: 'loading' });
+
+  useEffect(() => {
+    const token =
+      typeof window === 'undefined'
+        ? null
+        : localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setState({ state: 'guest' });
+      return;
+    }
+
+    let cancelled = false;
+    subscriptions
+      .getStatus()
+      .then((data) => {
+        if (cancelled) return;
+        setState({ state: 'ready', data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Token expired or other transient — treat as guest for the
+        // landing page so we don't render a misleading status card.
+        setState({ state: 'error' });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return state;
+}
+
+
+/* ============================================================
+ *  SubscriptionStatusCard
+ *  ----------------------------------------------------------------
+ *  Renders one of three pills for authenticated users:
+ *    - active base subscription → green "subscribed" card
+ *    - on trial → indigo countdown card
+ *    - trial expired (has_access false) → red "renew" card
+ *
+ *  Guests and not-yet-loaded states render nothing so the section
+ *  layout stays identical for the default landing-page visitor.
+ * ============================================================ */
+function SubscriptionStatusCard({ subStatus, lang, t, onNavigate }) {
+  if (subStatus.state !== 'ready') return null;
+
+  const data = subStatus.data;
+  const baseSub = (data?.active_subscriptions || []).find(
+    (s) => !s.plan?.is_addon
+  );
+
+  if (baseSub) {
+    const planName = pickPlanName(baseSub.plan, lang);
+    const date = formatPlanDate(baseSub.current_period_ends_at, lang);
+    return (
+      <StatusBanner
+        tone="success"
+        icon={BadgeCheck}
+        title={t('subscribe.page.activeBanner.title')}
+        body={t('subscribe.page.activeBanner.body', { name: planName, date })}
+        actionLabel={t('subscribe.page.activeBanner.manage')}
+        onAction={() => onNavigate('/subscribe')}
+      />
+    );
+  }
+
+  if (data?.on_trial) {
+    return (
+      <StatusBanner
+        tone="info"
+        icon={Clock}
+        body={t('subscribe.page.trial.active', {
+          days: data.days_left_in_trial ?? 0,
+        })}
+        actionLabel={t('subscribe.profile.trialOnly.cta')}
+        onAction={() => onNavigate('/subscribe')}
+      />
+    );
+  }
+
+  if (data && !data.has_access) {
+    return (
+      <StatusBanner
+        tone="danger"
+        icon={AlertCircle}
+        body={t('subscribe.page.trial.expired')}
+        actionLabel={t('subscribe.profile.noAccess.cta')}
+        onAction={() => onNavigate('/subscribe')}
+      />
+    );
+  }
+
+  return null;
+}
+
+function StatusBanner({ tone, icon: Icon, title, body, actionLabel, onAction }) {
+  const palettes = {
+    success: {
+      bg: 'rgba(19,109,74,0.06)',
+      border: 'rgba(19,109,74,0.22)',
+      iconColor: '#0d5538',
+      btnBorder: 'rgba(19,109,74,0.30)',
+      btnColor: '#0d5538',
+    },
+    info: {
+      bg: 'rgba(44,47,124,0.06)',
+      border: 'rgba(44,47,124,0.22)',
+      iconColor: '#2c2f7c',
+      btnBorder: 'rgba(44,47,124,0.30)',
+      btnColor: '#2c2f7c',
+    },
+    danger: {
+      bg: 'rgba(185,28,28,0.06)',
+      border: 'rgba(185,28,28,0.22)',
+      iconColor: '#b91c1c',
+      btnBorder: 'rgba(185,28,28,0.30)',
+      btnColor: '#b91c1c',
+    },
+  };
+  const p = palettes[tone] || palettes.info;
+
+  return (
+    <div
+      className="max-w-[900px] mx-auto mb-8 rounded-[14px] flex items-start gap-3 animate-fade-up"
+      style={{
+        background: p.bg,
+        border: `1px solid ${p.border}`,
+        padding: '14px 18px',
+      }}
+    >
+      <Icon
+        size={20}
+        strokeWidth={1.9}
+        style={{ color: p.iconColor, flexShrink: 0, marginTop: 2 }}
+      />
+      <div className="flex-1 min-w-0">
+        {title && (
+          <div
+            className="font-display font-bold mb-0.5"
+            style={{ fontSize: 14, color: 'var(--text-ink)' }}
+          >
+            {title}
+          </div>
+        )}
+        <div style={{ fontSize: 13, color: 'var(--text-ink-soft)', lineHeight: 1.6 }}>
+          {body}
+        </div>
+      </div>
+      {actionLabel && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="inline-flex items-center gap-1.5 font-semibold transition-colors flex-shrink-0"
+          style={{
+            fontSize: 12.5,
+            padding: '7px 12px',
+            borderRadius: 9,
+            border: `1px solid ${p.btnBorder}`,
+            color: p.btnColor,
+            background: 'transparent',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function pickPlanName(plan, lang) {
+  if (!plan) return '';
+  if (lang === 'ar' && plan.name_ar) return plan.name_ar;
+  if (plan.name_en) return plan.name_en;
+  return plan.name_ar || plan.code || '';
+}
+
+function formatPlanDate(d, lang) {
+  if (!d) return '';
+  try {
+    const locale =
+      lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(d));
+  } catch {
+    return d;
+  }
 }

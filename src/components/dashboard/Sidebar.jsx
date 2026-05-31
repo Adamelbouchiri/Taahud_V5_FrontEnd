@@ -17,6 +17,7 @@ import {
   Landmark,
   Briefcase,
   ShoppingBag,
+  CreditCard,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -58,6 +59,13 @@ const NAV_ITEMS = [
     labelKey: 'dashboard.sidebar.items.profile',
     icon: UserCircle,
     accountTypes: ALL_TYPES,
+  },
+  // Individuals are on the free tier; no plans to browse.
+  {
+    to: '/subscribe',
+    labelKey: 'subscribe.nav',
+    icon: CreditCard,
+    accountTypes: ['entrepreneur', 'engineering', 'supplier', 'developer'],
   },
 ];
 
