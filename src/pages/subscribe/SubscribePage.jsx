@@ -18,6 +18,7 @@ import {
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
+import { SALES_WHATSAPP_URL } from '../../config/constants';
 
 /* ============================================================
  *  SubscribePage — /subscribe
@@ -146,44 +147,59 @@ export default function SubscribePage() {
   const handleSubscribe = async (plan) => {
     setPlanError({ planId: null, message: '' });
     setBusyPlanId(plan.id);
+
+    // For now we route "enroll" intent to our sales WhatsApp instead of
+    // running the Stripe checkout. We hand the sales team the plan the
+    // user picked plus their name / phone / email so they can follow up.
+    // TODO: re-enable the Stripe checkout flow below when payments go live.
     try {
-      const origin = window.location.origin;
-      const { url } = await subscriptions.createCheckout({
-        plan_id: plan.id,
-        success_url: `${origin}/subscribe/success?plan_id=${plan.id}`,
-        cancel_url: `${origin}/subscribe/cancel`,
-      });
-      if (url) {
-        // Sanity-check the returned URL. When the backend has
-        // PAYMENT_DRIVER=fake, the fake gateway hands back a URL that
-        // points right at its own /api/subscriptions/checkout endpoint
-        // — which Laravel only serves via POST. Following such a URL
-        // would dump the user on a "Method Not Allowed" debug page.
-        // Detect that case and surface a clear error instead.
-        if (isLikelyFakeGatewayUrl(url)) {
-          throw new Error(
-            'Backend payment gateway is in fake mode (PAYMENT_DRIVER=fake). ' +
-              'Set PAYMENT_DRIVER=stripe with a valid STRIPE_SECRET_KEY in the API .env to enable real checkout.'
-          );
-        }
-        window.location.href = url;
-        return;
-      }
-      throw new Error(t('subscribe.page.errors.generic'));
-    } catch (err) {
-      const code = err?.data?.code;
-      const httpStatus = err?.status;
-      let message = err?.message || t('subscribe.page.errors.generic');
-      if (code === 'already_subscribed') {
-        message = t('subscribe.page.errors.alreadySubscribed');
-      } else if (code === 'addon_already_active') {
-        message = t('subscribe.page.errors.addonActive');
-      } else if (httpStatus === 403) {
-        message = t('subscribe.page.errors.accountType');
-      }
-      setPlanError({ planId: plan.id, message });
+      const planName = pickName(plan, lang) || plan.code || `#${plan.id}`;
+      const message = buildWhatsAppMessage({ planName, user, lang });
+      const waUrl = `${SALES_WHATSAPP_URL}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+    } finally {
       setBusyPlanId(null);
     }
+
+    // --- Stripe checkout (disabled for now — see TODO above) ---
+    // try {
+    //   const origin = window.location.origin;
+    //   const { url } = await subscriptions.createCheckout({
+    //     plan_id: plan.id,
+    //     success_url: `${origin}/subscribe/success?plan_id=${plan.id}`,
+    //     cancel_url: `${origin}/subscribe/cancel`,
+    //   });
+    //   if (url) {
+    //     // Sanity-check the returned URL. When the backend has
+    //     // PAYMENT_DRIVER=fake, the fake gateway hands back a URL that
+    //     // points right at its own /api/subscriptions/checkout endpoint
+    //     // — which Laravel only serves via POST. Following such a URL
+    //     // would dump the user on a "Method Not Allowed" debug page.
+    //     // Detect that case and surface a clear error instead.
+    //     if (isLikelyFakeGatewayUrl(url)) {
+    //       throw new Error(
+    //         'Backend payment gateway is in fake mode (PAYMENT_DRIVER=fake). ' +
+    //           'Set PAYMENT_DRIVER=stripe with a valid STRIPE_SECRET_KEY in the API .env to enable real checkout.'
+    //       );
+    //     }
+    //     window.location.href = url;
+    //     return;
+    //   }
+    //   throw new Error(t('subscribe.page.errors.generic'));
+    // } catch (err) {
+    //   const code = err?.data?.code;
+    //   const httpStatus = err?.status;
+    //   let message = err?.message || t('subscribe.page.errors.generic');
+    //   if (code === 'already_subscribed') {
+    //     message = t('subscribe.page.errors.alreadySubscribed');
+    //   } else if (code === 'addon_already_active') {
+    //     message = t('subscribe.page.errors.addonActive');
+    //   } else if (httpStatus === 403) {
+    //     message = t('subscribe.page.errors.accountType');
+    //   }
+    //   setPlanError({ planId: plan.id, message });
+    //   setBusyPlanId(null);
+    // }
   };
 
   if (userLoading || loading) {
@@ -918,6 +934,47 @@ function PageSkeleton({ t }) {
 /* ============================================================
  *  Helpers
  * ============================================================ */
+
+/* Builds the prefilled WhatsApp message handed to the sales team
+   when a user clicks "enroll". Localized to the active UI language
+   and carries the picked plan plus the user's name / phone / email
+   so sales can follow up directly. */
+function buildWhatsAppMessage({ planName, user, lang }) {
+  const name = user?.name?.trim() || '';
+  const phone = user?.phone?.trim() || '';
+  const email = user?.email?.trim() || '';
+  const dash = '—';
+
+  if (lang === 'en') {
+    return [
+      `Hello, I'm interested in subscribing to the "${planName}" plan.`,
+      '',
+      `Name: ${name || dash}`,
+      `Phone: ${phone || dash}`,
+      `Email: ${email || dash}`,
+    ].join('\n');
+  }
+
+  if (lang === 'zh') {
+    return [
+      `您好，我想订阅 “${planName}” 套餐。`,
+      '',
+      `姓名：${name || dash}`,
+      `电话：${phone || dash}`,
+      `邮箱：${email || dash}`,
+    ].join('\n');
+  }
+
+  // Default: Arabic
+  return [
+    `السلام عليكم، أرغب في الاشتراك في باقة "${planName}".`,
+    '',
+    `الاسم: ${name || dash}`,
+    `الجوال: ${phone || dash}`,
+    `البريد الإلكتروني: ${email || dash}`,
+  ].join('\n');
+}
+
 function pickName(plan, lang) {
   if (!plan) return '';
   if (lang === 'ar' && plan.name_ar) return plan.name_ar;
