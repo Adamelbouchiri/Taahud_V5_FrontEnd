@@ -2325,6 +2325,17 @@ export default {
       backToPlans: 'Back to plans',
       backToDashboard: 'Back to dashboard',
     },
+    pay: {
+      title: 'Complete your payment',
+      secureNote: 'Secure payment powered by Moyasar',
+      loading: 'Loading payment form…',
+      backToPlans: 'Back to plans',
+      errors: {
+        expired: 'This checkout link has expired — please start again.',
+        forbidden: "This checkout doesn't belong to your account.",
+        generic: "Couldn't load the payment form.",
+      },
+    },
     profile: {
       sectionTitle: 'Subscription',
       trialOnly: {
@@ -2346,6 +2357,9 @@ export default {
         canceling: 'Canceling...',
         manageCta: 'Change plan',
         confirmCancel: 'Are you sure you want to cancel? Access will remain until the end of the current period.',
+        confirmTitle: 'Cancel subscription?',
+        confirmYes: 'Yes, cancel',
+        confirmKeep: 'Keep subscription',
         canceledToast: 'Cancellation requested. The status will update shortly.',
         cancelError: 'Couldn’t cancel the subscription. Please try again or contact support.',
       },

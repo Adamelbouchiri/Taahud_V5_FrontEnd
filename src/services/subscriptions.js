@@ -103,6 +103,32 @@ export const subscriptions = {
   },
 
   /* ============================================================
+   *  GET /payments/moyasar/checkout/:session
+   *  ----------------------------------------------------------------
+   *  Fetches the config for our own Moyasar checkout page (the
+   *  /pay/:sessionId route). Moyasar has no hosted subscription
+   *  checkout like Stripe, so the backend hands us a session id and
+   *  we render Moyasar.js's embedded card form ourselves.
+   *
+   *  Returns (http.js already unwraps response.data):
+   *    {
+   *      publishable_key: string,   // pk_test_xxx / pk_live_xxx
+   *      amount:          number,   // in halalas (1 SAR = 100), pass as-is
+   *      currency:        string,   // "SAR"
+   *      description:     string,
+   *      callback_url:    string,   // set by BE — pass straight to Moyasar
+   *      metadata:        object,   // pass straight to Moyasar, unchanged
+   *    }
+   *
+   *  Errors (read err.status):
+   *    404  session expired or invalid (sessions live ~30 min)
+   *    403  session doesn't belong to the logged-in user
+   * ============================================================ */
+  async getMoyasarCheckout(sessionId) {
+    return http.get(`/payments/moyasar/checkout/${sessionId}`);
+  },
+
+  /* ============================================================
    *  Helper — poll getStatus() until the webhook lands.
    *  ----------------------------------------------------------------
    *  Used by the /subscribe/success page. Stripe redirects back

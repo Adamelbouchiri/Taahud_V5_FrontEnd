@@ -18,7 +18,7 @@ import {
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
-import { SALES_WHATSAPP_URL } from '../../config/constants';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 /* ============================================================
  *  SubscribePage — /subscribe
@@ -53,6 +53,7 @@ export default function SubscribePage() {
   const [planError, setPlanError] = useState({ planId: null, message: '' });
   const [canceling, setCanceling] = useState(false);
   const [cancelMessage, setCancelMessage] = useState({ tone: '', text: '' });
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const refreshStatus = async () => {
     try {
@@ -120,21 +121,28 @@ export default function SubscribePage() {
     return m;
   }, [activeSubs]);
 
-  const handleCancelSub = async () => {
+  // Open the confirmation modal (replaces the native window.confirm).
+  const handleCancelSub = () => {
     if (!baseSub) return;
-    const ok = window.confirm(t('subscribe.profile.active.confirmCancel'));
-    if (!ok) return;
+    setConfirmCancelOpen(true);
+  };
+
+  // Runs the actual cancellation once the user confirms in the modal.
+  const confirmCancelSub = async () => {
+    if (!baseSub) return;
     setCancelMessage({ tone: '', text: '' });
     setCanceling(true);
     try {
       await subscriptions.cancel(baseSub.id);
+      setConfirmCancelOpen(false);
       setCancelMessage({
         tone: 'success',
         text: t('subscribe.profile.active.canceledToast'),
       });
-      // Stripe webhook usually flips state within a few seconds.
+      // Webhook usually flips state within a few seconds.
       setTimeout(() => refreshStatus(), 3000);
     } catch (err) {
+      setConfirmCancelOpen(false);
       setCancelMessage({
         tone: 'error',
         text: err?.message || t('subscribe.profile.active.cancelError'),
@@ -148,58 +156,49 @@ export default function SubscribePage() {
     setPlanError({ planId: null, message: '' });
     setBusyPlanId(plan.id);
 
-    // For now we route "enroll" intent to our sales WhatsApp instead of
-    // running the Stripe checkout. We hand the sales team the plan the
-    // user picked plus their name / phone / email so they can follow up.
-    // TODO: re-enable the Stripe checkout flow below when payments go live.
+    // Create a checkout session and redirect to the URL the backend
+    // returns. With Moyasar that URL is our OWN /pay/:sessionId page
+    // (Moyasar has no hosted checkout) — but the redirect logic is the
+    // same regardless of provider: window.location.href = url.
     try {
-      const planName = pickName(plan, lang) || plan.code || `#${plan.id}`;
-      const message = buildWhatsAppMessage({ planName, user, lang });
-      const waUrl = `${SALES_WHATSAPP_URL}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, '_blank', 'noopener,noreferrer');
-    } finally {
+      const origin = window.location.origin;
+      const { url } = await subscriptions.createCheckout({
+        plan_id: plan.id,
+        success_url: `${origin}/subscribe/success?plan_id=${plan.id}`,
+        cancel_url: `${origin}/subscribe/cancel`,
+      });
+      if (url) {
+        // With Moyasar the checkout URL is our OWN /pay/:sessionId page.
+        // The backend may render it with the production host (or a wrong
+        // host/port in dev) — a hard window.location redirect to that
+        // host would land us off-origin and drop the auth token from
+        // storage (→ "unauthenticated"). So when the URL points at our
+        // own pay page, ignore the host and navigate client-side: we
+        // stay inside the SPA on the current origin, token intact.
+        const payPath = toInAppPayPath(url);
+        if (payPath) {
+          navigate(payPath);
+          return;
+        }
+        // External provider page (e.g. a hosted gateway) — hard redirect.
+        window.location.href = url;
+        return;
+      }
+      throw new Error(t('subscribe.page.errors.generic'));
+    } catch (err) {
+      const code = err?.data?.code;
+      const httpStatus = err?.status;
+      let message = err?.message || t('subscribe.page.errors.generic');
+      if (code === 'already_subscribed') {
+        message = t('subscribe.page.errors.alreadySubscribed');
+      } else if (code === 'addon_already_active') {
+        message = t('subscribe.page.errors.addonActive');
+      } else if (httpStatus === 403) {
+        message = t('subscribe.page.errors.accountType');
+      }
+      setPlanError({ planId: plan.id, message });
       setBusyPlanId(null);
     }
-
-    // --- Stripe checkout (disabled for now — see TODO above) ---
-    // try {
-    //   const origin = window.location.origin;
-    //   const { url } = await subscriptions.createCheckout({
-    //     plan_id: plan.id,
-    //     success_url: `${origin}/subscribe/success?plan_id=${plan.id}`,
-    //     cancel_url: `${origin}/subscribe/cancel`,
-    //   });
-    //   if (url) {
-    //     // Sanity-check the returned URL. When the backend has
-    //     // PAYMENT_DRIVER=fake, the fake gateway hands back a URL that
-    //     // points right at its own /api/subscriptions/checkout endpoint
-    //     // — which Laravel only serves via POST. Following such a URL
-    //     // would dump the user on a "Method Not Allowed" debug page.
-    //     // Detect that case and surface a clear error instead.
-    //     if (isLikelyFakeGatewayUrl(url)) {
-    //       throw new Error(
-    //         'Backend payment gateway is in fake mode (PAYMENT_DRIVER=fake). ' +
-    //           'Set PAYMENT_DRIVER=stripe with a valid STRIPE_SECRET_KEY in the API .env to enable real checkout.'
-    //       );
-    //     }
-    //     window.location.href = url;
-    //     return;
-    //   }
-    //   throw new Error(t('subscribe.page.errors.generic'));
-    // } catch (err) {
-    //   const code = err?.data?.code;
-    //   const httpStatus = err?.status;
-    //   let message = err?.message || t('subscribe.page.errors.generic');
-    //   if (code === 'already_subscribed') {
-    //     message = t('subscribe.page.errors.alreadySubscribed');
-    //   } else if (code === 'addon_already_active') {
-    //     message = t('subscribe.page.errors.addonActive');
-    //   } else if (httpStatus === 403) {
-    //     message = t('subscribe.page.errors.accountType');
-    //   }
-    //   setPlanError({ planId: plan.id, message });
-    //   setBusyPlanId(null);
-    // }
   };
 
   if (userLoading || loading) {
@@ -229,6 +228,10 @@ export default function SubscribePage() {
             onCancel={handleCancelSub}
           />
         )}
+
+        {/* Isnad add-on status — mirrors the profile page so an enrolled
+            user sees their active add-on here too. */}
+        {hasIsnadAddon && <IsnadAddonBanner t={t} />}
 
         {loadError && !plans.length && (
           <InlineError message={loadError} />
@@ -269,6 +272,22 @@ export default function SubscribePage() {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        title={t('subscribe.profile.active.confirmTitle')}
+        message={t('subscribe.profile.active.confirmCancel')}
+        confirmLabel={
+          canceling
+            ? t('subscribe.profile.active.canceling')
+            : t('subscribe.profile.active.confirmYes')
+        }
+        cancelLabel={t('subscribe.profile.active.confirmKeep')}
+        onConfirm={confirmCancelSub}
+        onCancel={() => setConfirmCancelOpen(false)}
+        busy={canceling}
+        tone="danger"
+      />
     </div>
   );
 }
@@ -541,6 +560,60 @@ function StatusBanner({
   }
 
   return null;
+}
+
+/* Active Isnad add-on banner — shown on the subscribe page when the
+   user is enrolled in the Isnad add-on, mirroring the profile page's
+   IsnadAddonRow. Gold/Gem themed to set it apart from the base sub. */
+function IsnadAddonBanner({ t }) {
+  return (
+    <div
+      className="mb-7 rounded-[16px] flex items-start gap-3 animate-fade-up"
+      style={{
+        background: 'rgba(184,134,42,0.06)',
+        border: '1px solid rgba(184,134,42,0.28)',
+        padding: '16px 20px',
+      }}
+    >
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 11,
+          background: 'rgba(184,134,42,0.12)',
+          color: '#8a6a1f',
+        }}
+      >
+        <Gem size={20} strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+          <span
+            className="font-display font-bold"
+            style={{ fontSize: 14.5, color: 'var(--text-ink)' }}
+          >
+            {t('subscribe.profile.isnadAddon.label')}
+          </span>
+          <span
+            className="font-bold rounded-full"
+            style={{
+              fontSize: 10,
+              padding: '2px 8px',
+              background: 'rgba(184,134,42,0.14)',
+              color: '#8a6a1f',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {t('subscribe.profile.active.label')}
+          </span>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-ink-soft)' }}>
+          {t('subscribe.profile.isnadAddon.body')}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function RefreshButton({ onClick }) {
@@ -935,46 +1008,6 @@ function PageSkeleton({ t }) {
  *  Helpers
  * ============================================================ */
 
-/* Builds the prefilled WhatsApp message handed to the sales team
-   when a user clicks "enroll". Localized to the active UI language
-   and carries the picked plan plus the user's name / phone / email
-   so sales can follow up directly. */
-function buildWhatsAppMessage({ planName, user, lang }) {
-  const name = user?.name?.trim() || '';
-  const phone = user?.phone?.trim() || '';
-  const email = user?.email?.trim() || '';
-  const dash = '—';
-
-  if (lang === 'en') {
-    return [
-      `Hello, I'm interested in subscribing to the "${planName}" plan.`,
-      '',
-      `Name: ${name || dash}`,
-      `Phone: ${phone || dash}`,
-      `Email: ${email || dash}`,
-    ].join('\n');
-  }
-
-  if (lang === 'zh') {
-    return [
-      `您好，我想订阅 “${planName}” 套餐。`,
-      '',
-      `姓名：${name || dash}`,
-      `电话：${phone || dash}`,
-      `邮箱：${email || dash}`,
-    ].join('\n');
-  }
-
-  // Default: Arabic
-  return [
-    `السلام عليكم، أرغب في الاشتراك في باقة "${planName}".`,
-    '',
-    `الاسم: ${name || dash}`,
-    `الجوال: ${phone || dash}`,
-    `البريد الإلكتروني: ${email || dash}`,
-  ].join('\n');
-}
-
 function pickName(plan, lang) {
   if (!plan) return '';
   if (lang === 'ar' && plan.name_ar) return plan.name_ar;
@@ -1022,40 +1055,24 @@ function formatDate(d, lang) {
 }
 
 /* ============================================================
- *  isLikelyFakeGatewayUrl
+ *  toInAppPayPath
  *  ----------------------------------------------------------------
- *  Real Stripe checkout URLs live on checkout.stripe.com. When the
- *  backend has PAYMENT_DRIVER=fake, it returns a placeholder URL
- *  that almost always points at its own /api/subscriptions/checkout
- *  endpoint — which is POST-only, so the browser following it gets
- *  a Laravel "Method Not Allowed" page. Catch both cases:
- *    1. URL whose path includes /api/ (loops to the BE)
- *    2. URL parses to anything other than a recognized Stripe host
- *       AND happens to share an origin/host with our API
+ *  The checkout endpoint returns a URL for our own Moyasar pay page,
+ *  e.g. https://taahud.sa/pay/mch_xxx. We only care about the PATH —
+ *  the host the backend embeds may be the production domain (or a
+ *  wrong host/port in dev), and following it as an absolute URL would
+ *  bounce us off the current origin and lose the auth token in
+ *  storage. Extract just `/pay/:sessionId[?query]` so the caller can
+ *  navigate client-side. Returns null for any URL that isn't our
+ *  pay page (those still get a normal redirect).
  * ============================================================ */
-function isLikelyFakeGatewayUrl(rawUrl) {
-  if (!rawUrl) return true;
-  let parsed;
+function toInAppPayPath(rawUrl) {
+  if (!rawUrl) return null;
   try {
-    parsed = new URL(rawUrl, window.location.origin);
+    const u = new URL(rawUrl, window.location.origin);
+    return /^\/pay\/[^/]+\/?$/.test(u.pathname) ? u.pathname + u.search : null;
   } catch {
-    return true;
+    return null;
   }
-  const host = parsed.host.toLowerCase();
-  const isStripe =
-    host === 'checkout.stripe.com' || host.endsWith('.stripe.com');
-  if (isStripe) return false;
-  // Loops back to our own API.
-  if (parsed.pathname.startsWith('/api/')) return true;
-  // Shares host with VITE_API_URL — almost certainly the fake gateway.
-  try {
-    const apiBase = new URL(
-      import.meta.env.VITE_API_URL || '/api',
-      window.location.origin
-    );
-    if (apiBase.host && apiBase.host === host) return true;
-  } catch {
-    // fall through
-  }
-  return false;
 }
+

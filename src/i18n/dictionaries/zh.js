@@ -2274,6 +2274,17 @@ export default {
       backToPlans: '返回套餐',
       backToDashboard: '返回控制台',
     },
+    pay: {
+      title: '完成支付',
+      secureNote: '由 Moyasar 提供的安全支付',
+      loading: '正在加载支付表单…',
+      backToPlans: '返回套餐',
+      errors: {
+        expired: '此结账链接已过期，请重新开始。',
+        forbidden: '此结账不属于您的账户。',
+        generic: '无法加载支付表单。',
+      },
+    },
     profile: {
       sectionTitle: '订阅',
       trialOnly: {
@@ -2295,6 +2306,9 @@ export default {
         canceling: '取消中...',
         manageCta: '更改套餐',
         confirmCancel: '确定要取消订阅吗?当前周期结束前仍可访问。',
+        confirmTitle: '取消订阅?',
+        confirmYes: '是的,取消订阅',
+        confirmKeep: '保留订阅',
         canceledToast: '已收到取消申请,状态稍后更新。',
         cancelError: '无法取消订阅,请重试或联系客服。',
       },

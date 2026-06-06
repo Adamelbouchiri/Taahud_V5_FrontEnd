@@ -30,6 +30,9 @@ import ApplyPage from './pages/ApplyPage';
 import SubscribePage from './pages/subscribe/SubscribePage';
 import SubscribeSuccessPage from './pages/subscribe/SubscribeSuccessPage';
 import SubscribeCancelPage from './pages/subscribe/SubscribeCancelPage';
+// Moyasar embedded checkout — our own /pay/:sessionId page that
+// renders Moyasar.js's card form (Moyasar has no hosted checkout).
+import CheckoutPage from './pages/subscribe/CheckoutPage';
 
 // Per-arena browse pages. Each owns its own access gate
 // (RequireArenaAccess) so the route blocks render until the user's
@@ -270,6 +273,19 @@ function AppShell() {
           element={
             <RequireAuth>
               <SubscribeCancelPage />
+            </RequireAuth>
+          }
+        />
+        {/* Moyasar embedded checkout. The subscribe/checkout endpoint
+            returns a URL like https://taahud.sa/pay/mch_xxx — our own
+            frontend route — which the existing redirect logic sends the
+            browser to. This page fetches its config and renders the
+            Moyasar.js card form. Auth-gated like the rest of the flow. */}
+        <Route
+          path="/pay/:sessionId"
+          element={
+            <RequireAuth>
+              <CheckoutPage />
             </RequireAuth>
           }
         />

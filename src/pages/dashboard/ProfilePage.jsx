@@ -31,6 +31,7 @@ import { auth, subscriptions } from '../../services';
 import Field from '../../components/form/Field';
 import SelectField from '../../components/form/SelectField';
 import PasswordField from '../../components/form/PasswordField';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -582,6 +583,7 @@ function SubscriptionCard({ user, navigate }) {
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState('');
   const [cancelInfo, setCancelInfo] = useState('');
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const loadStatus = async () => {
     setLoading(true);
@@ -634,20 +636,27 @@ function SubscriptionCard({ user, navigate }) {
   const hasIsnadAddon = !!status?.has_isnad_addon;
   const daysLeft = status?.days_left_in_trial ?? 0;
 
-  const handleCancel = async () => {
+  // Open the confirmation modal (replaces the native window.confirm).
+  const handleCancel = () => {
     if (!baseSub) return;
-    const ok = window.confirm(t('subscribe.profile.active.confirmCancel'));
-    if (!ok) return;
+    setConfirmCancelOpen(true);
+  };
+
+  // Runs the actual cancellation once the user confirms in the modal.
+  const confirmCancel = async () => {
+    if (!baseSub) return;
     setCancelError('');
     setCancelInfo('');
     setCanceling(true);
     try {
       await subscriptions.cancel(baseSub.id);
+      setConfirmCancelOpen(false);
       setCancelInfo(t('subscribe.profile.active.canceledToast'));
       // Webhook usually flips state within a few seconds; refresh
       // after a short delay so the UI reflects the new canceled_at.
       setTimeout(() => loadStatus(), 3000);
     } catch (err) {
+      setConfirmCancelOpen(false);
       setCancelError(
         err?.message || t('subscribe.profile.active.cancelError')
       );
@@ -699,6 +708,22 @@ function SubscriptionCard({ user, navigate }) {
       )}
 
       {hasIsnadAddon && <IsnadAddonRow t={t} />}
+
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        title={t('subscribe.profile.active.confirmTitle')}
+        message={t('subscribe.profile.active.confirmCancel')}
+        confirmLabel={
+          canceling
+            ? t('subscribe.profile.active.canceling')
+            : t('subscribe.profile.active.confirmYes')
+        }
+        cancelLabel={t('subscribe.profile.active.confirmKeep')}
+        onConfirm={confirmCancel}
+        onCancel={() => setConfirmCancelOpen(false)}
+        busy={canceling}
+        tone="danger"
+      />
     </SectionCard>
   );
 }
