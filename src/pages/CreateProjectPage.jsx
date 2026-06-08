@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ArrowRight,
   X,
-  Save,
   Send,
   CheckCircle2,
   AlertCircle,
@@ -19,6 +18,7 @@ import StepReview from '../components/project/steps/StepReview';
 import { PROJECT_STEPS, defaultArenaFor } from '../config/projectConstants';
 import { projects as projectsApi, auth } from '../services';
 import { useTranslation } from '../i18n/LanguageContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 /* ============================================================
  *  CreateProjectPage — 4-step wizard.
@@ -53,6 +53,7 @@ export default function CreateProjectPage() {
   const [submitted, setSubmitted] = useState(false);
   const [createdProject, setCreatedProject] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   const [accountType, setAccountType] = useState(null);
   // Tracked separately from `accountType` because the resolved value
@@ -184,10 +185,11 @@ export default function CreateProjectPage() {
     }
   };
 
-  const handleExit = () => {
-    if (window.confirm(t('projects.create.exitConfirm'))) {
-      navigate('/dashboard');
-    }
+  // Replaces the native window.confirm with the app-styled ConfirmDialog.
+  const handleExit = () => setExitConfirmOpen(true);
+  const confirmExit = () => {
+    setExitConfirmOpen(false);
+    navigate('/dashboard');
   };
 
   if (submitted) {
@@ -218,28 +220,6 @@ export default function CreateProjectPage() {
 
           <div className="flex items-center gap-2">
             <LanguageThemeSwitcher compact />
-            <button
-              type="button"
-              onClick={() => alert(t('projects.create.saveDraftAlert'))}
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold transition-all"
-              style={{
-                fontSize: 13,
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-ink-soft)',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'var(--bg-cream)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = 'transparent')
-              }
-            >
-              <Save size={15} />
-              <span>{t('projects.create.saveDraft')}</span>
-            </button>
-
             <button
               type="button"
               onClick={handleExit}
@@ -492,6 +472,17 @@ export default function CreateProjectPage() {
           )}
         </div>
       </footer>
+
+      <ConfirmDialog
+        open={exitConfirmOpen}
+        title={t('projects.create.exitTitle')}
+        message={t('projects.create.exitConfirm')}
+        confirmLabel={t('projects.create.exitConfirmCta')}
+        cancelLabel={t('projects.create.exitKeepCta')}
+        onConfirm={confirmExit}
+        onCancel={() => setExitConfirmOpen(false)}
+        tone="danger"
+      />
     </div>
   );
 }
