@@ -57,11 +57,6 @@ import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
 import { RequireAdmin, RequireSuperAdmin } from './components/RequireAdmin';
 
-// SubscribePage needs the user context for account-type-aware copy
-// but it lives outside the dashboard layout (so it gets a full-bleed
-// Stripe-checkout-style page). Provide a local UserProvider for it.
-import { UserProvider } from './contexts/UserContext';
-
 // Admin layout + pages — gated by RequireAdmin / RequireSuperAdmin.
 import AdminLayout from './components/admin/AdminLayout';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
@@ -250,16 +245,20 @@ function AppShell() {
             so trial-expired users can still pick a plan. The success
             and cancel URLs are the ones we hand to Stripe Checkout
             via createCheckout({ success_url, cancel_url }). */}
+        {/* The manage-subscription page renders inside DashboardLayout so
+            it keeps the persistent sidebar + topbar (the layout already
+            supplies UserProvider, so SubscribePage needs no extra one). A
+            pathless layout route lets us keep the public-looking /subscribe
+            URL while nesting it under the dashboard chrome. */}
         <Route
-          path="/subscribe"
           element={
             <RequireAuth>
-              <UserProvider>
-                <SubscribePage />
-              </UserProvider>
+              <DashboardLayout />
             </RequireAuth>
           }
-        />
+        >
+          <Route path="/subscribe" element={<SubscribePage />} />
+        </Route>
         <Route
           path="/subscribe/success"
           element={
