@@ -626,7 +626,15 @@ function RefreshButton({ onClick }) {
   // Avoid setting state after the banner unmounts (the min-spin timer
   // can outlive a status flip that swaps the banner variant).
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; }, []);
+  useEffect(() => {
+    // Set on mount too: under StrictMode the effect runs mount → cleanup
+    // → mount, so without re-setting here the flag stays false after the
+    // double-invoke and the stop callback never clears the spin.
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const handleClick = async () => {
     if (spinning) return;
