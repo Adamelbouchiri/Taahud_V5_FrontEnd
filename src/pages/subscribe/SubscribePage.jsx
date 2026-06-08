@@ -1054,8 +1054,7 @@ function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
   };
 
   // Isnad add-on — universal, not audience-specific; its copy lives
-  // under landing.plans.addon. No localized feature list exists for it,
-  // so we keep the backend features there.
+  // under landing.plans.addon.
   if (isAddon || plan.is_addon) {
     const addon = dict?.landing?.plans?.addon;
     if (!addon) return fallback;
@@ -1066,7 +1065,10 @@ function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
           price: t('landing.plans.addon.price'),
           threshold: t('landing.plans.addon.threshold'),
         }) || fallback.description,
-      features: backendFeatures,
+      features:
+        Array.isArray(addon.features) && addon.features.length
+          ? addon.features
+          : backendFeatures,
     };
   }
 

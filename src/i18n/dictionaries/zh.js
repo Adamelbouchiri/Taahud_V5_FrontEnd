@@ -531,6 +531,12 @@ export default {
         price: '600 SAR',
         threshold: '1 亿 SAR',
         cta: '添加 Isnad 升级',
+        features: [
+          '访问 Ahd 私享场域',
+          '来自主要战略合作伙伴的独家项目',
+          '超过 1 亿 SAR 的高价值机会',
+          '项目融资与已注资机会',
+        ],
       },
       tiers: {
         contractor: {

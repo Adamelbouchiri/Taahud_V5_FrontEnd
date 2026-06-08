@@ -529,6 +529,12 @@ export default {
         price: '600 SAR',
         threshold: '100M SAR',
         cta: 'Add Isnad upgrade',
+        features: [
+          'Access to the "Ahd" private arena',
+          'Exclusive projects from major strategic partners',
+          'High-value opportunities above 100M SAR',
+          'Project-finance & funded opportunities',
+        ],
       },
       tiers: {
         contractor: {
