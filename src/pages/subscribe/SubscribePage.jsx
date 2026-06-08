@@ -19,6 +19,9 @@ import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import arDict from '../../i18n/dictionaries/ar';
+import enDict from '../../i18n/dictionaries/en';
+import zhDict from '../../i18n/dictionaries/zh';
 
 /* ============================================================
  *  SubscribePage — /subscribe
@@ -247,6 +250,7 @@ export default function SubscribePage() {
                 plans={basePlans}
                 lang={lang}
                 t={t}
+                accountType={user?.account_type}
                 onSubscribe={handleSubscribe}
                 busyPlanId={busyPlanId}
                 planError={planError}
@@ -260,6 +264,7 @@ export default function SubscribePage() {
                 plans={addonPlans}
                 lang={lang}
                 t={t}
+                accountType={user?.account_type}
                 onSubscribe={handleSubscribe}
                 busyPlanId={busyPlanId}
                 planError={planError}
@@ -646,6 +651,7 @@ function PlanSection({
   plans,
   lang,
   t,
+  accountType,
   onSubscribe,
   busyPlanId,
   planError,
@@ -682,6 +688,7 @@ function PlanSection({
               plan={plan}
               lang={lang}
               t={t}
+              accountType={accountType}
               forceAddon={forceAddon}
               isActive={isActive}
               disabled={disabled}
@@ -703,6 +710,7 @@ function PlanCard({
   plan,
   lang,
   t,
+  accountType,
   forceAddon,
   isActive,
   disabled,
@@ -721,11 +729,14 @@ function PlanCard({
     : 'rgba(44,47,124,0.10)';
   const Icon = isAddon ? Gem : isPremium ? Crown : Check;
 
-  const name = pickName(plan, lang);
-  const description = pickDescription(plan, lang);
+  const { name, description, features } = localizedPlanContent(plan, {
+    lang,
+    accountType,
+    isAddon,
+    t,
+  });
   const price = formatPrice(plan.price, plan.currency, lang);
   const months = plan.billing_interval_months || 1;
-  const features = Array.isArray(plan.features) ? plan.features : [];
 
   return (
     <article
@@ -1007,6 +1018,74 @@ function PageSkeleton({ t }) {
 /* ============================================================
  *  Helpers
  * ============================================================ */
+
+/* ============================================================
+ *  Localized plan copy (UX-only)
+ *  ----------------------------------------------------------------
+ *  The backend stores plan name/description/features in English
+ *  only. For the Arabic (and Chinese) UI we reuse the fully
+ *  translated marketing copy that already lives in the landing
+ *  dictionary under landing.plans.tiers.{audience}.{tier}, keyed by
+ *  the user's account_type + the plan tier. This is presentation
+ *  only — enrollment still sends the real backend plan.id, so no
+ *  Arabic copy is needed on the backend.
+ *
+ *  Falls back to the backend fields whenever there's no localized
+ *  entry (unmapped account type, a new plan shape, or missing copy).
+ * ============================================================ */
+const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+
+// account_type (from the API/user) → landing dictionary audience key.
+const AUDIENCE_BY_ACCOUNT_TYPE = {
+  entrepreneur: 'contractor',
+  contractor: 'contractor',
+  engineering: 'engineering',
+  developer: 'developer',
+  supplier: 'supplier',
+};
+
+function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
+  const dict = DICTS[lang] || DICTS.ar;
+  const backendFeatures = Array.isArray(plan.features) ? plan.features : [];
+  const fallback = {
+    name: pickName(plan, lang),
+    description: pickDescription(plan, lang),
+    features: backendFeatures,
+  };
+
+  // Isnad add-on — universal, not audience-specific; its copy lives
+  // under landing.plans.addon. No localized feature list exists for it,
+  // so we keep the backend features there.
+  if (isAddon || plan.is_addon) {
+    const addon = dict?.landing?.plans?.addon;
+    if (!addon) return fallback;
+    return {
+      name: addon.title || fallback.name,
+      description:
+        t('landing.plans.addon.body', {
+          price: t('landing.plans.addon.price'),
+          threshold: t('landing.plans.addon.threshold'),
+        }) || fallback.description,
+      features: backendFeatures,
+    };
+  }
+
+  const audience = AUDIENCE_BY_ACCOUNT_TYPE[accountType];
+  const tier = plan.tier === 'premium' ? 'premium' : 'basic';
+  const entry = audience && dict?.landing?.plans?.tiers?.[audience]?.[tier];
+  if (!entry) return fallback;
+
+  const roleLabel = dict?.landing?.plans?.audiences?.[audience] || '';
+  const tierLabel = t(`subscribe.page.tierLabels.${tier}`);
+  return {
+    name: roleLabel ? `${roleLabel} — ${tierLabel}` : fallback.name,
+    description: entry.description || fallback.description,
+    features:
+      Array.isArray(entry.features) && entry.features.length
+        ? entry.features
+        : backendFeatures,
+  };
+}
 
 function pickName(plan, lang) {
   if (!plan) return '';
