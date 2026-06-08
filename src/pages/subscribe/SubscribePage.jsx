@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Check,
@@ -622,11 +622,35 @@ function IsnadAddonBanner({ t }) {
 }
 
 function RefreshButton({ onClick }) {
+  const [spinning, setSpinning] = useState(false);
+  // Avoid setting state after the banner unmounts (the min-spin timer
+  // can outlive a status flip that swaps the banner variant).
+  const mounted = useRef(true);
+  useEffect(() => () => { mounted.current = false; }, []);
+
+  const handleClick = async () => {
+    if (spinning) return;
+    setSpinning(true);
+    const started = Date.now();
+    try {
+      await onClick?.();
+    } finally {
+      // Keep the icon spinning for at least one full turn even when the
+      // request resolves instantly, so the refresh reads as deliberate.
+      const remaining = 650 - (Date.now() - started);
+      const stop = () => mounted.current && setSpinning(false);
+      if (remaining > 0) setTimeout(stop, remaining);
+      else stop();
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
+      disabled={spinning}
       aria-label="refresh"
+      aria-busy={spinning}
       className="inline-flex items-center justify-center transition-colors flex-shrink-0"
       style={{
         width: 30,
@@ -635,10 +659,23 @@ function RefreshButton({ onClick }) {
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-default)',
         color: 'var(--text-ink-soft)',
-        cursor: 'pointer',
+        cursor: spinning ? 'default' : 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        if (spinning) return;
+        e.currentTarget.style.borderColor = 'var(--border-strong)';
+        e.currentTarget.style.color = 'var(--text-brand-deep)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-default)';
+        e.currentTarget.style.color = 'var(--text-ink-soft)';
       }}
     >
-      <RefreshCw size={13} strokeWidth={1.9} />
+      <RefreshCw
+        size={13}
+        strokeWidth={1.9}
+        className={spinning ? 'animate-spin' : ''}
+      />
     </button>
   );
 }
