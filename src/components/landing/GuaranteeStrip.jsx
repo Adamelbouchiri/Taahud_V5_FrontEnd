@@ -56,7 +56,7 @@ export default function GuaranteeStrip() {
                 >
                   {t('landing.guarantee.title')}
                 </span>
-                <span style={{ color: 'var(--border-strong)' }}>|</span>
+                <span style={{ color: 'var(--border-strong)' }}>—</span>
                 <span style={{ color: 'var(--text-ink-soft)' }}>
                   {t('landing.guarantee.headline')}
                 </span>
@@ -81,7 +81,6 @@ export default function GuaranteeStrip() {
                 >
                   {t('landing.guarantee.terms')}
                 </button>
-                <span style={{ color: 'var(--text-muted)' }}>·</span>
                 <button
                   type="button"
                   onClick={() => navigate('/refund-policy')}

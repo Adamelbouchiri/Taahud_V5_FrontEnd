@@ -9,7 +9,7 @@
 const en = {
   terms: {
     title: 'Terms & Conditions – Taahud Platform',
-    lastUpdated: 'Updated periodically per approved revisions',
+    lastUpdated: 'June 14, 2026',
     intro: [
       'Welcome to the "Taahud" platform.',
       'Your use of the platform, registering on it, or benefiting from its services is an explicit acknowledgement that you have read, understood, and agreed to these Terms & Conditions. Continued use constitutes a binding legal acceptance of everything contained herein and all associated policies.',
@@ -52,7 +52,7 @@ const en = {
         heading: 'IV. Subscriptions & Fees',
         bullets: [
           'Subscription fees are calculated according to the prices announced at the time of subscription.',
-          'All paid fees are non-refundable after the payment is completed.',
+          'Paid fees are 100% refundable if the service is not used, in accordance with the terms, conditions, and timeframes set out in the platform\'s adopted Refund & Exchange Policy. Except for the cases stipulated in that policy, paid fees are non-refundable.',
           'Payment is considered a final agreement to the Terms & Conditions.',
           'The platform does not guarantee results or business opportunities for the user.',
           'The platform may modify prices in the future and publish updates.',
@@ -206,7 +206,7 @@ const en = {
 
   privacy: {
     title: 'Privacy Policy',
-    lastUpdated: 'Updated periodically per approved revisions',
+    lastUpdated: 'June 14, 2026',
     intro: [
       'The "Taahud" platform respects the privacy of its users and is committed to protecting their personal data in accordance with the provisions of the Personal Data Protection Law in the Kingdom of Saudi Arabia and related regulations.',
       'By using the platform, you agree to the collection and processing of your data as described in this policy.',
@@ -378,7 +378,7 @@ const en = {
 
   refund: {
     title: 'Refund & Exchange Policy – Taahud Platform',
-    lastUpdated: 'Updated periodically per approved revisions',
+    lastUpdated: 'June 14, 2026',
     sections: [
       {
         heading: '1. General Framework',
@@ -417,10 +417,11 @@ const en = {
         heading: '5. Refund Cases',
         paragraphs: ['A refund request is accepted in the following cases:'],
         bullets: [
-          'Non-execution of the service by the service provider',
-          'Cancellation of the request before execution begins',
-          'A technical malfunction resulting in a charge without completing the transaction',
-          'Proven non-conformity of the service with what was agreed upon, after verification',
+          'Complete non-use of the service or plan — i.e. service execution has not begun and no part of the plan has been consumed — within (7) days of the payment date; in this case the full amount paid (100%) is refunded without any deductions (Taahud Guarantee).',
+          'Non-execution of the service by the service provider.',
+          'Cancellation of the request before execution begins.',
+          'A technical malfunction resulting in a charge without completing the transaction.',
+          'Proven non-conformity of the service with what was agreed upon, after verification.',
         ],
       },
       {
@@ -434,11 +435,11 @@ const en = {
         heading: '7. Non-Refund Cases',
         paragraphs: ['A refund request is not accepted in the following cases:'],
         bullets: [
-          'After service execution has begun or been completed',
-          'In case of the client\'s breach of obligations or delay',
-          'Change of mind by the client after payment is completed',
-          'Services or plans consumed partially or fully',
-          'Proven fraud or misuse',
+          'After service execution has begun or been completed.',
+          'In case of the client\'s breach of obligations or delay.',
+          'Change of mind by the client after service execution has begun or any part of the plan has been consumed.',
+          'Services or plans consumed partially or fully.',
+          'Proven fraud or misuse.',
         ],
         closing:
           'Client breach is any act or omission that disrupts or delays service execution, including — for example, not limited to —: failure to provide necessary requirements, failure to adhere to dates, weak or interrupted response, or providing incorrect or incomplete data. In all cases, this does not entail any right to a refund.',
@@ -464,6 +465,7 @@ const en = {
           'The amount is refunded via the same payment method used.',
           'The platform may apply a partial refund proportional to the percentage of service execution.',
           'Any operational, bank, or payment-gateway fees — if any — may be deducted from the refunded amount, in accordance with relevant laws and agreements.',
+          'As an exception to the above, where the Taahud Guarantee applies (refund upon non-use), the full amount paid is refunded at 100% without any deductions.',
         ],
       },
       {
@@ -480,7 +482,7 @@ const en = {
 
   cookies: {
     title: 'Cookies Policy – Taahud Platform',
-    lastUpdated: 'Updated periodically per approved revisions',
+    lastUpdated: 'June 14, 2026',
     sections: [
       {
         heading: 'I. Purpose of the Policy',
