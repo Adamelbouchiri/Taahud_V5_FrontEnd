@@ -5,7 +5,7 @@ import AuthShell from '../components/auth/AuthShell';
 import Field from '../components/form/Field';
 import SelectField from '../components/form/SelectField';
 import PasswordField from '../components/form/PasswordField';
-import PhoneField from '../components/form/PhoneField';
+import PhoneField, { isValidSaudiPhone } from '../components/form/PhoneField';
 import {
   ACCOUNT_CATEGORIES,
   SERVICE_PROVIDER_ROLES,
@@ -60,6 +60,9 @@ export default function RegisterPage() {
   // "company name" label/placeholder for those two roles.
   const isCompanyRole =
     accountType === 'entrepreneur' || accountType === 'engineering';
+
+  // Block submit until the phone is a valid Saudi mobile (5XXXXXXXX).
+  const phoneOk = isValidSaudiPhone(phone);
 
   const validate = () => {
     const e = {};
@@ -322,7 +325,11 @@ export default function RegisterPage() {
           </span>
         </label>
 
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={submitting || !phoneOk}
+        >
           {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
           {!submitting && <ArrowLeft size={17} />}
         </button>

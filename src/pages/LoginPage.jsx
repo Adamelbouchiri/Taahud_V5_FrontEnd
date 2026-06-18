@@ -4,7 +4,7 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import AuthShell from '../components/auth/AuthShell';
 import Field from '../components/form/Field';
 import PasswordField from '../components/form/PasswordField';
-import PhoneField from '../components/form/PhoneField';
+import PhoneField, { isValidSaudiPhone } from '../components/form/PhoneField';
 import { auth } from '../services';
 import { OTP_ENABLED } from '../config/constants';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -25,6 +25,10 @@ export default function LoginPage() {
   // was saved in location.state.from — honor it. Otherwise default
   // to /dashboard.
   const redirectAfterLogin = location.state?.from || '/dashboard';
+
+  // In phone mode, block submit until the number is a valid Saudi
+  // mobile (5XXXXXXXX). Email mode is unaffected.
+  const phoneOk = mode !== 'phone' || isValidSaudiPhone(identifier);
 
   // Normalize the user's input into the `login` field the
   // backend expects:
@@ -161,7 +165,11 @@ export default function LoginPage() {
           </a>
         </div>
 
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={submitting || !phoneOk}
+        >
           {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
           {!submitting && <ArrowLeft size={17} />}
         </button>
