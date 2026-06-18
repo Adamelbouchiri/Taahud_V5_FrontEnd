@@ -37,6 +37,24 @@ import http from './http';
  *    GET    /admin/applications/:id             show
  *    POST   /admin/applications/:id/override    { reason }
  *
+ *    Subscriptions
+ *    GET    /admin/subscriptions/stats          dashboard aggregates
+ *    GET    /admin/subscriptions                list (status, plan_id, user_id, provider, per_page)
+ *    GET    /admin/subscriptions/:id            show (with charges)
+ *    POST   /admin/subscriptions                grant a comped sub
+ *    POST   /admin/subscriptions/:id/cancel     { reason } — keeps the row
+ *    POST   /admin/subscriptions/:id/extend     { months } — does NOT charge
+ *    DELETE /admin/subscriptions/:id            { reason } — super-admin hard delete
+ *
+ *    Plans (catalog CRUD)
+ *    GET    /admin/plans                        list (account_type, tier, is_addon, is_active)
+ *    GET    /admin/plans/:id                    show (+ subscriptions_count)
+ *    POST   /admin/plans                        create
+ *    PATCH  /admin/plans/:id                    update (response: price_changed)
+ *    POST   /admin/plans/:id/activate           re-list
+ *    POST   /admin/plans/:id/deactivate         retire (subs unaffected)
+ *    DELETE /admin/plans/:id                    super-admin hard delete (422 plan_in_use)
+ *
  *    Roles (super-admin only)
  *    GET    /admin/roles/users?role=admin
  *    POST   /admin/roles/grant                  { user_id, reason }
@@ -309,6 +327,196 @@ export const admin = {
       return unwrap(
         await http.post(`/admin/applications/${id}/override`, { reason })
       );
+    },
+  },
+
+
+  /* ============================================================
+   * SUBSCRIPTIONS
+   * ----------------------------------------------------------------
+   * Admin subscription management. All paths live under
+   * /admin/subscriptions and require the `admin:*` ability; the
+   * hard `delete` additionally requires `super-admin:*`.
+   *
+   * Money notes (see the Postman collection):
+   *   - plan.price is a decimal string ("1999.00").
+   *   - stats.revenue / avg_value / total_revenue are SAR numbers.
+   *   - charges[].amount is in HALALAS (SAR × 100) — divide by 100.
+   *
+   * `is_active` (not `status`) is the source of truth for whether
+   * the subscriber has access right now: a comped sub can read
+   * status=active with a past period and is_active=false.
+   * ============================================================ */
+  subscriptions: {
+    /** GET /admin/subscriptions/stats — dashboard aggregates.
+     *  Returns { summary, by_account_type[], by_plan[] } un-enveloped. */
+    async stats() {
+      return http.get('/admin/subscriptions/stats');
+    },
+
+    /**
+     * GET /admin/subscriptions/plans — active plans for the grant picker.
+     * Filters (optional):
+     *   - account_type — only plans for this type; pass the selected
+     *     subscriber's type so the picker matches them.
+     *   - is_addon — 1 add-ons only, 0 base only; omit for all.
+     * Returns a plain array of plan objects ({ id, code, account_type,
+     * tier, billing_interval_months, price, currency, name_ar, name_en,
+     * is_addon }). Use `id` as `plan_id` when granting.
+     */
+    async plans(filters = {}) {
+      const params = strip({
+        account_type: filters.account_type,
+        is_addon: filters.is_addon,
+      });
+      const res = await http.get('/admin/subscriptions/plans', { params });
+      if (Array.isArray(res?.data)) return res.data;
+      return Array.isArray(res) ? res : [];
+    },
+
+    /** GET /admin/subscriptions — paginated list.
+     *  Filters (all optional, AND together): status, plan_id,
+     *  user_id, provider, per_page. */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        plan_id: filters.plan_id,
+        user_id: filters.user_id,
+        provider: filters.provider,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/subscriptions', { params }));
+    },
+
+    /** GET /admin/subscriptions/:id — one sub with the last 10 charges. */
+    async get(id) {
+      return unwrap(await http.get(`/admin/subscriptions/${id}`));
+    },
+
+    /**
+     * POST /admin/subscriptions — grant a comped subscription.
+     * Body: { user_id, plan_id, months?, reason? }. The created sub
+     * is provider=manual, auto_renew=false (the renewal cron skips it).
+     * Returns { message, subscription }.
+     * Errors: 409 (already active on that plan), 422 (validation).
+     */
+    async grant(payload) {
+      const body = strip({
+        user_id: payload.user_id,
+        plan_id: payload.plan_id,
+        months: payload.months,
+        reason: payload.reason,
+      });
+      return http.post('/admin/subscriptions', body);
+    },
+
+    /** POST /admin/subscriptions/:id/cancel — admin cancel (keeps row).
+     *  Body: { reason? }. Returns { message, subscription }.
+     *  422 if already canceled. */
+    async cancel(id, reason) {
+      return http.post(`/admin/subscriptions/${id}/cancel`, strip({ reason }));
+    },
+
+    /** POST /admin/subscriptions/:id/extend — push period out N months.
+     *  Body: { months } (1–24, required). Returns { message, subscription }.
+     *  422 on a canceled sub or invalid months. */
+    async extend(id, months) {
+      return http.post(`/admin/subscriptions/${id}/extend`, { months });
+    },
+
+    /** DELETE /admin/subscriptions/:id — HARD delete (super-admin).
+     *  Body: { reason? }. Returns { message, deleted }. The payment
+     *  ledger survives (charges detach). 403 without super-admin:*. */
+    async remove(id, reason) {
+      return http.delete(`/admin/subscriptions/${id}`, {
+        data: strip({ reason }),
+      });
+    },
+  },
+
+
+  /* ============================================================
+   * PLANS — subscription plan catalog (CRUD + activate/deactivate)
+   * ----------------------------------------------------------------
+   * Unlike the public /plans (account-type-scoped, active only) and
+   * the grant picker (subscriptions.plans), /admin/plans is the full
+   * catalog including inactive plans, with create/update/retire.
+   *
+   * PlanResource: id, code, account_type (null for add-ons), tier,
+   * billing_interval_months, price (decimal SAR), currency, name_ar,
+   * name_en, description_ar, description_en, features[], is_addon,
+   * is_active, sort_order, created_at, updated_at.
+   *
+   * Retire vs delete: deactivate() hides a plan from new sign-ups but
+   * keeps existing subscribers working — the safe option. delete() is
+   * super-admin only and 422s (code: plan_in_use) if any subscription
+   * references the plan.
+   * ============================================================ */
+  plans: {
+    /**
+     * GET /admin/plans/features — the feature catalog for the editor.
+     * Features are a fixed catalog of CODES (added by developers in
+     * FeatureCatalog.php, not via the API). A plan's `features` is an
+     * array of these codes; the checklist saves codes and the BE
+     * resolves them to `features_localized` labels on read.
+     * Returns an array of { code, en, ar }.
+     */
+    async features() {
+      const res = await http.get('/admin/plans/features');
+      if (Array.isArray(res?.data)) return res.data;
+      return Array.isArray(res) ? res : [];
+    },
+
+    /** GET /admin/plans — paginated catalog.
+     *  Filters: account_type, tier, is_addon (1/0), is_active (1/0). */
+    async list(filters = {}) {
+      const params = strip({
+        account_type: filters.account_type,
+        tier: filters.tier,
+        is_addon: filters.is_addon,
+        is_active: filters.is_active,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/plans', { params }));
+    },
+
+    /** GET /admin/plans/:id — plan + subscriptions_count.
+     *  Returns the raw envelope { data, subscriptions_count } so the
+     *  caller can decide deactivate (count > 0) vs delete. */
+    async get(id) {
+      return http.get(`/admin/plans/${id}`);
+    },
+
+    /** POST /admin/plans — create. Returns { message, data }.
+     *  Required: code, tier, billing_interval_months, price, name_ar,
+     *  name_en; account_type required unless is_addon. */
+    async create(payload) {
+      return http.post('/admin/plans', payload);
+    },
+
+    /** PATCH /admin/plans/:id — partial update.
+     *  Returns { message, price_changed, data }; branch on
+     *  price_changed to warn that subscribers were emailed. */
+    async update(id, payload) {
+      return http.patch(`/admin/plans/${id}`, payload);
+    },
+
+    /** POST /admin/plans/:id/activate — re-list a retired plan. */
+    async activate(id) {
+      return http.post(`/admin/plans/${id}/activate`);
+    },
+
+    /** POST /admin/plans/:id/deactivate — retire (existing subs unaffected). */
+    async deactivate(id) {
+      return http.post(`/admin/plans/${id}/deactivate`);
+    },
+
+    /** DELETE /admin/plans/:id — HARD delete (super-admin).
+     *  422 (code: plan_in_use) if any subscription references it. */
+    async remove(id, reason) {
+      return http.delete(`/admin/plans/${id}`, { data: strip({ reason }) });
     },
   },
 

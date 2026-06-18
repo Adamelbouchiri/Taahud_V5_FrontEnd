@@ -67,6 +67,8 @@ import AdminProjectsPage from './pages/admin/AdminProjectsPage';
 import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage';
 import AdminProjectCreatePage from './pages/admin/AdminProjectCreatePage';
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
+import AdminSubscriptionsPage from './pages/admin/AdminSubscriptionsPage';
+// import AdminPlansPage from './pages/admin/AdminPlansPage'; // TODO: re-enable when plans management is ready
 import AdminRolesPage from './pages/admin/AdminRolesPage';
 import AdminActivityPage from './pages/admin/AdminActivityPage';
 
@@ -369,6 +371,8 @@ function AppShell() {
           <Route path="projects/new" element={<AdminProjectCreatePage />} />
           <Route path="projects/:id" element={<AdminProjectDetailPage />} />
           <Route path="applications" element={<AdminApplicationsPage />} />
+          <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+          {/* <Route path="plans" element={<AdminPlansPage />} /> */}{/* TODO: re-enable when plans management is ready */}
           <Route path="activity" element={<AdminActivityPage />} />
           <Route
             path="roles"

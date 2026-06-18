@@ -4,6 +4,8 @@ import {
   Users,
   FolderKanban,
   ClipboardList,
+  CreditCard,
+  // Package, // TODO: re-enable when plans management is ready
   Key,
   Activity,
   ShieldOff,
@@ -113,6 +115,23 @@ export default function AdminOverviewPage() {
       accent: TONE.apps.accent,
       soft: TONE.apps.bg,
     },
+    {
+      to: '/admin/subscriptions',
+      icon: CreditCard,
+      titleKey: 'admin.overview.cards.subscriptions',
+      descKey: 'admin.overview.cards.subscriptionsDesc',
+      accent: '#136d4a',
+      soft: 'rgba(19,109,74,0.10)',
+    },
+    // TODO: re-enable when plans management is ready
+    // {
+    //   to: '/admin/plans',
+    //   icon: Package,
+    //   titleKey: 'admin.overview.cards.plans',
+    //   descKey: 'admin.overview.cards.plansDesc',
+    //   accent: '#b8862a',
+    //   soft: 'rgba(184,134,42,0.12)',
+    // },
     isSuperAdmin && {
       to: '/admin/roles',
       icon: Key,
