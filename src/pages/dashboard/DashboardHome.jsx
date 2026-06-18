@@ -23,6 +23,7 @@ import StatusBadge from '../../components/project/StatusBadge';
 import {
   arenaConfig,
   canPostAnyArena,
+  canSeeProjectBudget,
   defaultBrowseRouteFor,
 } from '../../config/projectConstants';
 import SupplierComingSoon from '../../components/SupplierComingSoon';
@@ -318,7 +319,11 @@ function RecentProjects({ canBrowseProjects }) {
 
 function DashboardProjectCard({ project, onClick, delay = 0 }) {
   const { t, lang } = useTranslation();
+  const { user } = useUser();
   const arena = arenaConfig(project.arena);
+  // Budget shows only to the project owner — hidden on associated
+  // (service-provider) projects.
+  const showBudget = canSeeProjectBudget(project, user?.id);
   const showProgress =
     project.status === 'in_progress' || project.status === 'completed';
 
@@ -474,7 +479,7 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         style={{ borderTop: '1px solid var(--border-soft)' }}
       >
         <div className="min-w-0">
-          {project.budget ? (
+          {project.budget && showBudget ? (
             <>
               <div
                 className="font-semibold uppercase mb-0.5"

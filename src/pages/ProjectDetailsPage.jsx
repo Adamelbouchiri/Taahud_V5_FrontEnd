@@ -235,7 +235,7 @@ function ProjectDetailsPage() {
             <FactsCard project={project} />
             <OwnerCard owner={project.owner} project={project} viewerId={user?.id} />
             {project.is_accepted === true && project.partner_id && (
-              <PartnerCard partnerId={project.partner_id} />
+              <PartnerCard partner={project.partner} partnerId={project.partner_id} />
             )}
           </aside>
         </div>
@@ -805,12 +805,12 @@ function FactsCard({ project }) {
   const facts = [
     { icon: Tag, label: t('projects.details.meta.type'), value: project.type },
     { icon: MapPin, label: t('projects.details.meta.city'), value: project.city },
-    project.budget != null && {
+    // Budget is shown only to the owner / accepted partner; hidden
+    // entirely from everyone else (no "sealed" placeholder).
+    project.budget != null && showBudget && {
       icon: Wallet,
       label: t('projects.details.meta.budget'),
-      value: showBudget
-        ? `${formatNumber(project.budget, lang)} ${t('common.currency')}`
-        : t('projects.details.meta.budgetSealed'),
+      value: `${formatNumber(project.budget, lang)} ${t('common.currency')}`,
     },
     project.expected_duration && {
       icon: Clock,
@@ -965,8 +965,11 @@ function OwnerCard({ owner, project, viewerId }) {
   );
 }
 
-function PartnerCard({ partnerId }) {
+function PartnerCard({ partner, partnerId }) {
   const { t } = useTranslation();
+  const role = partner?.account_type
+    ? t(`accountType.${partner.account_type}`)
+    : t('projects.list.ownerGeneric');
   return (
     <div
       className="rounded-[14px] p-5"
@@ -976,7 +979,7 @@ function PartnerCard({ partnerId }) {
       }}
     >
       <div
-        className="font-semibold uppercase mb-2 inline-flex items-center gap-1.5"
+        className="font-semibold uppercase mb-3 inline-flex items-center gap-1.5"
         style={{
           fontSize: 10.5,
           letterSpacing: '0.1em',
@@ -986,16 +989,56 @@ function PartnerCard({ partnerId }) {
         <CheckCircle2 size={12} />
         {t('projects.details.partnerSection')}
       </div>
-      <p
-        className="m-0"
-        style={{
-          fontSize: 13,
-          color: 'var(--text-ink-soft)',
-          lineHeight: 1.6,
-        }}
-      >
-        {t('projects.details.partnerPlaceholder', { id: partnerId })}
-      </p>
+
+      {partner?.name ? (
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center justify-center font-display font-bold flex-shrink-0"
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: 'rgba(19,109,74,0.10)',
+              color: '#0d5538',
+              fontSize: 18,
+            }}
+          >
+            {partner.name?.[0] || '·'}
+          </div>
+          <div className="min-w-0">
+            <div
+              className="font-bold truncate"
+              style={{ fontSize: 14, color: 'var(--text-ink)' }}
+            >
+              {partner.name}
+            </div>
+            <div
+              className="flex items-center gap-1 truncate"
+              style={{ fontSize: 12, color: 'var(--text-muted)' }}
+            >
+              <User size={11} strokeWidth={1.8} />
+              {role}
+              {partner.city && (
+                <>
+                  <span>·</span>
+                  <span>{partner.city}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p
+          className="m-0"
+          style={{
+            fontSize: 13,
+            color: 'var(--text-ink-soft)',
+            lineHeight: 1.6,
+          }}
+        >
+          {t('projects.details.partnerPlaceholder', { id: partnerId })}
+        </p>
+      )}
     </div>
   );
 }

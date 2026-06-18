@@ -204,56 +204,38 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
         style={{ borderTop: '1px solid var(--border-soft)' }}
       >
         <div className="min-w-0">
-          {project.budget && showBudget ? (
-            <>
-              <div
-                className="font-semibold uppercase mb-0.5"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                {t('projects.list.budgetLabel')}
-              </div>
-              <div
-                className="font-bold inline-flex items-center gap-1"
-                style={{ fontSize: 14, color: 'var(--text-ink)' }}
-              >
-                <Wallet size={13} strokeWidth={1.7} className="text-secondary" />
-                {formatNumber(project.budget, lang)}{' '}
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {t('common.currency')}
-                </span>
-              </div>
-            </>
-          ) : project.budget ? (
-            // Budget exists but the viewer isn't the owner/partner —
-            // sealed until acceptance.
-            <>
-              <div
-                className="font-semibold uppercase mb-0.5"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                {t('projects.list.budgetLabel')}
-              </div>
-              <div
-                className="inline-flex items-center gap-1"
-                style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 600 }}
-              >
-                <Lock size={11} strokeWidth={1.8} />
-                {t('projects.list.budgetSealed')}
-              </div>
-            </>
-          ) : (
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {t('projects.list.budgetUnspecified')}
-            </span>
-          )}
+          {/* Budget is shown only to the owner / accepted partner; hidden
+              entirely from everyone else (no "sealed" placeholder). */}
+          {showBudget ? (
+            project.budget ? (
+              <>
+                <div
+                  className="font-semibold uppercase mb-0.5"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  {t('projects.list.budgetLabel')}
+                </div>
+                <div
+                  className="font-bold inline-flex items-center gap-1"
+                  style={{ fontSize: 14, color: 'var(--text-ink)' }}
+                >
+                  <Wallet size={13} strokeWidth={1.7} className="text-secondary" />
+                  {formatNumber(project.budget, lang)}{' '}
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    {t('common.currency')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                {t('projects.list.budgetUnspecified')}
+              </span>
+            )
+          ) : null}
         </div>
 
         {/* BE returns pending_applications_count on the project list +

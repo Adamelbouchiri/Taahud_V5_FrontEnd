@@ -87,7 +87,7 @@ export const ARENAS = [
   },
   {
     value: 'arena',
-    label: 'ساحة أرينا',
+    label: 'أرينا للتطوير العقاري',
     shortLabel: 'أرينا',
     desc: 'الساحة الخاصّة بالمطوّر العقاري لطرح مشاريعه واستقبال العروض.',
     color: '#7a3aa3',
@@ -249,7 +249,8 @@ export function canApplyAnyArena(accountType) {
 export function canSeeProjectBudget(project, userId) {
   if (!project || !userId) return false;
   if (project.user_id === userId) return true; // owner
-  if (project.partner_id && project.partner_id === userId) return true; // accepted partner
+  // Budget is hidden for now from everyone but the owner — including the
+  // accepted partner / associated service provider.
   return false;
 }
 
