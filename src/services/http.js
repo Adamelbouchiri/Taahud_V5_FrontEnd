@@ -118,6 +118,33 @@ http.interceptors.response.use(
       sessionStorage.removeItem('token');
     }
 
+    // 403 + { code: 'phone_not_verified' } → the BE's phone-verified
+    // middleware refused this request. Mark the local snapshot
+    // unverified (so RequireVerified gates subsequent navigations) and
+    // hard-redirect to /otp. Unlike the 401 path we DO navigate here:
+    // there's no `from`-state UX to preserve, and the user must verify
+    // before anything else works. Guard against a redirect loop when
+    // the failing request originated from /otp itself.
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.code === 'phone_not_verified'
+    ) {
+      // Mirror savePhoneVerified() in auth.js: write '0' to the bucket
+      // the token lives in, clear the other. Kept as literals here to
+      // match the 401 handler above and avoid a circular import.
+      const persistent = Boolean(localStorage.getItem('token'));
+      if (persistent) {
+        localStorage.setItem('taahud:phone_verified', '0');
+        sessionStorage.removeItem('taahud:phone_verified');
+      } else {
+        sessionStorage.setItem('taahud:phone_verified', '0');
+        localStorage.removeItem('taahud:phone_verified');
+      }
+      if (window.location.pathname !== '/otp') {
+        window.location.assign('/otp');
+      }
+    }
+
     const data = error.response?.data;
 
     // Try in order: explicit message → explicit error → first

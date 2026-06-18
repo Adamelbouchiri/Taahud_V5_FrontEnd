@@ -52,6 +52,7 @@ import ComingSoonPage from './pages/dashboard/ComingSoonPage';
 
 // Route guards
 import RequireAuth from './components/RequireAuth';
+import RequireVerified from './components/RequireVerified';
 import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
@@ -71,16 +72,21 @@ import AdminActivityPage from './pages/admin/AdminActivityPage';
 
 
 /* ============================================================
- *  Routing — three guard layers
+ *  Routing — guard layers
  *  ----------------------------------------------------------------
  *    RequireAuth          must have a token
+ *    RequireVerified      must have a verified phone (snapshot from
+ *                         services/auth.js); bounces to /otp otherwise
  *    RequireGuest         must NOT have a token (login/register only)
  *    RequireNonSupplier   blocks suppliers from project routes
  *
- *  Most protected routes also stack RequireNonSupplier inside
- *  RequireAuth so suppliers see the "coming soon" view instead of
- *  the project page. Auth check happens first because it's the
- *  cheaper gate (no network call).
+ *  Protected routes stack RequireVerified inside RequireAuth so an
+ *  authenticated-but-unverified user can't reach the platform via the
+ *  back button — they're sent to /otp. The /otp route itself uses
+ *  RequireAuth ALONE (wrapping it in RequireVerified would loop).
+ *  Many routes also stack RequireNonSupplier so suppliers see the
+ *  "coming soon" view instead of the project page. Auth is checked
+ *  first because it's the cheaper gate (no network call).
  * ============================================================ */
 
 export default function App() {
@@ -169,29 +175,31 @@ function AppShell() {
           path="/projects"
           element={
             <RequireAuth>
-              <PublicProjectsPage />
+              <RequireVerified>
+                <PublicProjectsPage />
+              </RequireVerified>
             </RequireAuth>
           }
         />
         <Route
           path="/projects/public"
-          element={<RequireAuth><PublicArenaPage /></RequireAuth>}
+          element={<RequireAuth><RequireVerified><PublicArenaPage /></RequireVerified></RequireAuth>}
         />
         <Route
           path="/projects/private"
-          element={<RequireAuth><PrivateArenaPage /></RequireAuth>}
+          element={<RequireAuth><RequireVerified><PrivateArenaPage /></RequireVerified></RequireAuth>}
         />
         <Route
           path="/projects/solidarity"
-          element={<RequireAuth><SolidarityArenaPage /></RequireAuth>}
+          element={<RequireAuth><RequireVerified><SolidarityArenaPage /></RequireVerified></RequireAuth>}
         />
         <Route
           path="/projects/arena"
-          element={<RequireAuth><DeveloperArenaPage /></RequireAuth>}
+          element={<RequireAuth><RequireVerified><DeveloperArenaPage /></RequireVerified></RequireAuth>}
         />
         <Route
           path="/projects/isnad"
-          element={<RequireAuth><IsnadArenaPage /></RequireAuth>}
+          element={<RequireAuth><RequireVerified><IsnadArenaPage /></RequireVerified></RequireAuth>}
         />
         {/* Legacy alias — keep old links working. */}
         <Route
@@ -202,9 +210,11 @@ function AppShell() {
           path="/projects/new"
           element={
             <RequireAuth>
-              <RequireNonSupplier>
-                <CreateProjectPage />
-              </RequireNonSupplier>
+              <RequireVerified>
+                <RequireNonSupplier>
+                  <CreateProjectPage />
+                </RequireNonSupplier>
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -212,9 +222,11 @@ function AppShell() {
           path="/projects/:id"
           element={
             <RequireAuth>
-              <RequireNonSupplier>
-                <ProjectDetailsPage />
-              </RequireNonSupplier>
+              <RequireVerified>
+                <RequireNonSupplier>
+                  <ProjectDetailsPage />
+                </RequireNonSupplier>
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -222,9 +234,11 @@ function AppShell() {
           path="/projects/:id/edit"
           element={
             <RequireAuth>
-              <RequireNonSupplier>
-                <EditProjectPage />
-              </RequireNonSupplier>
+              <RequireVerified>
+                <RequireNonSupplier>
+                  <EditProjectPage />
+                </RequireNonSupplier>
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -232,9 +246,11 @@ function AppShell() {
           path="/projects/:id/apply"
           element={
             <RequireAuth>
-              <RequireServiceProvider>
-                <ApplyPage />
-              </RequireServiceProvider>
+              <RequireVerified>
+                <RequireServiceProvider>
+                  <ApplyPage />
+                </RequireServiceProvider>
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -253,7 +269,9 @@ function AppShell() {
         <Route
           element={
             <RequireAuth>
-              <DashboardLayout />
+              <RequireVerified>
+                <DashboardLayout />
+              </RequireVerified>
             </RequireAuth>
           }
         >
@@ -263,7 +281,9 @@ function AppShell() {
           path="/subscribe/success"
           element={
             <RequireAuth>
-              <SubscribeSuccessPage />
+              <RequireVerified>
+                <SubscribeSuccessPage />
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -271,7 +291,9 @@ function AppShell() {
           path="/subscribe/cancel"
           element={
             <RequireAuth>
-              <SubscribeCancelPage />
+              <RequireVerified>
+                <SubscribeCancelPage />
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -284,7 +306,9 @@ function AppShell() {
           path="/pay/:sessionId"
           element={
             <RequireAuth>
-              <CheckoutPage />
+              <RequireVerified>
+                <CheckoutPage />
+              </RequireVerified>
             </RequireAuth>
           }
         />
@@ -296,7 +320,9 @@ function AppShell() {
           path="/dashboard"
           element={
             <RequireAuth>
-              <DashboardLayout />
+              <RequireVerified>
+                <DashboardLayout />
+              </RequireVerified>
             </RequireAuth>
           }
         >
@@ -328,9 +354,11 @@ function AppShell() {
           path="/admin"
           element={
             <RequireAuth>
-              <RequireAdmin>
-                <AdminLayout />
-              </RequireAdmin>
+              <RequireVerified>
+                <RequireAdmin>
+                  <AdminLayout />
+                </RequireAdmin>
+              </RequireVerified>
             </RequireAuth>
           }
         >

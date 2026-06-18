@@ -33,6 +33,7 @@ import http from './http';
 
 const TOKEN_KEY = 'token';
 const ROLES_KEY = 'taahud:roles';
+const VERIFIED_KEY = 'taahud:phone_verified';
 
 /* Save the bearer token to the right storage based on persistence
    intent. When persistent, use localStorage; otherwise sessionStorage.
@@ -77,6 +78,47 @@ export function readRoles() {
   }
 }
 
+/* Phone-verification snapshot — same play as the roles snapshot above.
+   We mirror the user's `is_phone_verified` flag into the token's storage
+   bucket at login/register/verify time so RequireVerified can answer
+   synchronously (no /auth/me round-trip) on every guarded navigation.
+   The BE's phone-verified middleware stays authoritative; this only
+   controls which UI we render and where the back button can land.
+
+   `persistent` follows the token: localStorage when the session is
+   persistent, sessionStorage otherwise — and we always clear the OTHER
+   bucket so a stale snapshot can't shadow the live one. */
+function savePhoneVerified(verified, persistent) {
+  const val = verified ? '1' : '0';
+  if (persistent) {
+    localStorage.setItem(VERIFIED_KEY, val);
+    sessionStorage.removeItem(VERIFIED_KEY);
+  } else {
+    sessionStorage.setItem(VERIFIED_KEY, val);
+    localStorage.removeItem(VERIFIED_KEY);
+  }
+}
+
+/* True if the token currently lives in localStorage (persistent
+   session). Lets the snapshot writers below target the same bucket as
+   the token without the caller having to remember the remember_me
+   choice from login. */
+function activePersistent() {
+  return Boolean(localStorage.getItem(TOKEN_KEY));
+}
+
+/* Synchronous read for RequireVerified and the http.js 403 path.
+   Defaults to TRUE when no snapshot exists — we never want to lock out
+   a session created before this snapshot existed, and the BE middleware
+   is the real gate. A snapshot is written on every login/register, so
+   the only "unknown" case is a pre-existing logged-in session. */
+export function isPhoneVerified() {
+  const raw =
+    localStorage.getItem(VERIFIED_KEY) ?? sessionStorage.getItem(VERIFIED_KEY);
+  if (raw === null) return true;
+  return raw === '1';
+}
+
 export function hasRole(role) {
   return readRoles().includes(role);
 }
@@ -97,6 +139,8 @@ function clearToken() {
   sessionStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(ROLES_KEY);
   sessionStorage.removeItem(ROLES_KEY);
+  localStorage.removeItem(VERIFIED_KEY);
+  sessionStorage.removeItem(VERIFIED_KEY);
 }
 
 /* Reads the device label sent with login/register. Useful so you
@@ -150,6 +194,9 @@ export const auth = {
       // stay logged in.
       saveToken(res.token, true);
       saveRoles(res.roles, true);
+      // Registration always lands on /otp — the phone is never verified
+      // yet at this point, so seed the snapshot false.
+      savePhoneVerified(false, true);
     }
     return res; // { user, token, roles, message }
   },
@@ -183,6 +230,10 @@ export const auth = {
       //   remember_me=false → sessionStorage (BE TTL: 24h, dies with tab)
       saveToken(res.token, rememberMe);
       saveRoles(res.roles, rememberMe);
+      // Snapshot the phone-verified flag so RequireVerified can gate
+      // the platform without a /me round-trip. Treat anything other
+      // than an explicit `false` as verified (matches OtpPage).
+      savePhoneVerified(res.user?.is_phone_verified !== false, rememberMe);
     }
     return res; // { user, token, roles, ... }
   },
@@ -198,7 +249,14 @@ export const auth = {
     const res = await http.get('/auth/me');
     // Defensive unwrap: backend wraps with `data`, but if that
     // changes (or in tests) accept either shape.
-    return res?.data ?? res;
+    const user = res?.data ?? res;
+    // Keep the verification snapshot fresh — /me is the one endpoint
+    // that always returns the live flag, so it self-heals a stale
+    // snapshot (e.g. verified on another device).
+    if (user && typeof user.is_phone_verified !== 'undefined') {
+      savePhoneVerified(user.is_phone_verified !== false, activePersistent());
+    }
+    return user;
   },
 
   /* ============================================================
@@ -261,7 +319,11 @@ export const auth = {
    *  Returns 422 if wrong / expired (10 min TTL) / malformed.
    * ============================================================ */
   async verifyOtp(payload) {
-    return http.post('/auth/otp/verify', { otp: payload.otp });
+    const res = await http.post('/auth/otp/verify', { otp: payload.otp });
+    // Phone is now verified — flip the snapshot so RequireVerified lets
+    // the user into the platform on the post-verify redirect.
+    savePhoneVerified(true, activePersistent());
+    return res;
   },
 
   /* ============================================================
