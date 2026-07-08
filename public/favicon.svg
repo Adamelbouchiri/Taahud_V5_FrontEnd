@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="taahud-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f2258"/>
+      <stop offset="1" stop-color="#0f1147"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="url(#taahud-bg)"/>
+  <!-- Taahud emblem (the mark to the right of the wordmark in Logo.jsx),
+       isolated from the تعاهد wordmark, divider and ®. Auto-centered via
+       the nested viewBox tightly bounding the glyph. -->
+  <svg x="10" y="10" width="80" height="80" viewBox="98.04 21.1 29.73 8.81" preserveAspectRatio="xMidYMid meet">
+    <path fill="#ffffff" d="M104.9,21.1h6.31c0,0,1.43-0.04,2.58,1.37c0,0,1.04-1.33,2.51-1.37h6.34v3.49H116l-0.35,1.86h12.12v3.46h-11.44c0,0-1.75-0.1-2.54-1.42c0,0-1,1.43-2.58,1.42l-11.43,0l-1.74-3.46h13.89l-0.35-1.86h-6.64l0-3.49"/>
+  </svg>
+</svg>
