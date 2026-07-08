@@ -19,8 +19,9 @@ import { subscriptions, auth } from '../../services';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
+import urDict from '../../i18n/dictionaries/ur';
 
-const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+const DICTS = { ar: arDict, en: enDict, zh: zhDict, ur: urDict };
 
 /* ============================================================
  *  Plans — landing section

@@ -5,12 +5,13 @@ import { submitLead } from '../../utils/leads';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
+import urDict from '../../i18n/dictionaries/ur';
 
 // Direct dictionary access — needed for array-valued keys (tags
 // list). The shared t() helper only resolves leaf strings and
 // returns undefined for arrays, so it falls back to the key
 // string itself and arrays disappear from the rendered output.
-const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+const DICTS = { ar: arDict, en: enDict, zh: zhDict, ur: urDict };
 function lookupArray(lang, path) {
   const parts = path.split('.');
   let cur = DICTS[lang] || DICTS.ar;

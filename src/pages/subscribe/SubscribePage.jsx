@@ -24,6 +24,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
+import urDict from '../../i18n/dictionaries/ur';
 
 /* ============================================================
  *  SubscribePage — /subscribe
@@ -1119,7 +1120,7 @@ function PageSkeleton({ t }) {
  *  Falls back to the backend fields whenever there's no localized
  *  entry (unmapped account type, a new plan shape, or missing copy).
  * ============================================================ */
-const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+const DICTS = { ar: arDict, en: enDict, zh: zhDict, ur: urDict };
 
 // account_type (from the API/user) → landing dictionary audience key.
 const AUDIENCE_BY_ACCOUNT_TYPE = {

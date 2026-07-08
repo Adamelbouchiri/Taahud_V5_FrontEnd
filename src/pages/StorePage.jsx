@@ -22,12 +22,13 @@ import { submitLead } from '../utils/leads';
 import arDict from '../i18n/dictionaries/ar';
 import enDict from '../i18n/dictionaries/en';
 import zhDict from '../i18n/dictionaries/zh';
+import urDict from '../i18n/dictionaries/ur';
 
 // Direct dictionary access for array-valued keys. The shared
 // t() helper resolves leaf strings only and returns undefined
 // for arrays — which is why the categories list previously
 // rendered as the raw key string instead of pills.
-const DICTS = { ar: arDict, en: enDict, zh: zhDict };
+const DICTS = { ar: arDict, en: enDict, zh: zhDict, ur: urDict };
 function lookupArray(lang, path) {
   const parts = path.split('.');
   let cur = DICTS[lang] || DICTS.ar;
