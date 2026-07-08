@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { admin } from '../../services';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -39,7 +40,9 @@ function statusTone(status) {
 
 export default function AdminApplicationsPage() {
   const { t } = useTranslation();
-  const [projectId, setProjectId] = useState('');
+  const [searchParams] = useSearchParams();
+  // Pre-filter by project when linked from a project detail page.
+  const [projectId, setProjectId] = useState(searchParams.get('project_id') || '');
   const [userId, setUserId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);

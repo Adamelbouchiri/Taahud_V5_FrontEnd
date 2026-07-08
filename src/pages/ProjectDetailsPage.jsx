@@ -23,18 +23,29 @@ import {
   FileArchive,
   LayoutDashboard,
   Lock,
+  Handshake,
+  Layers,
+  Percent,
+  Building2,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
-import { projects as projectsApi, applications as applicationsApi } from '../services';
+import {
+  projects as projectsApi,
+  applications as applicationsApi,
+  partnerships as partnershipsApi,
+} from '../services';
 import {
   arenaConfig,
   canApplyArena,
   canSeeProjectBudget,
   canSeeProjectOwnerName,
   canSeeApplicantName,
+  offeringTypeLabel,
+  usesPartnershipOffers,
 } from '../config/projectConstants';
 import { UserProvider, useUser } from '../contexts/UserContext';
+import useArenaAddons from '../hooks/useArenaAddons';
 import StatusBadge from '../components/project/StatusBadge';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -54,11 +65,20 @@ function ProjectDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { addons } = useArenaAddons();
   const { t } = useTranslation();
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Solidarity is one-offer-per-user. The project resource doesn't
+  // reliably carry a "has_offered" flag, so for a non-owner viewer we
+  // confirm against the partnership-offers list to gate the CTA.
+  const [hasOwnOffer, setHasOwnOffer] = useState(false);
+  // Solidarity has no cascade, so the BE never stamps a single
+  // project.partner_id — an accepted partner would otherwise still see
+  // the owner's identity sealed. Track our own accepted offer to reveal it.
+  const [hasAcceptedOffer, setHasAcceptedOffer] = useState(false);
 
   const reloadProject = React.useCallback(async () => {
     try {
@@ -90,6 +110,29 @@ function ProjectDetailsPage() {
     };
   }, [id, t]);
 
+  // For solidarity projects, check whether the current (non-owner)
+  // user already submitted a partnership offer so we can hide the CTA
+  // and surface an "offer submitted" badge instead of letting them
+  // hit a 403 on a duplicate.
+  useEffect(() => {
+    if (!project || !user) return;
+    if (!usesPartnershipOffers(project.arena)) return;
+    if (project.user_id === user.id) return; // owner sees the inbox, not the CTA
+    let cancelled = false;
+    partnershipsApi
+      .list({ project_id: project.id })
+      .then((rows) => {
+        if (cancelled) return;
+        const mine = rows.filter((o) => o.partner?.id === user.id);
+        setHasOwnOffer(mine.length > 0);
+        setHasAcceptedOffer(mine.some((o) => o.status === 'accepted'));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [project, user]);
+
   if (loading)
     return (
       <Shell>
@@ -104,14 +147,22 @@ function ProjectDetailsPage() {
     );
 
   const isOwner = user && project.user_id === user.id;
+  // Solidarity uses partnership offers instead of bids — the CTA,
+  // owner inbox, and "already submitted" badge all fork on this.
+  const isSolidarity = usesPartnershipOffers(project.arena);
+  // BE may signal an existing submission via either flag depending on
+  // the arena's table; for solidarity we also trust the explicit
+  // offers lookup (hasOwnOffer). Treat any as "already participated".
+  const alreadySubmitted =
+    project.has_applied || project.has_offered || hasOwnOffer;
   // Per-arena applicants matrix (FRONTEND_INTEGRATION.md §3). solidarity
   // is entrepreneur-only, isnad also allows developer, etc.
   const canApply =
     !!user &&
     !isOwner &&
     project.status === 'open_for_bids' &&
-    !project.has_applied &&
-    canApplyArena(project.arena, user.account_type);
+    !alreadySubmitted &&
+    canApplyArena(project.arena, user.account_type, addons);
 
   return (
     <Shell>
@@ -127,8 +178,14 @@ function ProjectDetailsPage() {
           project={project}
           isOwner={isOwner}
           canApply={canApply}
+          isSolidarity={isSolidarity}
+          alreadySubmitted={alreadySubmitted}
           onEdit={() => navigate(`/projects/${project.id}/edit`)}
-          onApply={() => navigate(`/projects/${project.id}/apply`)}
+          onApply={() =>
+            navigate(
+              `/projects/${project.id}/${isSolidarity ? 'partner' : 'apply'}`
+            )
+          }
         />
 
         <div className="grid lg:grid-cols-[1.5fr,1fr] gap-6 lg:gap-8 mt-8">
@@ -213,7 +270,24 @@ function ProjectDetailsPage() {
               </Section>
             )}
 
-            {isOwner && (
+            {isOwner && isSolidarity && (
+              <Section
+                title={
+                  typeof project.pending_partnership_requests_count === 'number' &&
+                  project.pending_partnership_requests_count > 0
+                    ? `${t('projects.details.offers.title')} (${project.pending_partnership_requests_count})`
+                    : t('projects.details.offers.title')
+                }
+                icon={Handshake}
+              >
+                <OwnerPartnershipOffers
+                  projectId={project.id}
+                  onAfterChange={reloadProject}
+                />
+              </Section>
+            )}
+
+            {isOwner && !isSolidarity && (
               <Section
                 title={
                   typeof project.pending_applications_count === 'number' &&
@@ -233,7 +307,12 @@ function ProjectDetailsPage() {
 
           <aside className="space-y-5">
             <FactsCard project={project} />
-            <OwnerCard owner={project.owner} project={project} viewerId={user?.id} />
+            <OwnerCard
+              owner={project.owner}
+              project={project}
+              viewerId={user?.id}
+              reveal={hasAcceptedOffer}
+            />
             {project.is_accepted === true && project.partner_id && (
               <PartnerCard partner={project.partner} partnerId={project.partner_id} />
             )}
@@ -305,7 +384,7 @@ function Shell({ children }) {
 /* ============================================================
  *  Header
  * ============================================================ */
-function Header({ project, isOwner, canApply, onEdit, onApply }) {
+function Header({ project, isOwner, canApply, isSolidarity, alreadySubmitted, onEdit, onApply }) {
   const { t } = useTranslation();
   return (
     <div className="mb-6 animate-fade-up">
@@ -419,12 +498,18 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Send size={14} strokeWidth={1.8} />
-              {t('projects.details.applyCta')}
+              {isSolidarity ? (
+                <Handshake size={14} strokeWidth={1.8} />
+              ) : (
+                <Send size={14} strokeWidth={1.8} />
+              )}
+              {isSolidarity
+                ? t('projects.details.offerCta')
+                : t('projects.details.applyCta')}
             </button>
           )}
 
-          {project.has_applied && (
+          {alreadySubmitted && (
             <span
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] font-semibold"
               style={{
@@ -435,7 +520,9 @@ function Header({ project, isOwner, canApply, onEdit, onApply }) {
               }}
             >
               <CheckCircle2 size={14} />
-              {t('projects.details.appliedBadge')}
+              {isSolidarity
+                ? t('projects.details.offeredBadge')
+                : t('projects.details.appliedBadge')}
             </span>
           )}
         </div>
@@ -795,6 +882,284 @@ function ApplicationPill({ status, t }) {
 }
 
 /* ============================================================
+ *  Owner-only: list of partnership offers on a solidarity project,
+ *  with inline accept/reject controls. Unlike applications, accepting
+ *  one offer does NOT cascade — a project can have multiple accepted
+ *  partners with different offering types. So there's no "winner"
+ *  selection: every pending offer keeps its own accept/reject.
+ * ============================================================ */
+function OwnerPartnershipOffers({ projectId, onAfterChange }) {
+  const { t } = useTranslation();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [acting, setActing] = useState(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const rows = await partnershipsApi.listForProject(projectId);
+      setItems(rows);
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const act = async (id, fn) => {
+    setActing(id);
+    try {
+      await fn(id);
+      await load();
+      onAfterChange?.();
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setActing(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-2 animate-pulse">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            style={{
+              height: 110,
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-soft)',
+              borderRadius: 11,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div
+        className="p-6 rounded-[12px] text-center"
+        style={{
+          background: 'var(--bg-canvas)',
+          border: '1px dashed var(--border-default)',
+          color: 'var(--text-muted)',
+          fontSize: 13.5,
+        }}
+      >
+        {t('projects.details.offers.empty')}
+      </div>
+    );
+  }
+
+  // Mosaic summary — show the mix of accepted partners by offering
+  // type (e.g. "1 × Funding · 2 × Execution") so the owner sees at a
+  // glance what the venture already has covered.
+  const accepted = items.filter((o) => o.status === 'accepted');
+  const acceptedMix = accepted.reduce((acc, o) => {
+    const label = o.offering_label || offeringTypeLabel(o.offering_type);
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-3">
+      {error && (
+        <div
+          className="p-3 rounded-[10px]"
+          style={{
+            background: 'rgba(185,28,28,0.06)',
+            border: '1px solid rgba(185,28,28,0.18)',
+            color: 'var(--accent-danger)',
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {accepted.length > 0 && (
+        <div
+          className="flex items-center gap-2 flex-wrap p-3 rounded-[10px]"
+          style={{
+            background: 'rgba(19,109,74,0.05)',
+            border: '1px solid rgba(19,109,74,0.16)',
+          }}
+        >
+          <span
+            className="font-semibold uppercase"
+            style={{ fontSize: 10.5, letterSpacing: '0.08em', color: '#0d5538' }}
+          >
+            {t('projects.details.offers.acceptedMix')}
+          </span>
+          {Object.entries(acceptedMix).map(([label, count]) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1 rounded-full font-semibold"
+              style={{
+                fontSize: 11.5,
+                padding: '2px 9px',
+                background: 'rgba(19,109,74,0.10)',
+                color: '#0d5538',
+                border: '1px solid rgba(19,109,74,0.22)',
+              }}
+            >
+              {count} × {label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {items.map((o) => {
+        const isPending = o.status === 'pending';
+        const offeringLabel = o.offering_label || offeringTypeLabel(o.offering_type);
+        return (
+          <article
+            key={o.id}
+            className="p-4 rounded-[12px]"
+            style={{
+              background: 'var(--bg-canvas)',
+              border: '1px solid var(--border-soft)',
+            }}
+          >
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+              <div className="min-w-0">
+                <div
+                  className="font-semibold mb-0.5 inline-flex items-center gap-1.5"
+                  style={{ fontSize: 14, color: 'var(--text-ink)' }}
+                >
+                  <Building2 size={14} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
+                  {o.firm_name || t('projects.details.offers.partner')}
+                </div>
+                <div
+                  className="flex items-center gap-2 flex-wrap"
+                  style={{ fontSize: 12, color: 'var(--text-muted)' }}
+                >
+                  {o.partner?.account_type && (
+                    <span>{t(`accountType.${o.partner.account_type}`)}</span>
+                  )}
+                  {o.partner?.city && (
+                    <>
+                      <span>·</span>
+                      <span>{o.partner.city}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <ApplicationPill status={o.status} t={t} />
+            </div>
+
+            <div className="flex gap-5 flex-wrap mb-3" style={{ fontSize: 12.5 }}>
+              <div>
+                <div
+                  className="font-medium uppercase mb-0.5 inline-flex items-center gap-1"
+                  style={{ fontSize: 9.5, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
+                >
+                  <Layers size={11} strokeWidth={1.8} />
+                  {t('projects.details.offers.offering')}
+                </div>
+                <div className="font-semibold" style={{ color: 'var(--text-ink)' }}>
+                  {offeringLabel}
+                </div>
+              </div>
+              {o.proposed_share && (
+                <div>
+                  <div
+                    className="font-medium uppercase mb-0.5 inline-flex items-center gap-1"
+                    style={{ fontSize: 9.5, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
+                  >
+                    <Percent size={11} strokeWidth={1.8} />
+                    {t('projects.details.offers.share')}
+                  </div>
+                  <div className="font-semibold" style={{ color: 'var(--text-ink)' }}>
+                    {o.proposed_share}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {o.capability_brief && (
+              <p
+                className="m-0 mb-2"
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  color: 'var(--text-ink-soft)',
+                }}
+              >
+                {o.capability_brief}
+              </p>
+            )}
+
+            {o.message && (
+              <p
+                className="m-0 mb-3"
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  color: 'var(--text-ink-soft)',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {o.message}
+              </p>
+            )}
+
+            {isPending && (
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  disabled={acting === o.id}
+                  onClick={() => act(o.id, partnershipsApi.reject)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] font-semibold transition-all"
+                  style={{
+                    fontSize: 12.5,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid rgba(185,28,28,0.3)',
+                    color: '#b91c1c',
+                    cursor: acting === o.id ? 'wait' : 'pointer',
+                    opacity: acting === o.id ? 0.6 : 1,
+                  }}
+                >
+                  <XCircle size={13} strokeWidth={1.8} />
+                  {t('projects.details.offers.reject')}
+                </button>
+                <button
+                  type="button"
+                  disabled={acting === o.id}
+                  onClick={() => act(o.id, partnershipsApi.accept)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-white font-semibold transition-all"
+                  style={{
+                    fontSize: 12.5,
+                    background: '#136d4a',
+                    border: '1px solid #136d4a',
+                    cursor: acting === o.id ? 'wait' : 'pointer',
+                    opacity: acting === o.id ? 0.7 : 1,
+                  }}
+                >
+                  <CheckCircle2 size={13} strokeWidth={1.8} />
+                  {t('projects.details.offers.accept')}
+                </button>
+              </div>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================
  *  Sidebar cards
  * ============================================================ */
 
@@ -887,13 +1252,15 @@ function FactsCard({ project }) {
   );
 }
 
-function OwnerCard({ owner, project, viewerId }) {
+function OwnerCard({ owner, project, viewerId, reveal = false }) {
   const { t } = useTranslation();
   if (!owner) return null;
   const role = owner.account_type
     ? t(`accountType.${owner.account_type}`)
     : t('projects.list.ownerGeneric');
-  const showName = canSeeProjectOwnerName(project, viewerId);
+  // `reveal` covers the accepted-partnership-partner case, where the BE
+  // can't express the relationship via project.partner_id (no cascade).
+  const showName = reveal || canSeeProjectOwnerName(project, viewerId);
   return (
     <div
       className="rounded-[14px] p-5"

@@ -43,6 +43,11 @@ import {
 
 const ACCOUNT_TYPES = ['individual', 'entrepreneur', 'engineering', 'developer', 'supplier'];
 const TIERS = ['basic', 'premium', 'addon'];
+// Tiers offered when creating/editing a plan. `addon` is excluded —
+// add-on status is set via the dedicated "Is add-on" toggle, so it
+// doesn't belong as a tier choice. (TIERS still includes it so the
+// filter bar can surface any legacy add-on-tier plans.)
+const FORM_TIERS = ['basic', 'premium'];
 const INTERVALS = [1, 6, 12];
 
 const EMPTY_FORM = {
@@ -747,11 +752,16 @@ export default function AdminPlansPage() {
             )}
             <Labeled label={t('admin.plans.form.tier')}>
               <select className="field" value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
-                {TIERS.map((tr) => (
+                {FORM_TIERS.map((tr) => (
                   <option key={tr} value={tr}>
                     {t(`admin.plans.tiers.${tr}`)}
                   </option>
                 ))}
+                {/* Keep the current value selectable when editing a legacy
+                    plan whose tier isn't in the offered set (e.g. addon). */}
+                {form.tier && !FORM_TIERS.includes(form.tier) && (
+                  <option value={form.tier}>{t(`admin.plans.tiers.${form.tier}`)}</option>
+                )}
               </select>
             </Labeled>
             <Labeled label={t('admin.plans.form.interval')}>

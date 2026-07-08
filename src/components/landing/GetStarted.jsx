@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import {
-  GraduationCap,
-  Percent,
-  BellRing,
-  Check,
-  ArrowLeft,
-  ArrowRight,
-} from 'lucide-react';
+import { GraduationCap, Percent, BellRing, Check } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
-import { SALES_WHATSAPP_URL } from '../../config/constants';
+import { submitLead } from '../../utils/leads';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -34,10 +27,13 @@ function lookupArray(lang, path) {
  *  Two cards side-by-side:
  *
  *    Academy   — coming-soon, lets the visitor leave their email
- *                for a launch notification (UI only — no backend
- *                wiring yet; submission flips to a confirmed state).
- *    Affiliate — "register your interest" CTA that points at the
- *                normal /register flow with affiliate intent.
+ *                for a launch notification.
+ *    Affiliate — "register your interest" email capture for the
+ *                partner program.
+ *
+ *  Both cards POST the email to a Google Sheet via submitLead()
+ *  (see src/utils/leads.js + LEADS_SHEET_URL). Submission flips
+ *  the card to a confirmed state.
  *
  *  Replaces the older UpcomingFeatures block. The conversion
  *  surface is identical (Academy + affiliate) but the layout
@@ -101,7 +97,9 @@ function AcademyCard({ t }) {
   const submit = (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-    // No BE endpoint yet — flip the UI into a confirmed state.
+    // Fire-and-forget the email to the Google Sheet, then flip the
+    // UI to a confirmed state (regardless of network outcome).
+    submitLead(email.trim(), 'academy');
     setSubmitted(true);
   };
 
@@ -249,13 +247,23 @@ function AcademyCard({ t }) {
  *  AffiliateCard — partner program teaser
  * ============================================================ */
 function AffiliateCard({ t }) {
-  const { dir, lang } = useTranslation();
+  const { lang } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
   const accent = '#b8862a';
   const accentSoft = 'rgba(184,134,42,0.12)';
-  const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
   // Read the tags array straight from the active dictionary —
   // t() resolves leaves only and would return undefined here.
   const tags = lookupArray(lang, 'landing.getStarted.affiliate.tags');
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    // Fire-and-forget the email to the Google Sheet, then flip the
+    // UI to a confirmed state (regardless of network outcome).
+    submitLead(email.trim(), 'affiliate');
+    setSubmitted(true);
+  };
 
   return (
     <article
@@ -325,33 +333,77 @@ function AffiliateCard({ t }) {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() =>
-            window.open(SALES_WHATSAPP_URL, '_blank', 'noopener,noreferrer')
-          }
-          className="mt-auto inline-flex items-center gap-1.5 font-semibold self-start"
-          style={{
-            padding: '11px 18px',
-            background: accent,
-            color: 'white',
-            border: `1px solid ${accent}`,
-            borderRadius: 11,
-            fontSize: 13.5,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            boxShadow: '0 6px 14px rgba(184,134,42,0.22)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#9a701f';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = accent;
-          }}
-        >
-          {t('landing.getStarted.affiliate.cta')}
-          <Arrow size={14} strokeWidth={2} />
-        </button>
+        {submitted ? (
+          <div
+            className="inline-flex items-center gap-2 mt-auto self-start"
+            style={{
+              padding: '10px 14px',
+              borderRadius: 11,
+              background: 'rgba(19,109,74,0.08)',
+              border: '1px solid rgba(19,109,74,0.22)',
+              color: '#136d4a',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <Check size={15} strokeWidth={2.3} />
+            {t('landing.getStarted.affiliate.done')}
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-auto flex gap-2 flex-wrap">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('landing.getStarted.affiliate.placeholder')}
+              className="flex-1 min-w-0"
+              style={{
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 11,
+                outline: 0,
+                padding: '11px 14px',
+                fontSize: 13.5,
+                color: 'var(--text-ink)',
+                fontFamily: 'inherit',
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = accent;
+                e.currentTarget.style.boxShadow = `0 0 0 4px ${accentSoft}`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-default)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 font-semibold"
+              style={{
+                padding: '11px 16px',
+                background: accent,
+                color: 'white',
+                border: `1px solid ${accent}`,
+                borderRadius: 11,
+                fontSize: 13.5,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                boxShadow: '0 6px 14px rgba(184,134,42,0.22)',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#9a701f';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = accent;
+              }}
+            >
+              {t('landing.getStarted.affiliate.cta')}
+            </button>
+          </form>
+        )}
       </div>
     </article>
   );

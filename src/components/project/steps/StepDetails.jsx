@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   Tag,
@@ -7,7 +8,6 @@ import {
   Sparkles,
   X,
   Check,
-  BellRing,
   Cloud,
 } from 'lucide-react';
 import Field from '../../form/Field';
@@ -19,8 +19,13 @@ import {
   canPostArena,
   arenaLockReason,
 } from '../../../config/projectConstants';
-import { CITIES } from '../../../config/constants';
+import { cityOptions } from '../../../config/cityTranslations';
 import { useTranslation } from '../../../i18n/LanguageContext';
+import arDict from '../../../i18n/dictionaries/ar';
+import enDict from '../../../i18n/dictionaries/en';
+import zhDict from '../../../i18n/dictionaries/zh';
+
+const DICTS = { ar: arDict, en: enDict, zh: zhDict };
 
 export default function StepDetails({
   form,
@@ -28,8 +33,9 @@ export default function StepDetails({
   errors,
   accountType,
   accountLoaded = true,
+  addons = {},
 }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const k = 'projects.create.steps.details';
 
   return (
@@ -40,6 +46,7 @@ export default function StepDetails({
         error={errors.arena}
         accountType={accountType}
         accountLoaded={accountLoaded}
+        addons={addons}
       />
 
       <Field
@@ -66,7 +73,7 @@ export default function StepDetails({
         <SelectField
           label={t(`${k}.cityLabel`)}
           icon={MapPin}
-          options={CITIES}
+          options={cityOptions(lang)}
           value={form.city}
           onChange={(e) => update('city', e.target.value)}
           error={errors.city}
@@ -90,10 +97,10 @@ export default function StepDetails({
 /* ============================================================
  *  ArenaPicker
  * ============================================================ */
-function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
+function ArenaPicker({ value, onChange, error, accountType, accountLoaded, addons = {} }) {
   const { t } = useTranslation();
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [notified, setNotified] = useState(false);
+  // Slug of the gated arena whose upgrade modal is open, or null.
+  const [upgradeArena, setUpgradeArena] = useState(null);
 
   if (!accountLoaded) return <ArenaPickerSkeleton t={t} />;
 
@@ -107,6 +114,13 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
           const active = value === a.value;
           const isUpgrade = !!a.isUpgrade;
           const systemLocked = !!a.systemLocked;
+          // True when the user already owns this gated arena's add-on
+          // (or the arena isn't gated). When owned, the upgrade card
+          // becomes a normal selectable arena.
+          const hasAddon = !a.addonCode || !!addons[a.addonCode];
+          // Render the upsell treatment only for gated arenas the user
+          // hasn't unlocked yet.
+          const showUpgrade = isUpgrade && !hasAddon;
 
           if (
             isUpgrade &&
@@ -116,7 +130,7 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
             return null;
           }
 
-          const eligible = isUpgrade ? false : canPostArena(a.value, accountType);
+          const eligible = canPostArena(a.value, accountType, addons);
           // Pull the lock-reason text from i18n if the underlying config
           // exposes one for this arena, otherwise fall back to a generic.
           const lockReason =
@@ -128,8 +142,8 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
           const arenaDesc = t(`arena.${a.value}.desc`);
 
           const handleClick = () => {
-            if (isUpgrade) {
-              setUpgradeOpen(true);
+            if (showUpgrade) {
+              setUpgradeArena(a.value);
               return;
             }
             if (locked) return;
@@ -160,13 +174,13 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
                 background: bg,
                 border: `1.5px solid ${border}`,
                 borderRadius: 12,
-                cursor: locked && !isUpgrade ? 'not-allowed' : 'pointer',
-                opacity: locked && !isUpgrade ? 0.78 : 1,
+                cursor: locked && !showUpgrade ? 'not-allowed' : 'pointer',
+                opacity: locked && !showUpgrade ? 0.78 : 1,
                 minHeight: 96,
               }}
               onMouseEnter={(e) => {
                 if (active) return;
-                if (isUpgrade) {
+                if (showUpgrade) {
                   e.currentTarget.style.borderColor = a.color;
                   return;
                 }
@@ -178,7 +192,7 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
                 e.currentTarget.style.borderColor = border;
               }}
             >
-              {isUpgrade ? (
+              {showUpgrade ? (
                 <span
                   className="absolute font-bold inline-flex items-center gap-1"
                   style={{
@@ -247,13 +261,13 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
                   fontSize: 12,
                   color: locked ? 'var(--text-muted)' : 'var(--text-muted)',
                   lineHeight: 1.55,
-                  paddingInlineEnd: isUpgrade || locked ? 48 : 0,
+                  paddingInlineEnd: showUpgrade || locked ? 48 : 0,
                 }}
               >
                 {arenaDesc}
               </div>
 
-              {(locked || isUpgrade) && (
+              {(locked || showUpgrade) && (
                 <div
                   className="mt-2 inline-flex items-center gap-1.5"
                   style={{
@@ -263,7 +277,7 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
                     letterSpacing: '0.02em',
                   }}
                 >
-                  {isUpgrade ? (
+                  {showUpgrade ? (
                     <>
                       <Sparkles size={10.5} strokeWidth={2} />
                       {t(`arena.${a.value}.upgradePrice`)}
@@ -287,14 +301,10 @@ function ArenaPicker({ value, onChange, error, accountType, accountLoaded }) {
       </div>
       {error && <p className="field-err">{error}</p>}
 
-      {upgradeOpen && (
-        <IsnadUpgradeModal
-          onClose={() => {
-            setUpgradeOpen(false);
-            setNotified(false);
-          }}
-          notified={notified}
-          onNotify={() => setNotified(true)}
+      {upgradeArena && (
+        <ArenaUpgradeModal
+          arenaSlug={upgradeArena}
+          onClose={() => setUpgradeArena(null)}
         />
       )}
     </div>
@@ -363,10 +373,13 @@ function ArenaPickerSkeleton({ t }) {
 }
 
 /* ============================================================
- *  IsnadUpgradeModal
+ *  ArenaUpgradeModal — shown when a user without the add-on tries to
+ *  post in a gated arena (إسناد / التضامن). Arena label + price come
+ *  from the arena config so the same modal serves both add-ons.
  * ============================================================ */
-function IsnadUpgradeModal({ onClose, notified, onNotify }) {
-  const { t } = useTranslation();
+function ArenaUpgradeModal({ arenaSlug, onClose }) {
+  const { t, lang } = useTranslation();
+  const navigate = useNavigate();
   React.useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
@@ -376,8 +389,21 @@ function IsnadUpgradeModal({ onClose, notified, onNotify }) {
   }, [onClose]);
 
   const k = 'projects.create.steps.details.isnadModal';
-  const arenaLabel = t('arena.isnad.label');
-  const price = t('arena.isnad.upgradePrice');
+  // Subtitle + bullets are arena-specific so the إسناد and التضامن
+  // modals each describe their own add-on (the chrome is shared).
+  const dict = DICTS[lang] || DICTS.ar;
+  const isSolidarity = arenaSlug === 'solidarity';
+  const arenaCopy = isSolidarity
+    ? dict?.solidarityAddon
+    : dict?.projects?.create?.steps?.details?.isnadModal;
+  const subtitle = arenaCopy?.subtitle || t(`${k}.subtitle`);
+  const bullets = Array.isArray(arenaCopy?.bullets) ? arenaCopy.bullets : [];
+  const goSubscribe = () => {
+    onClose();
+    navigate('/subscribe');
+  };
+  const arenaLabel = t(`arena.${arenaSlug}.label`);
+  const price = t(`arena.${arenaSlug}.upgradePrice`);
   // Split out the price number + unit so the layout matches RTL/LTR.
   const priceParts = price.split('/');
   const priceValue = priceParts[0]?.trim() || price;
@@ -463,12 +489,12 @@ function IsnadUpgradeModal({ onClose, notified, onNotify }) {
             color: 'var(--text-ink-soft)',
           }}
         >
-          {t(`${k}.subtitle`)}
+          {subtitle}
         </p>
 
         <ul className="m-0 p-0 mb-5 flex flex-col gap-2.5">
-          {[0, 1, 2].map((i) => (
-            <Bullet key={i}>{t(`${k}.bullets.${i}`)}</Bullet>
+          {bullets.map((b, i) => (
+            <Bullet key={i}>{b}</Bullet>
           ))}
         </ul>
 
@@ -517,28 +543,18 @@ function IsnadUpgradeModal({ onClose, notified, onNotify }) {
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             type="button"
-            onClick={onNotify}
-            disabled={notified}
+            onClick={goSubscribe}
             className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-[11px] text-white font-semibold transition-all flex-1"
             style={{
               fontSize: 13.5,
-              background: notified ? '#136d4a' : '#0d5538',
-              border: `1px solid ${notified ? '#136d4a' : '#0d5538'}`,
-              cursor: notified ? 'default' : 'pointer',
+              background: '#0d5538',
+              border: '1px solid #0d5538',
+              cursor: 'pointer',
               boxShadow: '0 8px 18px rgba(13,85,56,0.30)',
             }}
           >
-            {notified ? (
-              <>
-                <Check size={14} strokeWidth={2.4} />
-                {t(`${k}.notifyDone`)}
-              </>
-            ) : (
-              <>
-                <BellRing size={14} strokeWidth={1.9} />
-                {t(`${k}.notify`)}
-              </>
-            )}
+            <Sparkles size={14} strokeWidth={1.9} />
+            {t('subscribe.page.subscribeCta')}
           </button>
           <button
             type="button"

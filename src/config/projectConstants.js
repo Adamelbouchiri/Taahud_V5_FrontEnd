@@ -75,15 +75,19 @@ export const ARENAS = [
     value: 'solidarity',
     label: 'ساحة التضامن',
     shortLabel: 'التضامن',
-    desc: 'تعاون بين المقاولين على مشاريع أكبر أو متعدّدة التخصّصات.',
+    desc: 'تعاون متعدّد التخصّصات بين المقاولين والمكاتب الهندسيّة والمطوّرين على مشاريع أكبر.',
     color: '#b8862a',
     accentSoft: 'rgba(184,134,42,0.10)',
-    postableBy: ['entrepreneur'],
-    viewableBy: ['entrepreneur'],
-    // Per FRONTEND_INTEGRATION.md §3 — solidarity is entrepreneur-only,
-    // engineering offices cannot apply here.
-    applicableBy: ['entrepreneur'],
-    lockReason: 'مخصّصة للمقاولين فقط.',
+    // Per ARENA_ADDONS_INTEGRATION.md — solidarity is now a
+    // cross-discipline marketplace open to developer, entrepreneur and
+    // engineering across all three axes, gated behind solidarity_addon.
+    postableBy: ['developer', 'entrepreneur', 'engineering'],
+    viewableBy: ['developer', 'entrepreneur', 'engineering'],
+    applicableBy: ['developer', 'entrepreneur', 'engineering'],
+    isUpgrade: true,
+    addonCode: 'solidarity_addon',
+    upgradePrice: '799 ر.س / شهر',
+    lockReason: 'تتطلّب ترقية التضامن.',
   },
   {
     value: 'arena',
@@ -116,6 +120,7 @@ export const ARENAS = [
     viewableBy: ['entrepreneur', 'engineering', 'developer'],
     applicableBy: ['entrepreneur', 'engineering', 'developer'],
     isUpgrade: true,
+    addonCode: 'isnad_addon',
     upgradePrice: '600 ر.س / شهر',
     lockReason: 'تتطلّب ترقية إسناد.',
   },
@@ -123,6 +128,38 @@ export const ARENAS = [
 
 export function arenaLabel(value) {
   return ARENAS.find((a) => a.value === value)?.label || value || '';
+}
+
+/* True when this arena uses partnership offers (طلبات التضامن)
+   instead of bids (applications). Only the solidarity arena does —
+   it's a partnership marketplace, not a bidding one. Drives the
+   "Apply" vs "Submit partnership offer" fork across the project
+   detail / dashboard surfaces. See PARTNERSHIP_REQUESTS_INTEGRATION.md. */
+export function usesPartnershipOffers(arenaValue) {
+  return arenaValue === 'solidarity';
+}
+
+/* ============================================================
+ *  Partnership offering types — Solidarity arena only.
+ *  ----------------------------------------------------------------
+ *  The five contribution types a partner can offer on a solidarity
+ *  project (PARTNERSHIP_REQUESTS_INTEGRATION.md). `value` is the enum
+ *  the BE stores; the human label is resolved through i18n
+ *  (`offering.<value>`), with the Arabic fallback kept here so the
+ *  picker still reads correctly if a translation is missing. The API
+ *  also echoes a localized `offering_label` on each offer resource —
+ *  prefer that when rendering an existing offer.
+ * ============================================================ */
+export const OFFERING_TYPES = [
+  { value: 'funding', label: 'تمويل' },
+  { value: 'execution', label: 'تنفيذ' },
+  { value: 'land', label: 'أرض' },
+  { value: 'expertise', label: 'خبرة' },
+  { value: 'development', label: 'تطوير' },
+];
+
+export function offeringTypeLabel(value) {
+  return OFFERING_TYPES.find((o) => o.value === value)?.label || value || '';
 }
 
 export function arenaConfig(value) {
@@ -153,8 +190,14 @@ export const DEFAULT_ARENA_BY_ACCOUNT = {
   developer: 'arena',
 };
 
-export function defaultArenaFor(accountType) {
-  return DEFAULT_ARENA_BY_ACCOUNT[accountType] || '';
+export function defaultArenaFor(accountType, addons = {}) {
+  const v = DEFAULT_ARENA_BY_ACCOUNT[accountType] || '';
+  // Don't pre-select a gated arena (إسناد / التضامن) the user can't
+  // post in yet — otherwise the wizard opens on a locked arena and a
+  // submit would 403. Leaving it blank surfaces the picker (with its
+  // upgrade prompt) so the user actively chooses or subscribes.
+  if (v && !canPostArena(v, accountType, addons)) return '';
+  return v;
 }
 
 /* Resolve the right "browse projects" route for this user. Generic
@@ -163,23 +206,33 @@ export function defaultArenaFor(accountType) {
    pick the first arena their account_type can view and route them
    straight there. Falls back to /projects when the role is still
    loading, and to /dashboard if the user can't view any arena. */
-export function defaultBrowseRouteFor(accountType, hasIsnadUpgrade) {
+export function defaultBrowseRouteFor(accountType, addons) {
   if (!accountType) return '/projects';
   const arena = ARENAS.find((a) =>
-    canViewArena(a.value, accountType, hasIsnadUpgrade)
+    canViewArena(a.value, accountType, addons)
   );
   if (arena) return `/projects/${arena.value}`;
   return '/dashboard';
+}
+
+/* True if the arena's required add-on (if any) is unlocked for this
+   user. `addons` is a map of addon-code → boolean, e.g.
+   { isnad_addon: true, solidarity_addon: false } — see useArenaAddons.
+   Arenas without an `addonCode` are free for their eligible roles. */
+function arenaAddonUnlocked(arena, addons) {
+  if (!arena.addonCode) return true;
+  return !!(addons && addons[arena.addonCode]);
 }
 
 /* True if the given account type is allowed to POST in this arena.
    Suppliers can't post anywhere (they don't see project creation
    in the UI). Public is system-locked — postableBy is empty, so
    nobody is eligible. */
-export function canPostArena(arenaValue, accountType) {
+export function canPostArena(arenaValue, accountType, addons = {}) {
   const a = ARENAS.find((x) => x.value === arenaValue);
   if (!a) return false;
   if (a.systemLocked) return false; // public — sourced via external API
+  if (!arenaAddonUnlocked(a, addons)) return false; // gated — no add-on
   if (!accountType) return true; // loading — don't lock prematurely
   return a.postableBy.includes(accountType);
 }
@@ -198,28 +251,33 @@ export function canPostAnyArena(accountType) {
 /* True if the given account type is allowed to VIEW this arena's feed.
    Drives the dashboard sidebar links and the /projects/:arena guards.
 
-   Upgrade-gated arenas (isUpgrade — currently just إسناد) require the
-   user to have paid for the upgrade in addition to having an eligible
-   role. The flag is read from `user.has_isnad_upgrade` upstream and
-   passed in here; missing/false hides the arena entirely. */
-export function canViewArena(arenaValue, accountType, hasIsnadUpgrade = false) {
+   Add-on-gated arenas (إسناد and التضامن) require the user to own the
+   corresponding add-on (arena.addonCode) in addition to having an
+   eligible role. `addons` is a code→boolean map resolved upstream from
+   the user's active subscriptions (see useArenaAddons); a missing/false
+   entry hides the arena entirely. */
+export function canViewArena(arenaValue, accountType, addons = {}) {
   const a = ARENAS.find((x) => x.value === arenaValue);
   if (!a) return false;
-  if (a.isUpgrade && !hasIsnadUpgrade) return false;
+  if (!arenaAddonUnlocked(a, addons)) return false; // gated — no add-on
   if (!accountType) return true; // loading — don't gate prematurely
   return (a.viewableBy || []).includes(accountType);
 }
 
 /* True if the given account type is allowed to APPLY (submit bids)
-   on projects in this arena. Per FRONTEND_INTEGRATION.md §3 the rule
-   is per-arena: solidarity is entrepreneur-only, isnad also lets
-   developers bid, etc. Individuals and suppliers never apply.
+   on projects in this arena. Per ARENA_ADDONS_INTEGRATION.md the rule
+   is per-arena: solidarity and isnad let developer/entrepreneur/
+   engineering bid (gated behind their add-on), private/arena are
+   entrepreneur+engineering. Individuals and suppliers never apply.
 
+   Add-on-gated arenas also require the matching add-on — the BE returns
+   403 on apply without it, so we fail closed here to pre-empt that.
    Project ownership still has to be checked separately — owners can't
    apply to their own projects regardless of arena. */
-export function canApplyArena(arenaValue, accountType) {
+export function canApplyArena(arenaValue, accountType, addons = {}) {
   const a = ARENAS.find((x) => x.value === arenaValue);
   if (!a) return false;
+  if (!arenaAddonUnlocked(a, addons)) return false; // gated — no add-on
   if (!accountType) return false; // unknown role — fail closed for apply
   return (a.applicableBy || []).includes(accountType);
 }

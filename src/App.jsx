@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import StorePage from './pages/StorePage';
 import ServicesPage from './pages/ServicesPage';
 import ContactPage from './pages/ContactPage';
+import PartnersPage from './pages/PartnersPage';
 
 // Legal pages — public, no guards
 import TermsPage from './pages/legal/TermsPage';
@@ -25,6 +26,7 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import EditProjectPage from './pages/EditProjectPage';
 import ApplyPage from './pages/ApplyPage';
+import PartnershipOfferPage from './pages/PartnershipOfferPage';
 
 // Subscription pages — plans picker + Stripe return URLs
 import SubscribePage from './pages/subscribe/SubscribePage';
@@ -48,6 +50,7 @@ import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardHome from './pages/dashboard/DashboardHome';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ApplicationsPage from './pages/dashboard/ApplicationsPage';
+import PartnershipsPage from './pages/dashboard/PartnershipsPage';
 import ComingSoonPage from './pages/dashboard/ComingSoonPage';
 
 // Route guards
@@ -67,8 +70,11 @@ import AdminProjectsPage from './pages/admin/AdminProjectsPage';
 import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage';
 import AdminProjectCreatePage from './pages/admin/AdminProjectCreatePage';
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
+import AdminPartnershipsPage from './pages/admin/AdminPartnershipsPage';
+import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage';
 import AdminSubscriptionsPage from './pages/admin/AdminSubscriptionsPage';
-// import AdminPlansPage from './pages/admin/AdminPlansPage'; // TODO: re-enable when plans management is ready
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
+import AdminPlansPage from './pages/admin/AdminPlansPage';
 import AdminRolesPage from './pages/admin/AdminRolesPage';
 import AdminActivityPage from './pages/admin/AdminActivityPage';
 
@@ -123,6 +129,9 @@ function AppShell() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        {/* Public "Become a Partner" directory + application form.
+            Wired to the public POST /api/partners/apply endpoint. */}
+        <Route path="/partners" element={<PartnersPage />} />
 
         {/* ===== Guest-only (auth pages) =====
             If a logged-in user lands here, bounce them to /dashboard. */}
@@ -256,6 +265,21 @@ function AppShell() {
             </RequireAuth>
           }
         />
+        {/* Solidarity-arena partnership offers — the partnership
+            counterpart to /apply. Same service-provider gate; the
+            page itself refines on arena + solidarity_addon. */}
+        <Route
+          path="/projects/:id/partner"
+          element={
+            <RequireAuth>
+              <RequireVerified>
+                <RequireServiceProvider>
+                  <PartnershipOfferPage />
+                </RequireServiceProvider>
+              </RequireVerified>
+            </RequireAuth>
+          }
+        />
 
         {/* ===== Subscription flow =====
             All routes require an authenticated user. The /subscribe
@@ -331,6 +355,7 @@ function AppShell() {
           <Route index element={<DashboardHome />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="applications" element={<ApplicationsPage />} />
+          <Route path="partnerships" element={<PartnershipsPage />} />
 
           {/* Coming-soon features. Each renders the same component
               with a different variant preset. Add them here so the
@@ -371,8 +396,14 @@ function AppShell() {
           <Route path="projects/new" element={<AdminProjectCreatePage />} />
           <Route path="projects/:id" element={<AdminProjectDetailPage />} />
           <Route path="applications" element={<AdminApplicationsPage />} />
+          <Route path="partnerships" element={<AdminPartnershipsPage />} />
+          {/* "Become a Partner" program — separate from /partnerships
+              (Solidarity offers). force-delete is gated inside the page
+              on the super-admin role. */}
+          <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
           <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
-          {/* <Route path="plans" element={<AdminPlansPage />} /> */}{/* TODO: re-enable when plans management is ready */}
+          <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="plans" element={<AdminPlansPage />} />
           <Route path="activity" element={<AdminActivityPage />} />
           <Route
             path="roles"

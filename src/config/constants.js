@@ -5,6 +5,28 @@ import { UserRound, HardHat, Truck, Building2, Compass } from 'lucide-react';
    (Saudi country code, leading zero dropped). */
 export const SALES_WHATSAPP_URL = 'https://wa.me/966537372053';
 
+/* Google Apps Script Web App endpoints that append landing-page lead
+   emails to a Google Sheet. There is ONE sheet (and one /exec URL)
+   per lead source, keyed below by the `source` value submitLead()
+   sends ('affiliate' | 'academy'). Each submission POSTs
+   { email, source }. To set one up:
+     Sheet → Extensions → Apps Script → paste the doPost script →
+     Deploy → New deployment → type "Web app" → Execute as "Me",
+     Who has access "Anyone" → copy the /exec URL here.
+   Leave a value empty to disable that source (form still shows a
+   thank-you). */
+export const LEADS_SHEET_URLS = {
+  // التسويق بالعمولة
+  affiliate:
+    'https://script.google.com/macros/s/AKfycbwH5M4cExmbFUrNKmUZB-AdtVbbr4dx1ZsU6gKlZ0UWdHwq8z9li_HU09m_YsfYjAYD/exec',
+  // تسجيل الاكاديمية
+  academy:
+    'https://script.google.com/macros/s/AKfycbwHOxu2LfbQlzeLocDCmeKFDz2LGEJrI30YDTIHoQ2OlAAUD5ugfoTxR_dUjJ0P9G5r/exec',
+  // متجر تعهد — قريباً (waitlist on the /store coming-soon page)
+  store:
+    'https://script.google.com/macros/s/AKfycbyr97WV4zPfoD8FzTBVMoX1-iWeUZaDCVpikVLKM8ICVqlLyBFDG9Qvhwc9zpW-0Vrv/exec',
+};
+
 /* Customer-facing contact channels. Imported by ContactUs, Footer,
    and anywhere else that needs to surface a "talk to us" link. */
 export const SUPPORT_EMAIL = 'support@taahud.sa';

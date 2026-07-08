@@ -2,6 +2,55 @@
 // English dictionary — mirrors ar.js key-for-key.
 
 export default {
+  identifier: {
+    label: 'User ID',
+    copy: 'Copy identifier',
+    copied: 'Copied',
+  },
+  features: {
+    families: {
+      submit_offers: 'Submit offers',
+      rfq: 'RFQs',
+      ai_project_analyzer: 'AI Project Analyzer',
+      ai_materials_calculator: 'AI Materials Calculator',
+      ai_engineering_assistant: 'AI Engineering Assistant',
+      ai_executive_assistant: 'AI Executive Assistant',
+      ai_project_calculator: 'AI Project Calculator',
+      ai_development_advisor: 'AI Development Advisor',
+      project_supervision: 'Project Supervision',
+      engineering_fees_calculator: 'Engineering Fees Calculator',
+      external_projects: 'External Projects',
+      e_signature_nafath: 'E-signature via Nafath',
+      engineering_documents: 'Engineering Documents Storage',
+    },
+    upgrade: {
+      noFeatureTitle: 'Your plan doesn’t include this',
+      noFeatureBody:
+        'Submitting offers ({label}) needs an active subscription. Subscribe to a plan to start bidding and offering partnerships.',
+      exhaustedTitle: 'Monthly limit reached',
+      exhaustedCounterBody:
+        'You’ve used all {limit} of your monthly offers ({label}). Upgrade your plan for a higher limit, or wait for the next reset.',
+      exhaustedLifetimeBody:
+        'You’ve used up your quota for {label}. Upgrade your plan to get more.',
+      resetsOn: 'Your quota resets on {date}.',
+      cta: 'View plans',
+      back: 'Back to browse',
+    },
+    usage: {
+      title: 'Your plan usage',
+      unlimited: 'Unlimited',
+      usedCount: 'Used {used} times',
+      usedOfLimit: '{used} / {limit}',
+      resets: 'Resets {date}',
+    },
+    banner: {
+      trialTitle: 'You’re on a free trial',
+      trialBody: 'Subscribe before your trial ends to keep full access to Taahud.',
+      expiredTitle: 'Your subscription is inactive',
+      expiredBody: 'Subscribe to continue submitting offers and using premium features.',
+      cta: 'Subscribe',
+    },
+  },
   common: {
     brand: 'Taahud',
     locale: 'en-US',
@@ -98,6 +147,7 @@ export default {
       affiliate: 'Affiliate Marketing',
     },
     contact: 'Contact',
+    partners: 'Taahud Partners',
     testimonials: 'Testimonials',
     store: 'Store',
     login: 'Sign in',
@@ -127,6 +177,7 @@ export default {
     },
     notify: 'Notify me at launch',
     notifyDone: 'Notification enabled',
+    notifyPlaceholder: 'Your email for launch updates',
     back: 'Back',
     backHome: 'Back to home',
     backDashboard: 'Back to dashboard',
@@ -450,6 +501,51 @@ export default {
         },
       },
     },
+    features: {
+      eyebrow: 'Key features',
+      title: 'Everything you need, built into one platform',
+      subtitle: 'Tools that replace a stack of external software.',
+      prev: 'Previous',
+      next: 'Next',
+      items: {
+        calculator: {
+          title: 'AI project calculator',
+          desc: 'Material, labor, and phase costs in seconds',
+        },
+        assistant: {
+          title: 'Smart AI assistant',
+          desc: 'Analysis, quotes, and opportunities matched to you',
+        },
+        escrow: {
+          title: 'Escrow & payment guarantees',
+          desc: 'Funds held safely until the work is done',
+        },
+        contracts: {
+          title: 'Smart e-contracts',
+          desc: 'Create and sign via Nafath with an AI reviewer',
+        },
+        dashboards: {
+          title: 'Specialized dashboards',
+          desc: 'Real-time reports and tracking for every role',
+        },
+        approval: {
+          title: 'Material approval before execution',
+          desc: 'Vetted supplier prices before the project starts',
+        },
+        trust: {
+          title: 'Trust badge',
+          desc: 'A digital reputation with verified reviews',
+        },
+        signature: {
+          title: 'E-signature via Nafath',
+          desc: 'Officially certified, straight from the platform',
+        },
+        suppliers: {
+          title: 'Local & international supplier network',
+          desc: 'Direct access at competitive prices',
+        },
+      },
+    },
     testimonials: {
       eyebrow: 'Testimonials',
       title: 'Trusted — and recommended',
@@ -534,6 +630,20 @@ export default {
           'Exclusive projects from major strategic partners',
           'High-value opportunities above 100M SAR',
           'Project-finance & funded opportunities',
+        ],
+      },
+      solidarityAddon: {
+        eyebrow: 'Solidarity upgrade',
+        title: 'Solidarity add-on — partner up and complete the opportunity',
+        body:
+          'Add {price} per month to enter the Solidarity arena and co-venture with parties who bring financing, execution, land, supply, or expertise.',
+        price: '799 SAR',
+        cta: 'Add Solidarity add-on',
+        features: [
+          'Solidarity opportunities for mid-to-large projects',
+          'Bridges financing, execution and expertise',
+          'An independent subscription for each party',
+          'Incentive credit when a party subscribes through your opportunity',
         ],
       },
       tiers: {
@@ -835,7 +945,9 @@ export default {
         desc:
           'Get a personal referral link and earn commission on every subscription you bring — monthly payouts.',
         tags: ['Competitive commission', 'Personal tracking link', 'Partner dashboard'],
+        placeholder: 'Your email to join as a partner',
         cta: 'Register your interest',
+        done: 'Your interest is registered',
       },
     },
     contact: {
@@ -1046,6 +1158,8 @@ export default {
     phoneCountryCode: '+966',
     phonePlaceholder: '5X XXX XXXX',
     phoneLeadingZeroWarning: 'Don’t start with a zero — enter the number right after the country code (e.g. 5X XXX XXXX).',
+    phoneMustStartWithFive: 'Saudi mobile numbers start with 5 — enter the number right after the country code (e.g. 5X XXX XXXX).',
+    phoneDigitsOnly: 'Enter digits only — no letters or symbols (e.g. 5X XXX XXXX).',
     brand: {
       eyebrow: 'Contracting & supply platform',
       name: 'Taahud',
@@ -1102,6 +1216,8 @@ export default {
       createProjectDesc: 'Post your project and start receiving bids from partners.',
       browseProjects: 'Browse projects',
       browseProjectsDesc: 'Find projects that fit you across the three arenas.',
+      isnadArena: 'Isnad arena',
+      isnadArenaDesc: 'Explore large and financed projects (+100M SAR) — your Isnad add-on.',
       profile: 'Profile',
       profileDesc: 'Update your personal and company details.',
     },
@@ -1132,6 +1248,7 @@ export default {
       items: {
         home: 'Home',
         applications: 'Applications',
+        partnerships: 'Partnerships',
         profile: 'Profile',
         ai: 'AI analytics',
         analytics: 'Analytics & Reports',
@@ -1173,6 +1290,38 @@ export default {
         receivedTitle: "You haven't received any bids yet.",
         receivedSubtitle:
           'Once a partner bids on one of your projects, it will appear here for review.',
+      },
+    },
+    partnerships: {
+      eyebrow: 'Partnerships',
+      title: 'My partnerships',
+      subtitle:
+        'Partnership offers you sent on solidarity opportunities and offers received on yours — in one place.',
+      loadError: "Couldn't load partnership offers.",
+      actionError: "Couldn't complete the action. Please try again.",
+      projectFallback: 'Opportunity #{id}',
+      partner: 'Partner',
+      tabs: {
+        sent: 'Offers sent',
+        received: 'Offers received',
+      },
+      fields: {
+        offering: 'Offering',
+        share: 'Proposed share',
+      },
+      actions: {
+        accept: 'Accept',
+        reject: 'Reject',
+        withdraw: 'Withdraw',
+        openProject: 'Open opportunity',
+      },
+      empty: {
+        sentTitle: "You haven't sent any partnership offers yet.",
+        sentSubtitle:
+          'Browse the solidarity arena and offer to partner on an opportunity to see it here.',
+        receivedTitle: "You haven't received any partnership offers yet.",
+        receivedSubtitle:
+          'Once a partner offers on one of your solidarity opportunities, it will appear here for review.',
       },
     },
     userMenu: {
@@ -1326,7 +1475,7 @@ export default {
       blockedNoArena: 'No arenas are available for your account type right now.',
       blockedIsnadTitle: '{arena} — optional upgrade',
       blockedIsnadSubtitle:
-        'Exclusive access to large projects and financing opportunities ({price}). Activate the upgrade from the Plans page to view this arena.',
+        'This is a paid add-on arena ({price}). Activate the add-on from the Plans page to view it.',
       searchPlaceholder: 'Search open projects...',
       filters: {
         cityLabel: 'City',
@@ -1343,6 +1492,7 @@ export default {
       countSingular: '{count} project available',
       countPlural: '{count} projects available',
       applicants: 'Applicants',
+      partnerRequests: 'Partnership requests',
       budgetLabel: 'Budget',
       budgetUnspecified: 'Budget unspecified',
       budgetSealed: 'Budget sealed',
@@ -1381,6 +1531,8 @@ export default {
       noFiles: 'No files attached.',
       applyCta: 'Submit bid',
       appliedBadge: 'Bid submitted',
+      offerCta: 'Submit partnership offer',
+      offeredBadge: 'Offer submitted',
       acceptedBadge: 'Accepted',
       editCta: 'Edit',
       deleteCta: 'Delete',
@@ -1419,6 +1571,16 @@ export default {
         rejected: 'Rejected',
         pending: 'Pending review',
       },
+      offers: {
+        title: 'Partnership offers',
+        empty: 'No partnership offers received on this opportunity yet.',
+        partner: 'Partner',
+        offering: 'Offering',
+        share: 'Proposed share',
+        accept: 'Accept',
+        reject: 'Reject',
+        acceptedMix: 'Accepted partners',
+      },
     },
     create: {
       title: 'Create a new project',
@@ -1439,6 +1601,8 @@ export default {
       uploading: 'Uploading files...',
       uploadingFile: 'Uploading: {name}',
       submitFailed: 'Something went wrong while submitting. Please try again.',
+      addonRequired:
+        'Posting in {arena} requires a paid add-on. Activate it from the Plans page, then try again.',
       successTitleNew: 'Project submitted successfully',
       successSubtitleNew:
         "Your project is now under review. We'll let you know once it's available to partners.",
@@ -1459,6 +1623,7 @@ export default {
       },
       validate: {
         arena: 'Please choose an arena',
+        arenaLocked: 'This arena requires a paid add-on — subscribe to post here.',
         name: 'Project name is required',
         type: 'Type is required',
         city: 'City is required',
@@ -1741,6 +1906,77 @@ export default {
         removeAria: 'Remove {name}',
       },
     },
+    partner: {
+      breadcrumbBrowse: 'Browse opportunities',
+      breadcrumbOffer: 'Partnership offer',
+      eyebrow: 'Partnership offer',
+      title: 'Offer to partner on this opportunity',
+      subtitle:
+        'Solidarity is a partnership marketplace, not a bidding one. Tell the owner what you bring to the venture — funding, execution, land, expertise, or development.',
+      sections: {
+        offerTitle: 'What you bring',
+        offerSubtitle:
+          'Pick your contribution type, your firm, and the share you propose.',
+        briefTitle: 'Capability & message',
+        briefSubtitle:
+          'Show why you are the right partner and write a note to the owner.',
+      },
+      offeringLabel: 'Contribution type',
+      offeringPlaceholder: 'Choose what you offer',
+      firmLabel: 'Firm / entity name',
+      firmPlaceholder: 'e.g. Advanced Investment Co.',
+      shareLabel: 'Proposed share (optional)',
+      sharePlaceholder: 'e.g. 30% · 5M SAR · by negotiation',
+      shareHint: 'Free text — an amount, a percentage, or mixed terms.',
+      briefLabel: 'Capability brief',
+      briefPlaceholder:
+        'e.g. 15 years funding mega-projects across the Gulf, with...',
+      messageLabel: 'Message to the owner',
+      messagePlaceholder:
+        'e.g. We would like to partner with you on this distinctive project and guarantee a swift process.',
+      charHint: '{count} characters',
+      notice:
+        'Once sent, your offer stays pending until the owner replies. You can withdraw it from the “My partnerships” page while it is still pending.',
+      cancel: 'Cancel',
+      submit: 'Send offer',
+      submitting: 'Sending...',
+      backToBrowse: 'Back to browse',
+      summary: {
+        eyebrow: 'Partnering on',
+        type: 'Type',
+        city: 'City',
+        duration: 'Expected duration',
+        startDate: 'Start date',
+        description: 'Description',
+        scope: 'Scope of work',
+        requirements: 'Requirements',
+      },
+      errorState: {
+        title: "Couldn't open the partnership page",
+        wrongArena: 'This opportunity does not use partnership offers.',
+        notOpen: 'This opportunity is no longer open.',
+        alreadyOffered: 'You have already submitted an offer on this opportunity.',
+        ownProject: "You can't offer on your own opportunity.",
+        notEligible: "Your account can't submit partnership offers here.",
+        loadFailed: "Couldn't load the opportunity.",
+        backToBrowse: 'Back to browse',
+      },
+      success: {
+        title: 'Your offer was sent successfully',
+        subtitlePrefix: 'Your partnership offer for',
+        subtitleSuffix: ' was sent. We will let you know once the owner replies.',
+        myOffers: 'View my partnerships',
+        browse: 'Back to browse',
+      },
+      validation: {
+        offeringMissing: 'Please choose what you offer.',
+        firmShort: 'Please enter your firm or entity name.',
+        briefShort: 'Capability brief must be at least 10 characters.',
+        messageShort: 'Please write a message of at least 10 characters.',
+        shareLong: 'Proposed share must be 255 characters or fewer.',
+      },
+      errorGeneric: "Couldn't send the offer. Please try again.",
+    },
     requirements: {
       placeholder: 'e.g. Valid building permit',
       addCta: 'Add',
@@ -1778,8 +2014,9 @@ export default {
     solidarity: {
       label: 'Solidarity arena',
       short: 'Solidarity',
-      desc: 'Cooperation between contractors on larger or multi-specialty projects.',
-      lockReason: 'Reserved for contractors.',
+      desc: 'Cross-discipline collaboration between contractors, engineering offices and developers on larger projects.',
+      lockReason: 'Requires the Solidarity add-on.',
+      upgradePrice: '799 SAR / month',
     },
     arena: {
       label: 'Arena pool',
@@ -1795,6 +2032,41 @@ export default {
       upgradePrice: '600 SAR / month',
     },
     unknownLockReason: 'Not available for your account type.',
+  },
+
+  solidarityAddon: {
+    eyebrow: 'For partnerships & shared opportunities',
+    title: 'Solidarity arena — build your partnership, complete the opportunity',
+    subtitle:
+      'A space that brings together parties looking to enter partnerships or co-ventures on shared projects and opportunities — whether they bring financing, execution, land, expertise, or supply.',
+    cardChip: 'Solidarity arena',
+    cardTitle: 'Operational & financial partnerships and shared opportunities',
+    tags: ['Financing', 'Execution', 'Land', 'Supply', 'Expertise'],
+    cardDesc:
+      'Enter a shared opportunity with a party who brings what completes your need — financing, execution, land, supply, or expertise.',
+    bullets: [
+      'Solidarity opportunities for mid-to-large projects',
+      'Bridges financing, execution and expertise',
+      'An independent subscription for each party',
+      'Incentive credit when a party subscribes through your opportunity',
+    ],
+    priceLabel: 'Individual subscription / month',
+    price: '799',
+    currency: 'SAR',
+    priceNote: 'Per party — independent of the other parties',
+    subscribeCta: 'Subscribe now',
+    incentiveTitle: 'Incentive credit for your wallet',
+    incentiveBody:
+      'Added when another party subscribes through a solidarity opportunity linked to you.',
+    explore: 'Explore the Solidarity arena',
+  },
+
+  offering: {
+    funding: 'Funding',
+    execution: 'Execution',
+    land: 'Land',
+    expertise: 'Expertise',
+    development: 'Development',
   },
 
   status: {
@@ -1864,7 +2136,10 @@ export default {
         users: 'Users',
         projects: 'Projects',
         applications: 'Applications',
+        partnerships: 'Partnerships',
+        partners: 'Taahud Partners',
         subscriptions: 'Subscriptions',
+        payments: 'Payments',
         plans: 'Plans',
         roles: 'Roles',
         activity: 'Activity log',
@@ -1872,7 +2147,7 @@ export default {
     },
     common: {
       search: 'Search',
-      searchPlaceholder: 'Search by name, email, phone…',
+      searchPlaceholder: 'Search by name, email, phone, ID…',
       filter: 'Filter',
       reset: 'Reset',
       apply: 'Apply',
@@ -1946,6 +2221,9 @@ export default {
         delta: {
           mom: 'vs last month',
           yoy: 'vs last year',
+          allTime: 'All-time',
+          since: 'since',
+          months: 'months',
           new: 'new',
         },
         suspendedHelper: 'Review suspended accounts',
@@ -2025,6 +2303,7 @@ export default {
           unsuspend: 'Lift suspension',
           forceVerify: 'Force verify phone',
           forceReset: 'Force password reset',
+          forceDelete: 'Delete permanently',
           viewActivity: 'View activity log',
         },
         edit: {
@@ -2060,6 +2339,13 @@ export default {
           newPasswordLabel: 'New password (shown once)',
           done: 'Password reset. Make sure to hand the new password to the user.',
         },
+        forceDelete: {
+          title: 'Delete user permanently',
+          description:
+            'This irreversibly removes the user from the database — there is no recovery. It is refused automatically if the user owns or partners on any project, has applications, or has admin activity; suspend them instead. You cannot delete your own account.',
+          confirm: 'Delete permanently',
+          done: 'User permanently deleted.',
+        },
       },
     },
     projects: {
@@ -2092,6 +2378,10 @@ export default {
       empty: 'No projects match the current filters.',
       detail: {
         title: 'Project',
+        requirements: 'Requirements',
+        offers: 'Submitted offers',
+        noOffers: 'No offers on this project yet.',
+        viewAllOffers: 'View all',
         actions: {
           forceStatus: 'Force status',
           forcePartner: 'Force partner',
@@ -2190,6 +2480,88 @@ export default {
         },
       },
     },
+    partnerships: {
+      eyebrow: 'Operations · Partnerships',
+      title: 'Partnership offers',
+      subtitle:
+        'Manage every Solidarity-arena partnership offer. Override status, register offers on behalf of users, or force-accept for an unreachable owner.',
+      archived: 'Archived',
+      filters: {
+        projectId: 'Project ID',
+        userId: 'Partner ID',
+        archived: 'Archived',
+        archivedActive: 'Active only',
+        archivedWith: 'Include archived',
+        archivedOnly: 'Archived only',
+        anyOffering: 'Any offering',
+      },
+      columns: {
+        offer: 'Offer',
+        partner: 'Partner',
+        offering: 'Offering',
+        project: 'Project',
+        share: 'Proposed share',
+        status: 'Status',
+        actions: 'Actions',
+      },
+      empty: 'No partnership offers match the current filters.',
+      detail: {
+        partner: 'Partner',
+        firm: 'Firm / entity',
+        capabilityBrief: 'Capability brief',
+        message: 'Message',
+        actions: {
+          override: 'Override status',
+          forceAccept: 'Force-accept',
+          softDelete: 'Archive',
+          restore: 'Restore',
+          forceDelete: 'Force-delete',
+        },
+        override: {
+          title: 'Override status',
+          description:
+            'Force-change the offer status. No cascade — accepting one offer does not auto-reject the others on the project.',
+          newStatus: 'New status',
+          confirm: 'Override',
+          done: 'Status overridden.',
+        },
+        forceAccept: {
+          title: 'Force-accept offer',
+          description:
+            'Accept this offer on behalf of the project owner (e.g. owner unreachable). No cascade — sibling offers stay as they are.',
+          confirm: 'Force-accept',
+          done: 'Offer force-accepted.',
+        },
+        softDelete: {
+          title: 'Archive offer',
+          description: 'Soft-delete this offer. It can be restored later.',
+          confirm: 'Archive',
+          done: 'Offer archived.',
+        },
+        restore: {
+          done: 'Offer restored.',
+        },
+        forceDelete: {
+          title: 'Permanently delete offer',
+          description:
+            'This irreversibly removes the offer from the database. Only a snapshot survives in the audit log. Super-admin only.',
+          confirm: 'Force-delete',
+          done: 'Offer permanently deleted.',
+        },
+      },
+      proxy: {
+        cta: 'Create on behalf',
+        title: 'Create offer on behalf of a user',
+        description:
+          'Register a partnership offer for a user (e.g. they called support). Bypasses the add-on gate but still validates solidarity arena, non-owner, and no duplicate.',
+        projectId: 'Project ID',
+        userId: 'User ID (on behalf of)',
+        offeringPlaceholder: 'Choose offering type',
+        reasonPlaceholder: 'e.g. User called support, identity verified by phone.',
+        confirm: 'Create on behalf',
+        done: 'Offer created on behalf of the user.',
+      },
+    },
     roles: {
       eyebrow: 'Super-admin · Roles',
       title: 'Roles',
@@ -2256,6 +2628,114 @@ export default {
         title: 'Activity entry',
         payload: 'Payload',
         userAgent: 'User agent',
+      },
+    },
+    partners: {
+      eyebrow: 'Operations · Taahud Partners',
+      title: 'Partner applications',
+      subtitle:
+        'Review applications to the Taahud Partners program and manage the discount-code lifecycle: approve, reject, regenerate, revoke, and delete.',
+      guest: 'Guest (no account)',
+      columns: {
+        partner: 'Business',
+        applicant: 'Applicant',
+        sector: 'Sector',
+        code: 'Discount code',
+        status: 'Status',
+      },
+      code: {
+        valid: 'Valid',
+        invalid: 'Invalid',
+      },
+      statuses: {
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        revoked: 'Revoked',
+        archived: 'Deleted',
+      },
+      filters: {
+        searchPlaceholder: 'Search by business name or email…',
+        anySector: 'All sectors',
+        archived: 'Archive',
+        archivedActive: 'Active only',
+        archivedWith: 'Include archived',
+        archivedOnly: 'Archived only',
+      },
+      empty: 'No partner applications match the current filters.',
+      detail: {
+        company: 'Business name',
+        email: 'Email',
+        phone: 'Mobile number',
+        offer: 'Submitted offer',
+        rejectionReason: 'Rejection reason',
+        expires: 'Expires on {date}',
+      },
+      actions: {
+        approve: {
+          button: 'Approve',
+          title: 'Approve partner',
+          description:
+            'This mints a discount code valid for one year and lists the partner in the public directory, clearing any prior rejection or revocation.',
+          confirm: 'Approve',
+          done: 'Partner approved and discount code minted.',
+        },
+        reject: {
+          button: 'Reject',
+          title: 'Reject application',
+          description: 'The rejection reason is shown to the applicant.',
+          confirm: 'Reject application',
+          done: 'Application rejected.',
+        },
+        regenerate: {
+          button: 'Regenerate code',
+          title: 'Regenerate discount code',
+          description:
+            'A new code is generated and the expiry resets to a full year. The old code stops working.',
+          confirm: 'Regenerate',
+          done: 'Discount code regenerated.',
+        },
+        revoke: {
+          button: 'Revoke code',
+          title: 'Revoke discount code',
+          description:
+            'The code stays on record but becomes invalid immediately. It can be reinstated later.',
+          confirm: 'Revoke code',
+          done: 'Discount code revoked.',
+        },
+        reinstate: {
+          button: 'Reinstate',
+          title: 'Reinstate code',
+          description: 'Clears the revocation. The code becomes valid again unless it has expired.',
+          confirm: 'Reinstate',
+          done: 'Discount code reinstated.',
+        },
+        remove: {
+          button: 'Delete',
+          title: 'Delete application',
+          description: 'Soft delete — the application can be restored later.',
+          confirm: 'Delete',
+          done: 'Application deleted.',
+        },
+        restore: {
+          button: 'Restore',
+          title: 'Restore application',
+          description: 'The application returns to the active list.',
+          confirm: 'Restore',
+          done: 'Application restored.',
+        },
+        forceDelete: {
+          button: 'Delete permanently',
+          title: 'Delete permanently',
+          description: 'This cannot be undone — the record is removed for good.',
+          confirm: 'Delete permanently',
+          done: 'Record permanently deleted.',
+        },
+        edit: {
+          button: 'Edit',
+          title: 'Edit partner details',
+          done: 'Changes saved.',
+        },
       },
     },
     statuses: {
@@ -2357,6 +2837,10 @@ export default {
         exportExcel: 'Export Excel',
         exportPdf: 'Export PDF',
       },
+      report: {
+        label: 'Subscriptions report',
+        count: '{n} subscriptions',
+      },
       grant: {
         title: 'Grant a subscription',
         description: 'Create a comped subscription. No payment is taken and it will not auto-renew — access ends at the period end.',
@@ -2446,6 +2930,80 @@ export default {
       ids: {
         sub: 'Sub #{id}',
         user: 'ID #{id}',
+      },
+      exported: 'Export started.',
+    },
+    payments: {
+      eyebrow: 'Operations',
+      title: 'Payments & invoices',
+      subtitle: 'Track every transaction across the ledger — revenue, status, and the invoice behind each charge.',
+      kpi: {
+        revenue: 'Total revenue',
+        successful: 'Successful',
+        pending: 'Pending',
+        failed: 'Failed',
+        refunded: 'Refunded',
+        refundedSub: '{amount} refunded',
+      },
+      tabs: {
+        all: 'All',
+        successful: 'Successful',
+        pending: 'Pending',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      },
+      listTitle: 'Transactions',
+      search: 'Search by invoice number or user name…',
+      filters: {
+        kind: 'Type',
+        anyKind: 'All types',
+        method: 'Method',
+        anyMethod: 'All methods',
+      },
+      kinds: {
+        initial: 'Subscription',
+        renewal: 'Renewal',
+      },
+      methods: {
+        card: 'Credit card',
+        bank_transfer: 'Bank transfer',
+        applepay: 'Apple Pay',
+        stcpay: 'STC Pay',
+      },
+      statuses: {
+        successful: 'Successful',
+        pending: 'Pending',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      },
+      table: {
+        invoice: 'Invoice',
+        user: 'User',
+        category: 'Category',
+        kind: 'Type',
+        method: 'Method',
+        amount: 'Amount',
+        status: 'Status',
+        provider: 'Provider',
+        date: 'Date',
+        actions: 'Actions',
+        empty: 'No transactions match the current filters.',
+      },
+      actions: {
+        view: 'Details',
+        exportExcel: 'Export Excel',
+        exportPdf: 'Export PDF',
+      },
+      report: {
+        label: 'Payments report',
+        count: '{n} transactions',
+      },
+      details: {
+        title: 'Invoice {invoice}',
+        user: 'Customer',
+        viewUser: 'Open customer',
+        canRefund: 'This payment is eligible for a refund.',
+        canConfirm: 'This payment is awaiting confirmation.',
       },
       exported: 'Export started.',
     },
@@ -2660,6 +3218,93 @@ export default {
       isnadAddon: {
         label: 'Isnad add-on active',
         body: 'You have access to the Isnad arena.',
+      },
+      solidarityAddon: {
+        label: 'Solidarity add-on active',
+        body: 'You have access to the Solidarity arena.',
+      },
+    },
+  },
+
+  partners: {
+    hero: {
+      eyebrow: 'Exclusive perks for Taahud clients',
+      title: 'Taahud Partners',
+      subtitle:
+        'A network of trusted companies and offices offering exclusive discounts and deals to Taahud clients — from accounting and legal services to tech and hospitality.',
+      searchPlaceholder: 'Search for a partner or service...',
+      becomePartner: 'Become a partner',
+      stats: {
+        discountValue: 'Up to {value}%',
+        discountLabel: 'Exclusive discounts',
+        sectorsLabel: 'Sectors',
+        partnersLabel: 'Certified partners',
+      },
+    },
+    filter: {
+      all: 'All',
+    },
+    sectors: {
+      finance: 'Accounting & Finance',
+      legal: 'Legal Services',
+      tech: 'Tech & Software',
+      marketing: 'Marketing & Advertising',
+      hospitality: 'Food & Hospitality',
+      logistics: 'Logistics & Shipping',
+      insurance: 'Insurance',
+      training: 'Training & Development',
+    },
+    card: {
+      verified: 'Verified partner',
+      exclusiveOffer: 'Exclusive offer',
+      getCode: 'Discount code',
+      loginToGet: 'Log in for the code',
+      noOffer: 'An exclusive offer for Taahud clients.',
+    },
+    empty: {
+      title: 'No results',
+      subtitle: "We couldn't find a partner matching your search. Try another keyword or pick a different sector.",
+      reset: 'Reset search',
+      noneTitle: 'No partners yet',
+      noneSubtitle:
+        "We're building the Taahud partner network. Be the first to join and offer an exclusive deal to thousands of platform clients.",
+      noneCta: 'Become a partner',
+    },
+    form: {
+      title: 'Become a Taahud partner',
+      subtitle:
+        'Does your business offer a service Taahud clients would value? Join the partner network with an exclusive offer and reach the thousands of businesses and projects registered on the platform.',
+      perks: {
+        reach: 'Reach thousands of clients',
+        badge: 'Certified partner badge',
+        listing: 'Listed in the partner directory',
+      },
+      fields: {
+        company: 'Company name',
+        companyPlaceholder: 'Your business name',
+        sector: 'Sector',
+        sectorPlaceholder: 'Select a sector',
+        email: 'Email',
+        emailPlaceholder: 'name@company.sa',
+        phone: 'Mobile number',
+        offer: 'The offer or discount you’d like to provide (optional)',
+        offerPlaceholder: 'e.g. 20% off our service plans for Taahud clients',
+      },
+      errors: {
+        companyRequired: 'Please enter your company name',
+        sectorRequired: 'Please select a sector',
+        emailRequired: 'Please enter your email',
+        emailInvalid: 'That email address looks invalid',
+        phoneRequired: 'Please enter your mobile number',
+        phoneInvalid: 'Please enter a valid Saudi mobile number',
+        throttle: 'Too many attempts in a short time. Please try again in a minute.',
+        generic: "Couldn't submit your application. Please try again.",
+      },
+      submit: 'Send partnership request',
+      submitting: 'Sending...',
+      success: {
+        title: 'Your request has been received',
+        body: 'Thank you for your interest in joining Taahud Partners. Our team will review your application and reach out to you shortly.',
       },
     },
   },

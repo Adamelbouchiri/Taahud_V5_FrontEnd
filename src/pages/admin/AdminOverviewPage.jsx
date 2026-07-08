@@ -272,6 +272,9 @@ export default function AdminOverviewPage() {
               lang={lang}
               momLabel={t('admin.overview.stats.delta.mom')}
               yoyLabel={t('admin.overview.stats.delta.yoy')}
+              allTimeLabel={t('admin.overview.stats.delta.allTime')}
+              sinceLabel={t('admin.overview.stats.delta.since')}
+              monthsLabel={t('admin.overview.stats.delta.months')}
               onClick={() => navigate('/admin/users')}
             />
             <KpiCard

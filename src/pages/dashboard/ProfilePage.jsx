@@ -19,19 +19,20 @@ import {
   Clock,
   BadgeCheck,
   Gem,
+  Handshake,
   Sparkles,
   RefreshCw,
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
-import {
-  hasSpecialty,
-  CITIES,
-} from '../../config/constants';
+import { hasSpecialty } from '../../config/constants';
+import { cityOptions } from '../../config/cityTranslations';
 import { auth, subscriptions } from '../../services';
+import { deriveArenaAddons } from '../../services/subscriptions';
 import Field from '../../components/form/Field';
 import SelectField from '../../components/form/SelectField';
 import PasswordField from '../../components/form/PasswordField';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import IdentifierChip from '../../components/IdentifierChip';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -226,6 +227,14 @@ function IdentityCard({ user }) {
                 </>
               )}
             </div>
+            {user.identifier && (
+              <div className="mt-3">
+                <IdentifierChip
+                  identifier={user.identifier}
+                  label={t('identifier.label')}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -372,7 +381,7 @@ function FieldRow({ icon: Icon, label, value, ltr, readOnlyHint }) {
 }
 
 function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [form, setForm] = useState({
     name: user.name || '',
     email: user.email || '',
@@ -473,7 +482,7 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
       <SelectField
         label={t('dashboard.profile.city')}
         icon={MapPin}
-        options={CITIES}
+        options={cityOptions(lang)}
         value={form.city}
         onChange={update('city')}
         error={errors.city}
@@ -633,7 +642,12 @@ function SubscriptionCard({ user, navigate }) {
     null;
   const onTrial = !!status?.on_trial;
   const hasAccess = !!status?.has_access;
-  const hasIsnadAddon = !!status?.has_isnad_addon;
+  // Arena add-ons owned by the user (isnad / solidarity), resolved from
+  // active subscriptions. OR in the legacy has_isnad_addon boolean so a
+  // BE that only sets the flag still surfaces the isnad row.
+  const arenaAddons = deriveArenaAddons(status);
+  const hasIsnadAddon = arenaAddons.isnad_addon || !!status?.has_isnad_addon;
+  const hasSolidarityAddon = arenaAddons.solidarity_addon;
   const daysLeft = status?.days_left_in_trial ?? 0;
 
   // Open the confirmation modal (replaces the native window.confirm).
@@ -707,7 +721,26 @@ function SubscriptionCard({ user, navigate }) {
         <TrialRow daysLeft={daysLeft} t={t} navigate={navigate} expired />
       )}
 
-      {hasIsnadAddon && <IsnadAddonRow t={t} />}
+      {hasIsnadAddon && (
+        <AddonRow
+          t={t}
+          icon={Gem}
+          accent="#0d5538"
+          accentBg="rgba(13,85,56,0.12)"
+          labelKey="subscribe.profile.isnadAddon.label"
+          bodyKey="subscribe.profile.isnadAddon.body"
+        />
+      )}
+      {hasSolidarityAddon && (
+        <AddonRow
+          t={t}
+          icon={Handshake}
+          accent="#8a6a1f"
+          accentBg="rgba(184,134,42,0.12)"
+          labelKey="subscribe.profile.solidarityAddon.label"
+          bodyKey="subscribe.profile.solidarityAddon.body"
+        />
+      )}
 
       <ConfirmDialog
         open={confirmCancelOpen}
@@ -974,7 +1007,9 @@ function NoAccessRow({ t, navigate }) {
   );
 }
 
-function IsnadAddonRow({ t }) {
+/* A single active arena add-on row (isnad / solidarity), themed by the
+   passed accent so each add-on reads as distinct. */
+function AddonRow({ t, icon: Icon, accent, accentBg, labelKey, bodyKey }) {
   return (
     <div
       className="flex items-start gap-3 mt-4 pt-4"
@@ -986,21 +1021,21 @@ function IsnadAddonRow({ t }) {
           width: 38,
           height: 38,
           borderRadius: 10,
-          background: 'rgba(184,134,42,0.12)',
-          color: '#8a6a1f',
+          background: accentBg,
+          color: accent,
         }}
       >
-        <Gem size={18} strokeWidth={1.9} />
+        <Icon size={18} strokeWidth={1.9} />
       </div>
       <div className="flex-1 min-w-0">
         <div
           className="font-display font-bold mb-0.5"
           style={{ fontSize: 14, color: 'var(--text-ink)' }}
         >
-          {t('subscribe.profile.isnadAddon.label')}
+          {t(labelKey)}
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-          {t('subscribe.profile.isnadAddon.body')}
+          {t(bodyKey)}
         </div>
       </div>
     </div>

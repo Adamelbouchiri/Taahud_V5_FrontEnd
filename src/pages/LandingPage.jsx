@@ -7,7 +7,9 @@ import IntegratedPlatform from '../components/landing/IntegratedPlatform';
 import FeaturedProjects from '../components/landing/FeaturedProjects';
 import Arenas from '../components/landing/Arenas';
 import Testimonials from '../components/landing/Testimonials';
+import PlatformFeatures from '../components/landing/PlatformFeatures';
 import Plans from '../components/landing/Plans';
+import SolidarityAddon from '../components/landing/SolidarityAddon';
 import GuaranteeStrip from '../components/landing/GuaranteeStrip';
 import CtaBanner from '../components/landing/CtaBanner';
 import GetStarted from '../components/landing/GetStarted';
@@ -18,8 +20,8 @@ import Footer from '../components/landing/Footer';
  *  ----------------------------------------------------------------
  *  Order:
  *    Hero → Partners → IntegratedPlatform → FeaturedProjects
- *      → Arenas → Testimonials → Plans → GuaranteeStrip
- *      → CtaBanner → GetStarted → Footer
+ *      → Arenas → Testimonials → PlatformFeatures → Plans
+ *      → GuaranteeStrip → CtaBanner → GetStarted → Footer
  *
  *  Services and Contact were extracted out to dedicated routes
  *  (/services and /contact) — reached via the navbar mega menu
@@ -51,7 +53,9 @@ export default function LandingPage() {
         <FeaturedProjects />
         <Arenas />
         <Testimonials />
+        <PlatformFeatures />
         <Plans />
+        <SolidarityAddon />
         <GuaranteeStrip />
         <CtaBanner />
         <GetStarted />

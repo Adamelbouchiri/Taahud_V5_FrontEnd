@@ -15,9 +15,11 @@ import {
   HardHat,
   Handshake,
   Users,
+  Landmark,
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { projects as projectsApi } from '../../services';
+import useArenaAddons from '../../hooks/useArenaAddons';
 import { isServiceProvider } from '../../config/constants';
 import StatusBadge from '../../components/project/StatusBadge';
 import {
@@ -25,8 +27,10 @@ import {
   canPostAnyArena,
   canSeeProjectBudget,
   defaultBrowseRouteFor,
+  usesPartnershipOffers,
 } from '../../config/projectConstants';
 import SupplierComingSoon from '../../components/SupplierComingSoon';
+import PlanUsage from '../../components/dashboard/PlanUsage';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -50,6 +54,10 @@ export default function DashboardHome() {
   const isProvider = isServiceProvider(accountType);
   const canPostProject = canPostAnyArena(accountType);
   const canBrowseProjects = accountType !== 'individual';
+  // Plan usage + subscription banner only for subscription-bearing
+  // account types — free individuals never subscribe. (Suppliers
+  // return early above.)
+  const showPlanUsage = !!accountType && accountType !== 'individual';
 
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1100px]">
@@ -58,6 +66,7 @@ export default function DashboardHome() {
         canPostProject={canPostProject}
         canBrowseProjects={canBrowseProjects}
       />
+      {showPlanUsage && <PlanUsage />}
       {isOwner && <RecentProjects canBrowseProjects={canBrowseProjects} />}
       {isProvider && (
         <div className="space-y-9">
@@ -131,10 +140,20 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useUser();
-  const browseRoute = defaultBrowseRouteFor(
-    user?.account_type,
-    user?.has_isnad_upgrade
-  );
+  // Arena add-on ownership (isnad / solidarity) drives both the browse
+  // route and the dedicated arena card below.
+  const { addons, loading: addonsLoading } = useArenaAddons();
+  const browseRoute = defaultBrowseRouteFor(user?.account_type, addons);
+  const showIsnadArena = !!addons.isnad_addon;
+
+  // Hold the whole grid until the add-on status resolves, otherwise the
+  // Isnad card pops in late and reflows the grid (3→4 cards), shoving
+  // the Profile card. Show a skeleton sized to the cards we already
+  // know about so everything appears at once.
+  if (addonsLoading) {
+    const known = (canPostProject ? 1 : 0) + (canBrowseProjects ? 1 : 0) + 1;
+    return <QuickActionsSkeleton count={known} />;
+  }
 
   const actions = [];
 
@@ -158,6 +177,18 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
     });
   }
 
+  // Users who own the إسناد add-on get a dedicated entry point into
+  // the Isnad arena — surfaced here whenever either access signal is set.
+  if (showIsnadArena) {
+    actions.push({
+      icon: Landmark,
+      title: t('dashboard.actions.isnadArena'),
+      desc: t('dashboard.actions.isnadArenaDesc'),
+      color: '#0d5538',
+      onClick: () => navigate('/projects/isnad'),
+    });
+  }
+
   actions.push({
     icon: UserCircle,
     title: t('dashboard.actions.profile'),
@@ -174,6 +205,28 @@ function QuickActions({ canPostProject, canBrowseProjects }) {
     >
       {actions.map((a, i) => (
         <ActionCard key={i} action={a} delay={i * 0.06} />
+      ))}
+    </div>
+  );
+}
+
+function QuickActionsSkeleton({ count = 3 }) {
+  return (
+    <div
+      className={`grid gap-4 mb-9 animate-pulse ${
+        count === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+      }`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            height: 140,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 14,
+          }}
+        />
       ))}
     </div>
   );
@@ -246,10 +299,8 @@ function RecentProjects({ canBrowseProjects }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useUser();
-  const browseRoute = defaultBrowseRouteFor(
-    user?.account_type,
-    user?.has_isnad_upgrade
-  );
+  const { addons } = useArenaAddons();
+  const browseRoute = defaultBrowseRouteFor(user?.account_type, addons);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -517,34 +568,45 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
           )}
         </div>
 
-        {/* Pending-bid count from pending_applications_count (BE list
-            response). Always an integer per FRONTEND_INTEGRATION.md §10,
-            but we keep a typeof guard so a missing field during a
-            transitional deploy doesn't render "undefined". */}
-        {typeof project.pending_applications_count === 'number' && (
-          <div
-            className="text-end"
-            style={{ marginInlineEnd: 10 }}
-          >
-            <div
-              className="font-semibold uppercase mb-0.5"
-              style={{
-                fontSize: 9.5,
-                letterSpacing: '0.08em',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {t('projects.list.applicants')}
+        {/* Pending count. Solidarity arenas track partnership offers in
+            a separate table, so they carry pending_partnership_requests_count
+            instead of pending_applications_count — picking the wrong one
+            shows 0 on an active solidarity project (PROJECT_COUNTS_INTEGRATION.md).
+            Both are integers per the BE contract; the typeof guard keeps a
+            missing field during a transitional deploy from rendering
+            "undefined". */}
+        {(() => {
+          const isSolidarity = usesPartnershipOffers(project.arena);
+          const pendingCount = isSolidarity
+            ? project.pending_partnership_requests_count
+            : project.pending_applications_count;
+          if (typeof pendingCount !== 'number') return null;
+          return (
+            <div className="text-end" style={{ marginInlineEnd: 10 }}>
+              <div
+                className="font-semibold uppercase mb-0.5"
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                {t(
+                  isSolidarity
+                    ? 'projects.list.partnerRequests'
+                    : 'projects.list.applicants'
+                )}
+              </div>
+              <div
+                className="font-bold inline-flex items-center gap-1"
+                style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
+              >
+                <Users size={12.5} strokeWidth={1.7} />
+                {pendingCount}
+              </div>
             </div>
-            <div
-              className="font-bold inline-flex items-center gap-1"
-              style={{ fontSize: 13.5, color: 'var(--text-ink)' }}
-            >
-              <Users size={12.5} strokeWidth={1.7} />
-              {project.pending_applications_count}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         <span
           className="inline-flex items-center justify-center transition-all"
@@ -610,10 +672,8 @@ function formatRelativeDate(d, t) {
 function RecentAssociatedProjects({ user }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const browseRoute = defaultBrowseRouteFor(
-    user?.account_type,
-    user?.has_isnad_upgrade
-  );
+  const { addons } = useArenaAddons();
+  const browseRoute = defaultBrowseRouteFor(user?.account_type, addons);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 

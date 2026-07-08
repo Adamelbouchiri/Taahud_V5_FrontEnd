@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function Field({
   label,
@@ -8,6 +9,7 @@ export default function Field({
   hint,
   ...props
 }) {
+  const { dir } = useTranslation();
   return (
     <div className="animate-fade-up">
       <label className="field-label">{label}</label>
@@ -19,6 +21,10 @@ export default function Field({
         )}
         <input
           type={type}
+          // Bind the writing direction to the app's: browsers render
+          // email/tel/number/url inputs LTR by default, which in an RTL layout
+          // pushes the text under the icon (which sits at the inline-end).
+          dir={dir}
           className={`field ${error ? 'error' : ''} ${!Icon ? 'field-no-icon' : ''}`}
           {...props}
         />

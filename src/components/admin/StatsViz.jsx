@@ -33,14 +33,41 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 /* ---------- helpers ---------- */
 
-function fmtDelta(value) {
+function fmtDelta(value, lang) {
   if (value == null) return { text: '—', tone: 'muted' };
   const rounded = Math.round(value * 10) / 10;
   const sign = rounded > 0 ? '+' : '';
+  // Locale grouping matters for all-time deltas, which can run into the
+  // thousands of percent (e.g. "+4,900%") on a platform grown since launch.
+  let num;
+  try {
+    num = new Intl.NumberFormat(lang || undefined, { maximumFractionDigits: 1 }).format(rounded);
+  } catch {
+    num = String(rounded);
+  }
   return {
-    text: `${sign}${rounded}%`,
+    text: `${sign}${num}%`,
     tone: rounded > 0 ? 'positive' : rounded < 0 ? 'negative' : 'neutral',
   };
+}
+
+function deltaColor(tone) {
+  if (tone === 'positive') return '#136d4a';
+  if (tone === 'negative') return 'var(--accent-danger)';
+  return 'var(--text-muted)';
+}
+
+// "Feb 2025" — used for the all-time "since" context line.
+function fmtMonthYear(iso, lang) {
+  if (!iso) return '';
+  try {
+    return new Intl.DateTimeFormat(lang || undefined, {
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(iso));
+  } catch {
+    return '';
+  }
 }
 
 function fmtNumber(n, lang) {
@@ -92,9 +119,17 @@ export function KpiCard({
   lang,
   momLabel = 'MoM',
   yoyLabel = 'vs last year',
+  // All-time growth is opt-in per card: only passed where the BE actually
+  // returns the all_time_percent / first_record_at / months_active fields
+  // (currently only the users resource). Omit these and the row is hidden.
+  allTimeLabel,
+  sinceLabel = 'since',
+  monthsLabel = 'months',
 }) {
-  const delta = fmtDelta(growth?.mom_percent);
-  const yoy = fmtDelta(growth?.yoy_percent);
+  const delta = fmtDelta(growth?.mom_percent, lang);
+  const yoy = fmtDelta(growth?.yoy_percent, lang);
+  const allTime = fmtDelta(growth?.all_time_percent, lang);
+  const showAllTime = !!allTimeLabel && growth?.all_time_percent !== undefined;
   const Comp = onClick ? 'button' : 'div';
   const gradientId = useMemo(() => gradId('kpi', accent), [accent]);
 
@@ -213,30 +248,38 @@ export function KpiCard({
         </div>
       )}
 
-      {growth?.yoy_percent !== undefined && (
+      {(growth?.yoy_percent !== undefined || showAllTime) && (
         <div
-          className="flex items-center gap-1.5"
+          className="flex flex-col gap-1.5"
           style={{
             fontSize: 11.5,
             color: 'var(--text-muted)',
-            paddingTop: 4,
+            paddingTop: 8,
             borderTop: '1px dashed var(--border-soft)',
           }}
         >
-          <span>{yoyLabel}:</span>
-          <span
-            style={{
-              color:
-                yoy.tone === 'positive'
-                  ? '#136d4a'
-                  : yoy.tone === 'negative'
-                  ? 'var(--accent-danger)'
-                  : 'var(--text-muted)',
-              fontWeight: 700,
-            }}
-          >
-            {yoy.text}
-          </span>
+          {growth?.yoy_percent !== undefined && (
+            <div className="flex items-center justify-between gap-2">
+              <span>{yoyLabel}</span>
+              <span style={{ color: deltaColor(yoy.tone), fontWeight: 700 }}>{yoy.text}</span>
+            </div>
+          )}
+          {showAllTime && (
+            <div className="flex items-center justify-between gap-2">
+              <span>{allTimeLabel}</span>
+              <span style={{ color: deltaColor(allTime.tone), fontWeight: 700 }}>
+                {allTime.text}
+              </span>
+            </div>
+          )}
+          {showAllTime && growth?.first_record_at && (
+            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.9 }}>
+              {sinceLabel} {fmtMonthYear(growth.first_record_at, lang)}
+              {growth.months_active ? (
+                <> · {fmtNumber(growth.months_active, lang)} {monthsLabel}</>
+              ) : null}
+            </div>
+          )}
         </div>
       )}
     </Comp>

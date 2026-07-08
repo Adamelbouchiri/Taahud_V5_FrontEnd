@@ -14,6 +14,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import {
   canSeeProjectBudget,
   canSeeProjectOwnerName,
+  usesPartnershipOffers,
 } from '../../config/projectConstants';
 
 /**
@@ -32,6 +33,15 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
   const applied = project.has_applied;
   const showBudget = canSeeProjectBudget(project, currentUserId);
   const showOwnerName = canSeeProjectOwnerName(project, currentUserId);
+
+  // Solidarity counts partnership offers (separate table) instead of
+  // bids — the BE doesn't ship that count on the project resource, so
+  // the browse page derives it and passes it in as
+  // pending_partnership_requests_count. For arenas using bids we keep
+  // the BE's pending_applications_count.
+  const offerCount = usesPartnershipOffers(project.arena)
+    ? project.pending_partnership_requests_count
+    : project.pending_applications_count;
 
   const ownerLabel = (() => {
     const at = project.owner?.account_type;
@@ -253,16 +263,18 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
               color: 'var(--text-muted)',
             }}
           >
-            {t('projects.list.applicants')}
+            {t(
+              usesPartnershipOffers(project.arena)
+                ? 'projects.list.partnerRequests'
+                : 'projects.list.applicants'
+            )}
           </div>
           <div
             className="font-bold inline-flex items-center gap-1"
             style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}
           >
             <Users size={12} strokeWidth={1.8} />
-            {typeof project.pending_applications_count === 'number'
-              ? project.pending_applications_count
-              : '—'}
+            {typeof offerCount === 'number' ? offerCount : '—'}
           </div>
         </div>
       </div>

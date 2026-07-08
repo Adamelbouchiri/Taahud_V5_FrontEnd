@@ -9,6 +9,7 @@ import {
   RefreshCcw,
   UserPlus,
   ListChecks,
+  Gavel,
 } from 'lucide-react';
 import { admin } from '../../services';
 import { useUser } from '../../contexts/UserContext';
@@ -58,6 +59,19 @@ function statusTone(status) {
   }
 }
 
+// Application (offer) status → Badge tone — distinct enum from project status.
+function offerTone(status) {
+  switch (status) {
+    case 'accepted':
+      return 'success';
+    case 'rejected':
+      return 'danger';
+    case 'pending':
+    default:
+      return 'warning';
+  }
+}
+
 export default function AdminProjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,6 +80,9 @@ export default function AdminProjectDetailPage() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [offers, setOffers] = useState([]);
+  const [offersLoading, setOffersLoading] = useState(true);
 
   const [openModal, setOpenModal] = useState(null);
   const [reason, setReason] = useState('');
@@ -92,8 +109,24 @@ export default function AdminProjectDetailPage() {
     }
   };
 
+  // Offers (applications) on this project. Kept separate from `load` so a
+  // failure here never blanks the project view, and so it can refresh after
+  // actions that change bids (e.g. force-partner awards the project).
+  const loadOffers = async () => {
+    setOffersLoading(true);
+    try {
+      const res = await admin.applications.list({ project_id: id, per_page: 100 });
+      setOffers(Array.isArray(res?.data) ? res.data : []);
+    } catch {
+      setOffers([]);
+    } finally {
+      setOffersLoading(false);
+    }
+  };
+
   useEffect(() => {
     load();
+    loadOffers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -118,6 +151,7 @@ export default function AdminProjectDetailPage() {
       showToast(doneMsg);
       closeModal();
       load();
+      loadOffers();
     } catch (err) {
       setActionError(err.message || t('admin.common.actionError'));
     } finally {
@@ -270,7 +304,7 @@ export default function AdminProjectDetailPage() {
             <Card>
               <h3 className="font-display m-0 mb-3" style={{ fontSize: 15, fontWeight: 700 }}>
                 <ListChecks size={16} style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />
-                {t('createProject.steps.requirements.title') || 'Requirements'}
+                {t('admin.projects.detail.requirements')}
               </h3>
               <ul className="m-0 p-0 list-disc ps-5" style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}>
                 {project.requirements.map((r, i) => (
@@ -281,6 +315,67 @@ export default function AdminProjectDetailPage() {
               </ul>
             </Card>
           )}
+
+          {/* ---------- Offers (applications) ---------- */}
+          <Card>
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="font-display m-0" style={{ fontSize: 15, fontWeight: 700 }}>
+                <Gavel size={16} style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />
+                {t('admin.projects.detail.offers')}
+                {offers.length > 0 && (
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}> ({offers.length})</span>
+                )}
+              </h3>
+              {offers.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ padding: 0, fontSize: 12.5 }}
+                  onClick={() => navigate(`/admin/applications?project_id=${project.id}`)}
+                >
+                  {t('admin.projects.detail.viewAllOffers')}
+                </button>
+              )}
+            </div>
+
+            {offersLoading ? (
+              <div className="shimmer" style={{ height: 96, width: '100%', borderRadius: 10 }} />
+            ) : offers.length === 0 ? (
+              <p className="m-0" style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {t('admin.projects.detail.noOffers')}
+              </p>
+            ) : (
+              <div className="flex flex-col">
+                {offers.map((o, i) => (
+                  <div
+                    key={o.id}
+                    className="flex items-center justify-between gap-3"
+                    style={{
+                      padding: '10px 0',
+                      borderTop: i === 0 ? 'none' : '1px solid var(--border-soft)',
+                    }}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-ink)' }}>
+                        {o.applicant?.name || `#${o.user_id}`}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {t('admin.applications.columns.delivery')}: {o.delivery_date || '—'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-ink)' }}>
+                        {o.bid_amount != null ? Number(o.bid_amount).toLocaleString() : '—'}
+                      </span>
+                      <Badge tone={offerTone(o.status)}>
+                        {t(`admin.statuses.${o.status}`) || o.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
 
         <div>

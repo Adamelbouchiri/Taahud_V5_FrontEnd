@@ -9,11 +9,11 @@ import PhoneField, { isValidSaudiPhone } from '../components/form/PhoneField';
 import {
   ACCOUNT_CATEGORIES,
   SERVICE_PROVIDER_ROLES,
-  CITIES,
   OTP_ENABLED,
   getSpecialties,
   hasSpecialty,
 } from '../config/constants';
+import { cityOptions } from '../config/cityTranslations';
 import { auth } from '../services';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -37,7 +37,7 @@ function specialtyKey(accountType) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   const [categoryChoice, setCategoryChoice] = useState('');
   const [accountType, setAccountType] = useState('');
@@ -229,7 +229,7 @@ export default function RegisterPage() {
           <SelectField
             label={t('auth.register.city')}
             icon={MapPin}
-            options={CITIES}
+            options={cityOptions(lang)}
             value={city}
             onChange={(e) => setCity(e.target.value)}
             error={errors.city}

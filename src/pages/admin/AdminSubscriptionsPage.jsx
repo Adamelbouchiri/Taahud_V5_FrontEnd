@@ -25,6 +25,7 @@ import {
 import { admin } from '../../services';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { printReportPdf, downloadReportExcel } from '../../utils/reportExport';
 import {
   PageHeader,
   Card,
@@ -55,8 +56,9 @@ import {
  *
  *  Actions reuse the shared Modal primitive. Delete is gated to
  *  super-admins (the BE enforces it too — the guard just hides a
- *  button that would 403). Export is client-side: Excel = CSV of the
- *  loaded rows, PDF = a print window scoped to the same rows.
+ *  button that would 403). Export is client-side and shares the
+ *  branded report layout (see utils/reportExport): Excel = styled
+ *  .xls, PDF = a print window — both scoped to the loaded rows.
  * ============================================================ */
 
 const PER_PAGE = 25;
@@ -484,55 +486,34 @@ export default function AdminSubscriptionsPage() {
     [t, accountTypeLabel, planName, periodLabel, fmtDate, providerLabel, fmtMoney]
   );
 
-  const exportCsv = () => {
-    const esc = (v) => {
-      const s = String(v ?? '');
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  // Subtitle line under the logo: "Subscriptions report — <tab> — N subscriptions".
+  const reportMeta = () => {
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    const tabLabel = statusTab
+      ? t(`admin.subscriptions.tabs.${statusTab}`)
+      : t('admin.subscriptions.tabs.all');
+    const subtitle = [
+      t('admin.subscriptions.report.label'),
+      tabLabel,
+      t('admin.subscriptions.report.count', { n: visibleRows.length }),
+    ].join(' — ');
+    return {
+      title: t('admin.subscriptions.report.label'),
+      subtitle,
+      columns: exportColumns,
+      rows: visibleRows,
+      dir,
+      lang,
     };
-    const head = exportColumns.map((c) => esc(c.header)).join(',');
-    const body = visibleRows.map((r) => exportColumns.map((c) => esc(c.get(r))).join(',')).join('\n');
-    // Prepend a BOM so Excel reads UTF-8 (Arabic) correctly.
-    const csv = '﻿' + head + '\n' + body;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `subscriptions-${statusTab || 'all'}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  };
+
+  const exportCsv = () => {
+    downloadReportExcel({ ...reportMeta(), filename: `subscriptions-${statusTab || 'all'}` });
     showToast(t('admin.subscriptions.exported'));
   };
 
   const exportPdf = () => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    const dir = lang === 'ar' ? 'rtl' : 'ltr';
-    const title = t('admin.subscriptions.title');
-    const headCells = exportColumns.map((c) => `<th>${escapeHtml(c.header)}</th>`).join('');
-    const rowsHtml = visibleRows
-      .map(
-        (r) =>
-          `<tr>${exportColumns.map((c) => `<td>${escapeHtml(c.get(r))}</td>`).join('')}</tr>`
-      )
-      .join('');
-    win.document.write(`<!doctype html><html dir="${dir}" lang="${lang}"><head><meta charset="utf-8" />
-      <title>${escapeHtml(title)}</title>
-      <style>
-        body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif; padding: 24px; color: #1a1a2e; }
-        h1 { font-size: 18px; margin: 0 0 16px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #d9d6ce; padding: 6px 8px; text-align: ${dir === 'rtl' ? 'right' : 'left'}; }
-        th { background: #f3f1ea; font-weight: 700; }
-        tr:nth-child(even) td { background: #faf9f5; }
-      </style></head><body>
-      <h1>${escapeHtml(title)}</h1>
-      <table><thead><tr>${headCells}</tr></thead><tbody>${rowsHtml}</tbody></table>
-      <script>window.onload = function(){ window.print(); };<\/script>
-      </body></html>`);
-    win.document.close();
-    showToast(t('admin.subscriptions.exported'));
+    if (printReportPdf(reportMeta())) showToast(t('admin.subscriptions.exported'));
   };
 
   /* ---------- table columns ---------- */
@@ -1365,13 +1346,6 @@ const cellStyle = {
   whiteSpace: 'nowrap',
 };
 
-function escapeHtml(v) {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function SubKpi({ icon: Icon, label, value, sublabel, tone }) {
   return (

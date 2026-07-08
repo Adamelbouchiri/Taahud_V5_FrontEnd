@@ -24,7 +24,10 @@ export default function PasswordField({ label, error, hint, ...props }) {
         <input
           type={show ? 'text' : 'password'}
           className={`field ${error ? 'error' : ''}`}
-          style={{ paddingLeft: 44 }}
+          // Reserve room for the show/hide toggle, which sits at the logical
+          // inline-start (start-[12px]). Physical paddingLeft would reserve the
+          // wrong side in RTL and let the text run under the toggle.
+          style={{ paddingInlineStart: 44 }}
           {...props}
         />
       </div>

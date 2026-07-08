@@ -25,10 +25,15 @@ import TextareaField from '../components/form/TextareaField';
 import { projects as projectsApi, applications as applicationsApi } from '../services';
 import { useTranslation } from '../i18n/LanguageContext';
 import { UserProvider, useUser } from '../contexts/UserContext';
+import useArenaAddons from '../hooks/useArenaAddons';
+import useFeatures from '../hooks/useFeatures';
+import { isQuotaError, quotaErrorToCheck } from '../services/features';
+import FeatureUpgradeNotice from '../components/FeatureUpgradeNotice';
 import {
   canApplyArena,
   canSeeProjectOwnerName,
   defaultBrowseRouteFor,
+  usesPartnershipOffers,
 } from '../config/projectConstants';
 
 /* ============================================================
@@ -48,14 +53,16 @@ function ApplyPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useUser();
-  const browseRoute = defaultBrowseRouteFor(
-    user?.account_type,
-    user?.has_isnad_upgrade
-  );
+  const { addons, loading: addonsLoading } = useArenaAddons();
+  const { can, loading: featuresLoading, error: featuresError } = useFeatures();
+  const browseRoute = defaultBrowseRouteFor(user?.account_type, addons);
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  // Set when the `submit_offers` quota blocks this bid — either found
+  // up front or returned as an upgrade-required 403 on submit.
+  const [upgradeInfo, setUpgradeInfo] = useState(null);
 
   const [coverLetter, setCoverLetter] = useState('');
   const [bidAmount, setBidAmount] = useState('');
@@ -68,17 +75,26 @@ function ApplyPage() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Wait for user context to resolve so we can apply the per-arena
-    // applicant check below. Without it we'd race and either miss the
-    // gate (false positive open form) or flash a wrong error.
-    if (!user) return;
+    // Wait for user context, add-on state AND the feature snapshot to
+    // resolve so the per-arena applicant check and the submit_offers
+    // quota gate below are accurate. Without the add-on map we'd
+    // fail-closed on gated arenas (isnad / solidarity) for subscribers.
+    if (!user || addonsLoading || featuresLoading) return;
     let cancelled = false;
     setLoading(true);
     setLoadError('');
+    setUpgradeInfo(null);
     projectsApi
       .get(id)
       .then((p) => {
         if (cancelled) return;
+        // Solidarity uses partnership offers, not bids. If the user
+        // landed on /apply for a solidarity project, route them to the
+        // correct flow (the BE would otherwise 422 with use_endpoint).
+        if (usesPartnershipOffers(p.arena)) {
+          navigate(`/projects/${id}/partner`, { replace: true });
+          return;
+        }
         if (p.status !== 'open_for_bids') {
           setLoadError(t('projects.apply.errorState.notOpen'));
           return;
@@ -89,16 +105,29 @@ function ApplyPage() {
           setLoadError(t('projects.apply.errorState.ownProject'));
           return;
         }
-        // Per-arena applicant check — FRONTEND_INTEGRATION.md §3.
-        // solidarity is entrepreneur-only, isnad also allows developer,
-        // private/arena are entrepreneur+engineering.
-        if (!canApplyArena(p.arena, user.account_type)) {
+        // Per-arena applicant check — ARENA_ADDONS_INTEGRATION.md.
+        // solidarity/isnad allow developer/entrepreneur/engineering but
+        // require their add-on; private/arena are entrepreneur+engineering.
+        if (!canApplyArena(p.arena, user.account_type, addons)) {
           setLoadError(t('projects.apply.errorState.notEligible'));
           return;
         }
         if (p.has_applied) {
           setLoadError(t('projects.apply.errorState.alreadyApplied'));
           return;
+        }
+        // Proactive submit_offers quota gate — bids and partnership
+        // offers share this monthly counter. Block the form up front
+        // when the plan doesn't include it or the cap is hit, rather
+        // than letting the user fill it out and hit a 403 on submit.
+        // Skip when the snapshot failed to load (endpoint down / not
+        // deployed) — the 403 handler still fails safe on submit.
+        if (!featuresError) {
+          const offers = can('submit_offers');
+          if (!offers.has_feature || !offers.can_use) {
+            setUpgradeInfo(offers);
+            return;
+          }
         }
         setProject(p);
       })
@@ -112,7 +141,7 @@ function ApplyPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, t, user]);
+  }, [id, t, user, addons, addonsLoading, featuresLoading, featuresError, can]);
 
   const validate = () => {
     const e = {};
@@ -161,6 +190,19 @@ function ApplyPage() {
 
       setSubmitted(true);
     } catch (err) {
+      // Defensive net: a solidarity project rejects bids with a 422
+      // carrying `use_endpoint` pointing at the partnership form.
+      if (err?.status === 422 && err?.data?.use_endpoint) {
+        navigate(`/projects/${id}/partner`, { replace: true });
+        return;
+      }
+      // Quota-exhausted 403 (upgrade_required) — races/stale caches can
+      // slip past the proactive gate. Swap to the upgrade notice instead
+      // of a generic error banner.
+      if (isQuotaError(err)) {
+        setUpgradeInfo(quotaErrorToCheck(err));
+        return;
+      }
       setSubmitError(err.message || t('projects.apply.errorGeneric'));
     } finally {
       setSubmitting(false);
@@ -168,6 +210,16 @@ function ApplyPage() {
   };
 
   if (loading) return <Shell><LoadingState /></Shell>;
+  if (upgradeInfo)
+    return (
+      <Shell>
+        <FeatureUpgradeNotice
+          info={upgradeInfo}
+          featureCode="submit_offers"
+          onBack={() => navigate(browseRoute)}
+        />
+      </Shell>
+    );
   if (loadError)
     return (
       <Shell>
@@ -407,10 +459,8 @@ function Shell({ children }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useUser();
-  const browseRoute = defaultBrowseRouteFor(
-    user?.account_type,
-    user?.has_isnad_upgrade
-  );
+  const { addons } = useArenaAddons();
+  const browseRoute = defaultBrowseRouteFor(user?.account_type, addons);
   return (
     <div
       className="min-h-screen flex flex-col"

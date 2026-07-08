@@ -141,6 +141,40 @@ function clearToken() {
   sessionStorage.removeItem(ROLES_KEY);
   localStorage.removeItem(VERIFIED_KEY);
   sessionStorage.removeItem(VERIFIED_KEY);
+  // Drop the cached /auth/me so the next caller can't read the
+  // previous session's user (invalidateMe is hoisted; safe to call).
+  invalidateMe();
+}
+
+/* ------------------------------------------------------------------
+ *  /auth/me request cache
+ * ------------------------------------------------------------------
+ *  Many independent components call auth.me() on mount — UserContext,
+ *  the landing Navbar, several route guards (RequireArenaAccess,
+ *  RequireNonSupplier, RequireServiceProvider), and a few pages
+ *  (Plans, PublicProjectsPage, CreateProjectPage, OtpPage). On a
+ *  single navigation they fire near-simultaneously and each hits
+ *  /auth/me with an identical request. We coalesce them here:
+ *
+ *    1. In-flight dedupe — concurrent callers share ONE request.
+ *    2. Short TTL cache  — repeat calls within ME_TTL_MS reuse the
+ *       last result instead of re-hitting the network.
+ *
+ *  The cache is invalidated on every auth mutation (login, register,
+ *  logout, profile update, OTP verify, password change) so it never
+ *  serves stale data across a state change; me({ force: true })
+ *  bypasses it for a guaranteed-fresh read. Rejections are never
+ *  cached.
+ * ------------------------------------------------------------------ */
+const ME_TTL_MS = 30_000;
+let meCache = null; // last resolved user object
+let meCachedAt = 0; // Date.now() at that resolve
+let meInFlight = null; // shared promise while a request is pending
+
+function invalidateMe() {
+  meCache = null;
+  meCachedAt = 0;
+  meInFlight = null;
 }
 
 /* Reads the device label sent with login/register. Useful so you
@@ -198,6 +232,7 @@ export const auth = {
       // yet at this point, so seed the snapshot false.
       savePhoneVerified(false, true);
     }
+    invalidateMe(); // new session → drop any prior user's cached /me
     return res; // { user, token, roles, message }
   },
 
@@ -235,6 +270,7 @@ export const auth = {
       // than an explicit `false` as verified (matches OtpPage).
       savePhoneVerified(res.user?.is_phone_verified !== false, rememberMe);
     }
+    invalidateMe(); // new session → drop any prior user's cached /me
     return res; // { user, token, roles, ... }
   },
 
@@ -244,19 +280,50 @@ export const auth = {
    *  Returns the authenticated user. Laravel wraps it as
    *  { data: {...user} } so we unwrap and return just the user
    *  object — that's what the rest of the app expects from useUser().
+   *
+   *  Deduped + short-TTL cached (see the /auth/me request cache
+   *  above) so the many independent callers don't each hit the
+   *  network on every navigation. Pass { force: true } to bypass the
+   *  cache (e.g. UserContext.refresh after a profile edit — though
+   *  updateProfile already invalidates, so a plain call suffices).
    * ============================================================ */
-  async me() {
-    const res = await http.get('/auth/me');
-    // Defensive unwrap: backend wraps with `data`, but if that
-    // changes (or in tests) accept either shape.
-    const user = res?.data ?? res;
-    // Keep the verification snapshot fresh — /me is the one endpoint
-    // that always returns the live flag, so it self-heals a stale
-    // snapshot (e.g. verified on another device).
-    if (user && typeof user.is_phone_verified !== 'undefined') {
-      savePhoneVerified(user.is_phone_verified !== false, activePersistent());
+  async me({ force = false } = {}) {
+    if (!force) {
+      // Coalesce concurrent callers onto the pending request…
+      if (meInFlight) return meInFlight;
+      // …and serve a fresh-enough cached user without a round-trip.
+      if (meCache && Date.now() - meCachedAt < ME_TTL_MS) return meCache;
     }
-    return user;
+
+    const request = (async () => {
+      const res = await http.get('/auth/me');
+      // Defensive unwrap: backend wraps with `data`, but if that
+      // changes (or in tests) accept either shape.
+      const user = res?.data ?? res;
+      // Keep the verification snapshot fresh — /me is the one endpoint
+      // that always returns the live flag, so it self-heals a stale
+      // snapshot (e.g. verified on another device).
+      if (user && typeof user.is_phone_verified !== 'undefined') {
+        savePhoneVerified(user.is_phone_verified !== false, activePersistent());
+      }
+      return user;
+    })();
+
+    meInFlight = request;
+    try {
+      const user = await request;
+      meCache = user;
+      meCachedAt = Date.now();
+      return user;
+    } catch (err) {
+      // Never cache a failure — the next call should retry.
+      meCache = null;
+      meCachedAt = 0;
+      throw err;
+    } finally {
+      // Only clear if a newer forced request hasn't superseded us.
+      if (meInFlight === request) meInFlight = null;
+    }
   },
 
   /* ============================================================
@@ -277,6 +344,8 @@ export const auth = {
     if (payload.city !== undefined) body.city = payload.city;
 
     const res = await http.patch('/auth/profile', body);
+    // Profile changed → invalidate so the next me()/refresh() re-fetches.
+    invalidateMe();
     return res?.user ?? res;
   },
 
@@ -323,6 +392,8 @@ export const auth = {
     // Phone is now verified — flip the snapshot so RequireVerified lets
     // the user into the platform on the post-verify redirect.
     savePhoneVerified(true, activePersistent());
+    // is_phone_verified on the cached user is now stale — drop it.
+    invalidateMe();
     return res;
   },
 

@@ -4,6 +4,7 @@ import {
   Check,
   Sparkles,
   Gem,
+  Handshake,
   Crown,
   ArrowLeft,
   ArrowRight,
@@ -18,6 +19,7 @@ import {
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
+import { deriveArenaAddons } from '../../services/subscriptions';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
@@ -117,7 +119,11 @@ export default function SubscribePage() {
     activeSubs[0] ||
     null;
   const hasBaseSub = !!baseSub;
-  const hasIsnadAddon = !!status?.has_isnad_addon;
+  // Arena add-ons owned by the user (isnad / solidarity), resolved from
+  // active subscriptions. OR in the legacy has_isnad_addon boolean.
+  const ownedAddons = deriveArenaAddons(status);
+  const hasIsnadAddon = ownedAddons.isnad_addon || !!status?.has_isnad_addon;
+  const hasSolidarityAddon = ownedAddons.solidarity_addon;
   const activeSubByPlanId = useMemo(() => {
     const m = new Map();
     for (const s of activeSubs) m.set(s.plan_id, s);
@@ -232,9 +238,32 @@ export default function SubscribePage() {
           />
         )}
 
-        {/* Isnad add-on status — mirrors the profile page so an enrolled
-            user sees their active add-on here too. */}
-        {hasIsnadAddon && <IsnadAddonBanner t={t} />}
+        {/* Active arena add-on banners — mirror the profile page so an
+            enrolled user sees each active add-on here too. */}
+        {hasIsnadAddon && (
+          <AddonBanner
+            t={t}
+            icon={Gem}
+            accent="#0d5538"
+            accentBg="rgba(13,85,56,0.06)"
+            accentBorder="rgba(13,85,56,0.28)"
+            chipBg="rgba(13,85,56,0.12)"
+            labelKey="subscribe.profile.isnadAddon.label"
+            bodyKey="subscribe.profile.isnadAddon.body"
+          />
+        )}
+        {hasSolidarityAddon && (
+          <AddonBanner
+            t={t}
+            icon={Handshake}
+            accent="#8a6a1f"
+            accentBg="rgba(184,134,42,0.06)"
+            accentBorder="rgba(184,134,42,0.28)"
+            chipBg="rgba(184,134,42,0.14)"
+            labelKey="subscribe.profile.solidarityAddon.label"
+            bodyKey="subscribe.profile.solidarityAddon.body"
+          />
+        )}
 
         {loadError && !plans.length && (
           <InlineError message={loadError} />
@@ -271,7 +300,7 @@ export default function SubscribePage() {
                 hasBaseSub={false}
                 activeSubByPlanId={activeSubByPlanId}
                 forceAddon
-                hasIsnadAddon={hasIsnadAddon}
+                ownedAddons={ownedAddons}
               />
             )}
           </>
@@ -567,16 +596,25 @@ function StatusBanner({
   return null;
 }
 
-/* Active Isnad add-on banner — shown on the subscribe page when the
-   user is enrolled in the Isnad add-on, mirroring the profile page's
-   IsnadAddonRow. Gold/Gem themed to set it apart from the base sub. */
-function IsnadAddonBanner({ t }) {
+/* Active arena add-on banner — shown on the subscribe page when the
+   user owns the add-on, mirroring the profile page's AddonRow. Themed
+   per add-on (icon + accent) so isnad and solidarity read distinctly. */
+function AddonBanner({
+  t,
+  icon: Icon,
+  accent,
+  accentBg,
+  accentBorder,
+  chipBg,
+  labelKey,
+  bodyKey,
+}) {
   return (
     <div
       className="mb-7 rounded-[16px] flex items-start gap-3 animate-fade-up"
       style={{
-        background: 'rgba(184,134,42,0.06)',
-        border: '1px solid rgba(184,134,42,0.28)',
+        background: accentBg,
+        border: `1px solid ${accentBorder}`,
         padding: '16px 20px',
       }}
     >
@@ -586,11 +624,11 @@ function IsnadAddonBanner({ t }) {
           width: 42,
           height: 42,
           borderRadius: 11,
-          background: 'rgba(184,134,42,0.12)',
-          color: '#8a6a1f',
+          background: chipBg,
+          color: accent,
         }}
       >
-        <Gem size={20} strokeWidth={1.9} />
+        <Icon size={20} strokeWidth={1.9} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -598,15 +636,15 @@ function IsnadAddonBanner({ t }) {
             className="font-display font-bold"
             style={{ fontSize: 14.5, color: 'var(--text-ink)' }}
           >
-            {t('subscribe.profile.isnadAddon.label')}
+            {t(labelKey)}
           </span>
           <span
             className="font-bold rounded-full"
             style={{
               fontSize: 10,
               padding: '2px 8px',
-              background: 'rgba(184,134,42,0.14)',
-              color: '#8a6a1f',
+              background: chipBg,
+              color: accent,
               letterSpacing: '0.04em',
             }}
           >
@@ -614,7 +652,7 @@ function IsnadAddonBanner({ t }) {
           </span>
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-ink-soft)' }}>
-          {t('subscribe.profile.isnadAddon.body')}
+          {t(bodyKey)}
         </div>
       </div>
     </div>
@@ -703,7 +741,7 @@ function PlanSection({
   hasBaseSub,
   activeSubByPlanId,
   forceAddon,
-  hasIsnadAddon,
+  ownedAddons = {},
 }) {
   return (
     <section className="mb-10">
@@ -723,9 +761,12 @@ function PlanSection({
           const activeSub = activeSubByPlanId.get(plan.id);
           const isActive = !!activeSub;
           // Disable competing base plans when one is already active.
-          // Add-ons follow their own "addon active" rule (Isnad).
+          // For add-ons, only lock the card whose specific add-on the
+          // user already owns (by plan.code) — so owning isnad doesn't
+          // lock the solidarity card and vice-versa.
           const lockedByOtherBase = !forceAddon && hasBaseSub && !isActive;
-          const lockedByAddon = forceAddon && hasIsnadAddon && !isActive;
+          const lockedByAddon =
+            forceAddon && !!ownedAddons[plan.code] && !isActive;
           const disabled = lockedByOtherBase || lockedByAddon;
           return (
             <PlanCard
@@ -1098,16 +1139,18 @@ function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
     features: backendFeatures,
   };
 
-  // Isnad add-on — universal, not audience-specific; its copy lives
-  // under landing.plans.addon.
+  // Arena add-ons — universal, not audience-specific. Each add-on
+  // (isnad / solidarity) has its own copy block keyed by plan.code.
   if (isAddon || plan.is_addon) {
-    const addon = dict?.landing?.plans?.addon;
+    const addonKey =
+      plan.code === 'solidarity_addon' ? 'solidarityAddon' : 'addon';
+    const addon = dict?.landing?.plans?.[addonKey];
     if (!addon) return fallback;
     return {
       name: addon.title || fallback.name,
       description:
-        t('landing.plans.addon.body', {
-          price: t('landing.plans.addon.price'),
+        t(`landing.plans.${addonKey}.body`, {
+          price: t(`landing.plans.${addonKey}.price`),
           threshold: t('landing.plans.addon.threshold'),
         }) || fallback.description,
       features:

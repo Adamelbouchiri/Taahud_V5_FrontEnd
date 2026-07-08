@@ -10,9 +10,11 @@ import {
   Activity as ActivityIcon,
   Copy,
   Check,
+  Trash2,
 } from 'lucide-react';
 import { admin } from '../../services';
 import { useTranslation } from '../../i18n/LanguageContext';
+import IdentifierChip from '../../components/IdentifierChip';
 import {
   PageHeader,
   Card,
@@ -173,6 +175,20 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const handleForceDelete = async () => {
+    setBusy(true);
+    setActionError('');
+    try {
+      await admin.users.forceDelete(id, reason);
+      // The user row is gone — there's nothing left to reload on this page,
+      // so return to the list where the user no longer appears.
+      navigate('/admin/users');
+    } catch (err) {
+      setActionError(err.message || t('admin.common.actionError'));
+      setBusy(false);
+    }
+  };
+
   const copyPassword = async () => {
     try {
       await navigator.clipboard.writeText(newPassword);
@@ -242,6 +258,15 @@ export default function AdminUserDetailPage() {
           </Badge>
         }
       />
+
+      {user.identifier && (
+        <div className="mb-4">
+          <IdentifierChip
+            identifier={user.identifier}
+            label={t('identifier.label')}
+          />
+        </div>
+      )}
 
       {toast && (
         <div
@@ -351,6 +376,12 @@ export default function AdminUserDetailPage() {
                 icon={ActivityIcon}
                 label={t('admin.users.detail.actions.viewActivity')}
                 onClick={() => navigate(`/admin/activity?target_type=User&target_id=${user.id}`)}
+              />
+              <ActionButton
+                icon={Trash2}
+                tone="danger"
+                label={t('admin.users.detail.actions.forceDelete')}
+                onClick={() => setOpenModal('forceDelete')}
               />
             </div>
           </Card>
@@ -494,6 +525,24 @@ export default function AdminUserDetailPage() {
         confirmLabel={t('admin.users.detail.forceVerify.confirm')}
         cancelLabel={t('admin.common.cancel')}
         requireReason={false}
+        busy={busy}
+        error={actionError}
+      />
+
+      {/* ---------- Force delete modal (irreversible, reason required) ---------- */}
+      <ConfirmDialog
+        open={openModal === 'forceDelete'}
+        onClose={closeModal}
+        onConfirm={handleForceDelete}
+        title={t('admin.users.detail.forceDelete.title')}
+        description={t('admin.users.detail.forceDelete.description')}
+        reason={reason}
+        setReason={setReason}
+        reasonLabel={t('admin.common.reasonLabel')}
+        reasonPlaceholder={t('admin.common.reasonPlaceholder')}
+        confirmLabel={t('admin.users.detail.forceDelete.confirm')}
+        cancelLabel={t('admin.common.cancel')}
+        confirmTone="danger"
         busy={busy}
         error={actionError}
       />

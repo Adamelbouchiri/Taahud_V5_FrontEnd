@@ -15,8 +15,14 @@ import StepDetails from '../components/project/steps/StepDetails';
 import StepScopeAndBudget from '../components/project/steps/StepScopeAndBudget';
 import StepFilesAndRequirements from '../components/project/steps/StepFilesAndRequirements';
 import StepReview from '../components/project/steps/StepReview';
-import { PROJECT_STEPS, defaultArenaFor } from '../config/projectConstants';
+import {
+  PROJECT_STEPS,
+  defaultArenaFor,
+  arenaConfig,
+  canPostArena,
+} from '../config/projectConstants';
 import { projects as projectsApi, auth } from '../services';
+import useArenaAddons from '../hooks/useArenaAddons';
 import { useTranslation } from '../i18n/LanguageContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -62,6 +68,8 @@ export default function CreateProjectPage() {
   // arenas render as if everything is postable for a frame, then snap
   // into their locked state once auth.me() resolves.
   const [accountLoaded, setAccountLoaded] = useState(false);
+  // Which gated arenas (isnad / solidarity) the user can post in.
+  const { addons, loading: addonsLoading } = useArenaAddons();
 
   useEffect(() => {
     let cancelled = false;
@@ -85,8 +93,11 @@ export default function CreateProjectPage() {
   useEffect(() => {
     if (!accountType) return;
     if (userPickedArenaRef.current) return;
-    setForm((prev) => ({ ...prev, arena: defaultArenaFor(accountType) }));
-  }, [accountType]);
+    setForm((prev) => ({
+      ...prev,
+      arena: defaultArenaFor(accountType, addons),
+    }));
+  }, [accountType, addons]);
 
   const update = (key, value) => {
     if (key === 'arena') userPickedArenaRef.current = true;
@@ -98,6 +109,11 @@ export default function CreateProjectPage() {
     const e = {};
     if (s === 0) {
       if (!form.arena) e.arena = t('projects.create.validate.arena');
+      else if (!canPostArena(form.arena, accountType, addons)) {
+        // Gated arena without the add-on — block here so the user can't
+        // proceed to a guaranteed 403 on submit.
+        e.arena = t('projects.create.validate.arenaLocked');
+      }
       if (!form.name.trim()) e.name = t('projects.create.validate.name');
       if (!form.type) e.type = t('projects.create.validate.type');
       if (!form.city) e.city = t('projects.create.validate.city');
@@ -179,7 +195,20 @@ export default function CreateProjectPage() {
 
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err.message || t('projects.create.submitFailed'));
+      // A 403 on a gated arena (إسناد / التضامن) means the add-on isn't
+      // active — surface a clear add-on message instead of the BE's
+      // generic "This action is unauthorized." The picker normally
+      // prevents reaching here, so this is the defensive catch the
+      // integration guide calls for (e.g. an add-on that lapsed mid-flow).
+      if (err?.status === 403 && arenaConfig(form.arena)?.isUpgrade) {
+        setSubmitError(
+          t('projects.create.addonRequired', {
+            arena: t(`arena.${form.arena}.label`),
+          })
+        );
+      } else {
+        setSubmitError(err.message || t('projects.create.submitFailed'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -323,7 +352,8 @@ export default function CreateProjectPage() {
                 update={update}
                 errors={errors}
                 accountType={accountType}
-                accountLoaded={accountLoaded}
+                accountLoaded={accountLoaded && !addonsLoading}
+                addons={addons}
               />
             )}
             {step === 1 && (

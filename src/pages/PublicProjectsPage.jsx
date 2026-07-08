@@ -13,6 +13,7 @@ import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
 import OpenProjectCard from '../components/project/OpenProjectCard';
 import { CITIES } from '../config/constants';
+import { cityLabel } from '../config/cityTranslations';
 import {
   PROJECT_TYPES,
   ARENAS,
@@ -20,6 +21,7 @@ import {
   canViewArena,
 } from '../config/projectConstants';
 import { projects as projectsApi, auth } from '../services';
+import useArenaAddons from '../hooks/useArenaAddons';
 import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
@@ -41,12 +43,14 @@ const SORT_VALUE_TO_KEY = {
   newest: 'newest',
 };
 
-export default function PublicProjectsPage({ arenaSlug = null }) {
+export default function PublicProjectsPage({ arenaSlug = null, accessGranted = false }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [accountType, setAccountType] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [hasIsnadUpgrade, setHasIsnadUpgrade] = useState(false);
+  // Arena add-ons (isnad / solidarity) the user owns — drives which
+  // arenas are viewable. Resolved from active subscriptions.
+  const { addons } = useArenaAddons();
   const [accountLoaded, setAccountLoaded] = useState(false);
 
   const [items, setItems] = useState([]);
@@ -67,7 +71,6 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
         if (cancelled) return;
         setAccountType(u?.account_type || null);
         setUserId(u?.id ?? null);
-        setHasIsnadUpgrade(!!u?.has_isnad_upgrade);
         setAccountLoaded(true);
       })
       .catch(() => {
@@ -82,22 +85,27 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
   useEffect(() => {
     if (arenaSlug) return;
     if (!accountLoaded) return;
-    if (canViewArena(arena, accountType, hasIsnadUpgrade)) return;
+    if (canViewArena(arena, accountType, addons)) return;
     const first = ARENAS.find((a) =>
-      canViewArena(a.value, accountType, hasIsnadUpgrade)
+      canViewArena(a.value, accountType, addons)
     );
     if (first) setArena(first.value);
-  }, [accountLoaded, accountType, hasIsnadUpgrade, arena, arenaSlug]);
+  }, [accountLoaded, accountType, addons, arena, arenaSlug]);
 
   useEffect(() => {
     if (arenaSlug) setArena(arenaSlug);
   }, [arenaSlug]);
 
+  // `accessGranted` means an upstream route guard (RequireArenaAccess)
+  // already verified access for this arena, so we trust it and never
+  // show the in-page block — avoids a redundant gate (and its
+  // "activate the add-on" box) double-firing while add-on state loads.
   const blocked =
+    !accessGranted &&
     arenaSlug != null &&
     accountLoaded &&
     accountType &&
-    !canViewArena(arenaSlug, accountType, hasIsnadUpgrade);
+    !canViewArena(arenaSlug, accountType, addons);
 
   useEffect(() => {
     if (blocked) return;
@@ -148,7 +156,7 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
 
   const currentArena = arenaConfig(arena);
   const viewableArenas = ARENAS.filter((a) =>
-    canViewArena(a.value, accountType, hasIsnadUpgrade)
+    canViewArena(a.value, accountType, addons)
   );
 
   return (
@@ -176,14 +184,14 @@ export default function PublicProjectsPage({ arenaSlug = null }) {
               arena={currentArena}
               arenaSlug={arena}
               accountType={accountType}
-              hasIsnadUpgrade={hasIsnadUpgrade}
+              addons={addons}
             />
           ) : viewableArenas.length === 0 && !arenaSlug ? (
             <ArenaBlocked
               arena={null}
               arenaSlug={null}
               accountType={accountType}
-              hasIsnadUpgrade={hasIsnadUpgrade}
+              addons={addons}
             />
           ) : (
             <>
@@ -426,7 +434,7 @@ function darken(hex) {
  *  Toolbar
  * ============================================================ */
 function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearch, count, loading }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   return (
     <div className="mb-6">
       <div
@@ -465,7 +473,7 @@ function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearc
             onChange={(e) => setCity(e.target.value)}
             options={[
               { value: 'all', label: t('projects.list.filters.allCities') },
-              ...CITIES.map((c) => ({ value: c, label: c })),
+              ...CITIES.map((c) => ({ value: c, label: cityLabel(c, lang) })),
             ]}
           />
           <FilterSelect
@@ -641,11 +649,12 @@ function Centered({ icon: Icon, title, subtitle, cta }) {
 /* ============================================================
  *  ArenaBlocked — viewableBy / paywall gate
  * ============================================================ */
-function ArenaBlocked({ arena, arenaSlug, accountType, hasIsnadUpgrade }) {
+function ArenaBlocked({ arena, arenaSlug, accountType, addons }) {
   const { t } = useTranslation();
+  const addonMissing = arena?.addonCode && !addons?.[arena.addonCode];
   if (
     arena?.isUpgrade &&
-    !hasIsnadUpgrade &&
+    addonMissing &&
     (arena.viewableBy || []).includes(accountType)
   ) {
     const arenaLabel = t(`arena.${arenaSlug}.label`);

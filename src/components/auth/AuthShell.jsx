@@ -30,7 +30,10 @@ export default function AuthShell({
           {onBack && (
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 mb-5 rounded-full text-[13px] font-medium transition-colors"
+              // flex + w-fit so the button takes its own line (content-width)
+              // instead of flowing inline next to the kicker pill below it —
+              // inline-flex let the two pills sit side by side and touch.
+              className="flex w-fit items-center gap-1.5 px-3.5 py-2 mb-5 rounded-full text-[13px] font-medium transition-colors"
               style={{
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border-default)',

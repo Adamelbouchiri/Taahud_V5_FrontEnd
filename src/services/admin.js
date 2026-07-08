@@ -37,6 +37,16 @@ import http from './http';
  *    GET    /admin/applications/:id             show
  *    POST   /admin/applications/:id/override    { reason }
  *
+ *    Partnership requests (Solidarity offers)
+ *    GET    /admin/partnership-requests              list (project_id, user_id, status, offering_type, with/only_trashed)
+ *    POST   /admin/partnership-requests              proxy-create { project_id, user_id, ...offer, reason }
+ *    GET    /admin/partnership-requests/:id          show (incl. trashed)
+ *    POST   /admin/partnership-requests/:id/override { new_status, reason }
+ *    DELETE /admin/partnership-requests/:id          soft-delete { reason }
+ *    POST   /admin/partnership-requests/:id/restore  restore
+ *    DELETE /admin/partnership-requests/:id/force-delete  { reason } — super-admin
+ *    POST   /admin/projects/:id/force-partner-solidarity  { partnership_request_id, reason }
+ *
  *    Subscriptions
  *    GET    /admin/subscriptions/stats          dashboard aggregates
  *    GET    /admin/subscriptions                list (status, plan_id, user_id, provider, per_page)
@@ -45,6 +55,10 @@ import http from './http';
  *    POST   /admin/subscriptions/:id/cancel     { reason } — keeps the row
  *    POST   /admin/subscriptions/:id/extend     { months } — does NOT charge
  *    DELETE /admin/subscriptions/:id            { reason } — super-admin hard delete
+ *
+ *    Payments (read-only ledger)
+ *    GET    /admin/payments                     list + summary + tab_counts (status, kind, payment_method, q, per_page)
+ *    GET    /admin/payments/:id                 show
  *
  *    Plans (catalog CRUD)
  *    GET    /admin/plans                        list (account_type, tier, is_addon, is_active)
@@ -133,6 +147,10 @@ export const admin = {
    * `growth` is { mom_percent, yoy_percent, monthly_series: [...] }
    * where mom/yoy can be null (no baseline) and monthly_series is
    * always exactly 12 entries, oldest→newest, zero-filled.
+   *
+   * The users resource additionally carries all_time_percent /
+   * first_record_at / months_active (the projects/applications
+   * responses don't), surfaced only on the users KPI card.
    * ============================================================ */
   async stats() {
     return http.get('/admin/stats');
@@ -198,6 +216,21 @@ export const admin = {
      */
     async forcePasswordReset(id) {
       return http.post(`/admin/users/${id}/force-password-reset`);
+    },
+
+    /**
+     * DELETE /admin/users/:id/force  { reason } — ⚠️ irreversible hard delete.
+     * Permanently removes the user row (no soft-delete, no recovery).
+     * Guards on the BE:
+     *   - 422 if the user has associated data (projects / applications /
+     *     admin activity) — response carries has_projects / has_applications /
+     *     has_admin_activity flags; suspend instead.
+     *   - 422 on self-deletion or a missing/short reason (min 10 chars).
+     * Creates a `user.force_delete` audit entry with a full snapshot.
+     */
+    async forceDelete(id, reason) {
+      // axios DELETE with a body uses the `data` config field.
+      return http.delete(`/admin/users/${id}/force`, { data: { reason } });
     },
   },
 
@@ -332,6 +365,245 @@ export const admin = {
 
 
   /* ============================================================
+   * PARTNERSHIP REQUESTS (Solidarity arena offers)
+   * ----------------------------------------------------------------
+   * Admin management of partnership_requests — mirrors the
+   * applications admin surface with two additions: proxy-create
+   * (register an offer on behalf of a user, bypassing the addon
+   * gate) and force-partner-solidarity (force-accept on behalf of
+   * an unresponsive owner). All actions are audited; the mutating
+   * ones require a `reason` (10+ chars). Soft-delete/restore are
+   * reversible; force-delete is super-admin-only and irreversible.
+   * See ADMIN_PARTNERSHIP_INTEGRATION.md.
+   * ============================================================ */
+  partnerships: {
+    /** GET /admin/partnership-requests — every offer system-wide.
+     *  Filters: project_id, user_id, status, offering_type, plus
+     *  with_trashed / only_trashed (0/1) for archived rows. */
+    async list(filters = {}) {
+      const params = strip({
+        project_id: filters.project_id,
+        user_id: filters.user_id,
+        status: filters.status,
+        offering_type: filters.offering_type,
+        with_trashed: filters.with_trashed ? 1 : undefined,
+        only_trashed: filters.only_trashed ? 1 : undefined,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/partnership-requests', { params }));
+    },
+
+    /** GET /admin/partnership-requests/:id — includes soft-deleted. */
+    async get(id) {
+      return unwrap(await http.get(`/admin/partnership-requests/${id}`));
+    },
+
+    /**
+     * POST /admin/partnership-requests — proxy-create on behalf of a user.
+     * Bypasses the addon gate but still validates solidarity-arena,
+     * non-owner, and no-duplicate. Body: { project_id, user_id,
+     * offering_type, firm_name, capability_brief, proposed_share?,
+     * message, reason }.
+     */
+    async proxyCreate(payload) {
+      const body = strip({
+        project_id: payload.project_id,
+        user_id: payload.user_id,
+        offering_type: payload.offering_type,
+        firm_name: payload.firm_name,
+        capability_brief: payload.capability_brief,
+        proposed_share: payload.proposed_share,
+        message: payload.message,
+        reason: payload.reason,
+      });
+      return unwrap(await http.post('/admin/partnership-requests', body));
+    },
+
+    /** POST /admin/partnership-requests/:id/override  { new_status, reason }.
+     *  No cascade — accepting one does not auto-reject siblings. */
+    async override(id, newStatus, reason) {
+      return unwrap(
+        await http.post(`/admin/partnership-requests/${id}/override`, {
+          new_status: newStatus,
+          reason,
+        })
+      );
+    },
+
+    /** DELETE /admin/partnership-requests/:id  { reason } — soft-delete. */
+    async remove(id, reason) {
+      return http.delete(`/admin/partnership-requests/${id}`, {
+        data: { reason },
+      });
+    },
+
+    /** POST /admin/partnership-requests/:id/restore — undo a soft-delete. */
+    async restore(id) {
+      return unwrap(
+        await http.post(`/admin/partnership-requests/${id}/restore`)
+      );
+    },
+
+    /** DELETE /admin/partnership-requests/:id/force-delete  { reason }
+     *  — super-admin only, irreversible. */
+    async forceDelete(id, reason) {
+      return http.delete(`/admin/partnership-requests/${id}/force-delete`, {
+        data: { reason },
+      });
+    },
+
+    /**
+     * POST /admin/projects/:projectId/force-partner-solidarity
+     * Force-accept a specific offer on behalf of an unresponsive owner.
+     * Distinct audit action (partnership.force_accept) from override.
+     * Body: { partnership_request_id, reason }.
+     */
+    async forcePartner(projectId, partnershipRequestId, reason) {
+      return unwrap(
+        await http.post(
+          `/admin/projects/${projectId}/force-partner-solidarity`,
+          { partnership_request_id: partnershipRequestId, reason }
+        )
+      );
+    },
+  },
+
+
+  /* ============================================================
+   * PARTNER APPLICATIONS — the "Become a Partner" program.
+   * ----------------------------------------------------------------
+   * Businesses apply (public POST /partners/apply); admins approve to
+   * mint a 1-year discount code, and manage the full lifecycle here.
+   * SEPARATE from `partnerships` above (Solidarity offers) and
+   * `applications` (project bids) — don't confuse them. See
+   * partner_applications.md.
+   *
+   * Base: /admin/partner-applications. All require admin:* + verified
+   * phone + not-suspended; force-delete additionally needs super-admin:*.
+   *
+   *   GET    /                       list + filters (status, sector,
+   *                                  user_id, q, with/only_trashed)
+   *   GET    /:id                    show (incl. soft-deleted)
+   *   POST   /:id/approve            mint code, +1yr expiry; 422 if approved
+   *   POST   /:id/reject             { rejection_reason }; 422 if approved
+   *   PATCH  /:id                    partial update of company/sector/…
+   *   POST   /:id/regenerate-code    new code; 422 if not approved/revoked
+   *   POST   /:id/revoke             { reason } kill-switch; code stays,
+   *                                  is_code_valid → false
+   *   POST   /:id/reinstate          clears revocation; 422 if not revoked
+   *   DELETE /:id                    { reason } soft-delete
+   *   POST   /:id/restore            restore soft-deleted
+   *   DELETE /:id/force-delete       { reason } — super-admin, permanent
+   * ============================================================ */
+  partnerApplications: {
+    /** GET /admin/partner-applications — paginated list.
+     *  Filters AND together: status (pending/approved/rejected),
+     *  sector (exact), user_id, q (partial on company_name OR email),
+     *  with_trashed / only_trashed (0/1). */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        sector: filters.sector,
+        user_id: filters.user_id,
+        q: filters.q,
+        with_trashed: filters.with_trashed ? 1 : undefined,
+        only_trashed: filters.only_trashed ? 1 : undefined,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(
+        await http.get('/admin/partner-applications', { params })
+      );
+    },
+
+    /** GET /admin/partner-applications/:id — includes soft-deleted. */
+    async get(id) {
+      return unwrap(await http.get(`/admin/partner-applications/${id}`));
+    },
+
+    /** POST /:id/approve — mints a code, sets a 1-yr expiry, stamps the
+     *  approver, and clears any prior revoke/reject. 422 if already approved. */
+    async approve(id) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/approve`)
+      );
+    },
+
+    /** POST /:id/reject — { rejection_reason } (required, applicant-facing).
+     *  422 if already approved. */
+    async reject(id, rejectionReason) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/reject`, {
+          rejection_reason: rejectionReason,
+        })
+      );
+    },
+
+    /** PATCH /:id — partial update of any of company_name / sector /
+     *  email / phone / offer (+ optional reason). */
+    async update(id, payload) {
+      const body = strip({
+        company_name: payload.company_name,
+        sector: payload.sector,
+        email: payload.email,
+        phone: payload.phone,
+        offer: payload.offer,
+        reason: payload.reason,
+      });
+      return unwrap(
+        await http.patch(`/admin/partner-applications/${id}`, body)
+      );
+    },
+
+    /** POST /:id/regenerate-code — new code, resets the 1-yr expiry.
+     *  422 if not approved or currently revoked. */
+    async regenerateCode(id) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/regenerate-code`)
+      );
+    },
+
+    /** POST /:id/revoke — { reason } (required). Kill-switch: the code
+     *  stays but is_code_valid → false. 422 if not approved / already revoked. */
+    async revoke(id, reason) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/revoke`, { reason })
+      );
+    },
+
+    /** POST /:id/reinstate — clears the revocation. 422 if not revoked. */
+    async reinstate(id) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/reinstate`)
+      );
+    },
+
+    /** DELETE /:id — { reason } (required). Soft delete. */
+    async remove(id, reason) {
+      return http.delete(`/admin/partner-applications/${id}`, {
+        data: { reason },
+      });
+    },
+
+    /** POST /:id/restore — restore a soft-deleted row. */
+    async restore(id) {
+      return unwrap(
+        await http.post(`/admin/partner-applications/${id}/restore`)
+      );
+    },
+
+    /** DELETE /:id/force-delete — { reason } (required) — super-admin,
+     *  permanent. 403 for a plain admin. */
+    async forceDelete(id, reason) {
+      return http.delete(`/admin/partner-applications/${id}/force-delete`, {
+        data: { reason },
+      });
+    },
+  },
+
+
+  /* ============================================================
    * SUBSCRIPTIONS
    * ----------------------------------------------------------------
    * Admin subscription management. All paths live under
@@ -432,6 +704,63 @@ export const admin = {
       return http.delete(`/admin/subscriptions/${id}`, {
         data: strip({ reason }),
       });
+    },
+  },
+
+
+  /* ============================================================
+   * PAYMENTS — read-only view over the payment_charges ledger
+   * ----------------------------------------------------------------
+   * Payments & invoices console (see the Admin Payments Postman
+   * collection). A transaction row IS a payment_charge; user /
+   * category / plan come through subscription_id. Invoice numbers
+   * are derived from the id (`INV-` + id), not stored.
+   *
+   * The list endpoint returns FOUR top-level keys in one shot:
+   *   - summary      { total_revenue, refunded_amount } in SAR
+   *   - data[]       PaymentResource rows for the current filter/page
+   *   - meta         pagination
+   *   - tab_counts   { all, successful, pending, failed, refunded }
+   * `summary` and `tab_counts` are computed over ALL payments and do
+   * NOT change as you filter the table — so the cards + tab badges
+   * stay constant. We pass all four through untouched.
+   *
+   * PaymentResource money: `amount` is SAR (already halalas/100),
+   * `amount_halalas` is the raw value. The `*_label` fields follow
+   * Accept-Language; the raw fields (status / kind / payment_method)
+   * are for logic.
+   *
+   * can_refund / can_confirm are eligibility seeds — the refund /
+   * confirm actions are not built on the BE yet, so this surface is
+   * read-only (list + show + client-side export).
+   * ============================================================ */
+  payments: {
+    /** GET /admin/payments — list + summary + tab counts.
+     *  Filters (table only): status (successful|pending|failed|
+     *  refunded), kind (initial|renewal), payment_method (card|
+     *  bank_transfer|applepay|stcpay), q (invoice # or user name),
+     *  per_page. Returns { data, meta, summary, tab_counts }. */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        kind: filters.kind,
+        payment_method: filters.payment_method,
+        q: filters.q,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      const res = await http.get('/admin/payments', { params });
+      return {
+        data: Array.isArray(res?.data) ? res.data : [],
+        meta: res?.meta || null,
+        summary: res?.summary || null,
+        tab_counts: res?.tab_counts || null,
+      };
+    },
+
+    /** GET /admin/payments/:id — one payment (404 if missing). */
+    async get(id) {
+      return unwrap(await http.get(`/admin/payments/${id}`));
     },
   },
 

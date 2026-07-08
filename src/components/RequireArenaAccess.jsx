@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldOff, Sparkles } from 'lucide-react';
-import { auth } from '../services';
+import { auth, subscriptions } from '../services';
+import { deriveArenaAddons } from '../services/subscriptions';
 import { arenaConfig, canViewArena } from '../config/projectConstants';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -22,21 +23,28 @@ export default function RequireArenaAccess({ arena, children }) {
 
   useEffect(() => {
     let cancelled = false;
-    auth
-      .me()
-      .then((u) => {
+    // Add-on-gated arenas (إسناد / التضامن) resolve ownership from the
+    // user's active subscriptions on /subscriptions/me. Non-gated arenas
+    // skip the extra call.
+    const statusPromise = cfg.isUpgrade
+      ? subscriptions.getStatus().catch(() => null)
+      : Promise.resolve(null);
+
+    Promise.all([auth.me(), statusPromise])
+      .then(([u, status]) => {
         if (cancelled) return;
         const at = u?.account_type || null;
-        const paid = !!u?.has_isnad_upgrade;
+        const addons = status ? deriveArenaAddons(status) : {};
         setAccountType(at);
 
-        if (canViewArena(arena, at, paid)) {
+        if (canViewArena(arena, at, addons)) {
           setState('allowed');
           return;
         }
+        const addonMissing = cfg.addonCode && !addons[cfg.addonCode];
         if (
           cfg.isUpgrade &&
-          !paid &&
+          addonMissing &&
           (cfg.viewableBy || []).includes(at)
         ) {
           setState('upgrade');

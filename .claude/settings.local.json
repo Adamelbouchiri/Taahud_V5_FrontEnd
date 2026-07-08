@@ -23,7 +23,8 @@
       "PowerShell(npx vite build 2>&1 | Select-Object -Last 3)",
       "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\react-projects\\\\Taahud_v5_frontend\\\\src\\\\i18n\\\\dictionaries\\\\zh.js\"\\); $bytes[0..30] | ForEach-Object { \"{0:X2}\" -f $_ })",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "PowerShell(git *)"
     ]
   }
 }

@@ -5,8 +5,11 @@ import {
   Users,
   FolderKanban,
   ClipboardList,
+  Handshake,
+  Store,
   CreditCard,
-  // Package, // TODO: re-enable when plans management is ready
+  Receipt,
+  Package,
   Key,
   Activity,
   ArrowLeftRight,
@@ -36,8 +39,11 @@ const NAV_ITEMS = [
   { to: '/admin/users', labelKey: 'admin.sidebar.items.users', icon: Users, roles: ['admin', 'super-admin'] },
   { to: '/admin/projects', labelKey: 'admin.sidebar.items.projects', icon: FolderKanban, roles: ['admin', 'super-admin'] },
   { to: '/admin/applications', labelKey: 'admin.sidebar.items.applications', icon: ClipboardList, roles: ['admin', 'super-admin'] },
+  { to: '/admin/partnerships', labelKey: 'admin.sidebar.items.partnerships', icon: Handshake, roles: ['admin', 'super-admin'] },
+  { to: '/admin/partner-applications', labelKey: 'admin.sidebar.items.partners', icon: Store, roles: ['admin', 'super-admin'] },
   { to: '/admin/subscriptions', labelKey: 'admin.sidebar.items.subscriptions', icon: CreditCard, roles: ['admin', 'super-admin'] },
-  // { to: '/admin/plans', labelKey: 'admin.sidebar.items.plans', icon: Package, roles: ['admin', 'super-admin'] }, // TODO: re-enable when plans management is ready
+  { to: '/admin/payments', labelKey: 'admin.sidebar.items.payments', icon: Receipt, roles: ['admin', 'super-admin'] },
+  { to: '/admin/plans', labelKey: 'admin.sidebar.items.plans', icon: Package, roles: ['admin', 'super-admin'] },
   { to: '/admin/activity', labelKey: 'admin.sidebar.items.activity', icon: Activity, roles: ['admin', 'super-admin'] },
   { to: '/admin/roles', labelKey: 'admin.sidebar.items.roles', icon: Key, roles: ['super-admin'] },
 ];

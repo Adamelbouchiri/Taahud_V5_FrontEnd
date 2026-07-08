@@ -99,7 +99,20 @@ export default function AdminUsersPage() {
                 {row.name || '—'}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                ID #{row.id}
+                {row.identifier ? (
+                  <code
+                    dir="ltr"
+                    style={{
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    {row.identifier}
+                  </code>
+                ) : (
+                  `ID #${row.id}`
+                )}
               </div>
             </div>
           </div>

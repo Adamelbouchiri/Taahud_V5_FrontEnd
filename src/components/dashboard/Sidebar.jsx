@@ -22,6 +22,7 @@ import {
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
 import { ARENAS, canViewArena, canPostAnyArena } from '../../config/projectConstants';
+import useArenaAddons from '../../hooks/useArenaAddons';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -122,17 +123,31 @@ export default function Sidebar({ open, onClose }) {
   const { t } = useTranslation();
   const { user, loading, logout, isAdmin } = useUser();
   const accountType = user?.account_type;
-  // إسناد is paywalled — only show its sidebar link to users who
-  // have actually paid for the upgrade. Field comes from the backend
-  // once the upgrade flow ships; until then it's always false and
-  // the link stays hidden.
-  const hasIsnadUpgrade = !!user?.has_isnad_upgrade;
+  // إسناد and التضامن are paywalled — only show their sidebar links to
+  // users who own the matching add-on. Ownership is resolved from the
+  // user's active subscriptions (see useArenaAddons) and fed into
+  // canViewArena via the per-arena addonCode.
+  const { addons } = useArenaAddons();
 
   // Filter items by role. If we don't know the role yet, show
   // the full set so the UI doesn't look broken during loading.
   const items = accountType
     ? NAV_ITEMS.filter((it) => it.accountTypes.includes(accountType))
-    : NAV_ITEMS;
+    : [...NAV_ITEMS];
+
+  // Partnership offers live only in the solidarity arena, which is
+  // paywalled — surface the "My partnerships" link only to users who
+  // own the solidarity_addon. Slotted right after "Applications" so
+  // the two marketplace inboxes sit together.
+  if (addons?.solidarity_addon) {
+    const at = items.findIndex((it) => it.to === '/dashboard/applications');
+    const partnershipsItem = {
+      to: '/dashboard/partnerships',
+      labelKey: 'dashboard.sidebar.items.partnerships',
+      icon: Handshake,
+    };
+    items.splice(at >= 0 ? at + 1 : items.length, 0, partnershipsItem);
+  }
 
   const soonItems = accountType
     ? SOON_ITEMS.filter((it) => it.accountTypes.includes(accountType))
@@ -163,7 +178,7 @@ export default function Sidebar({ open, onClose }) {
   // a flash of links the user can't access. إسناد further requires
   // the paid upgrade — see canViewArena.
   const arenaLinks = accountType
-    ? ARENAS.filter((a) => canViewArena(a.value, accountType, hasIsnadUpgrade))
+    ? ARENAS.filter((a) => canViewArena(a.value, accountType, addons))
     : [];
 
   const handleLogout = async () => {
@@ -199,7 +214,7 @@ export default function Sidebar({ open, onClose }) {
           >
             <button
               onClick={() => {
-                navigate('/dashboard');
+                navigate('/');
                 onClose?.();
               }}
               className="bg-transparent border-0 p-0 cursor-pointer"

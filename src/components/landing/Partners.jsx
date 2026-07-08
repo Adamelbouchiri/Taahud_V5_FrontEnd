@@ -100,23 +100,22 @@ export default function Partners() {
         .partners-marquee:hover { animation-play-state: paused; }
         .partners-tile {
           flex-shrink: 0;
-          width: 180px;
-          height: 96px;
-          margin-inline-end: 28px;
+          width: 220px;
+          height: 130px;
+          margin-inline-end: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 8px 14px;
+          padding: 4px 8px;
           transition: transform 0.25s;
         }
         .partners-tile:hover {
           transform: translateY(-2px);
         }
         .partners-tile img {
-          max-width: 100%;
-          max-height: 100%;
+          height: 100%;
           width: auto;
-          height: auto;
+          max-width: 100%;
           object-fit: contain;
           display: block;
           user-select: none;

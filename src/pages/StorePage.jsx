@@ -18,6 +18,7 @@ import {
 import Navbar from '../components/landing/Navbar';
 import Footer from '../components/landing/Footer';
 import { useTranslation } from '../i18n/LanguageContext';
+import { submitLead } from '../utils/leads';
 import arDict from '../i18n/dictionaries/ar';
 import enDict from '../i18n/dictionaries/en';
 import zhDict from '../i18n/dictionaries/zh';
@@ -62,7 +63,18 @@ export default function StorePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, dir, lang } = useTranslation();
+  const [email, setEmail] = useState('');
   const [notified, setNotified] = useState(false);
+
+  // Fire-and-forget the email to the store waitlist Google Sheet,
+  // then flip the UI to a confirmed state regardless of network
+  // outcome (mirrors the Academy/Affiliate cards' behavior).
+  const submitNotify = (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    submitLead(email.trim(), 'store');
+    setNotified(true);
+  };
 
   // Smooth-scroll the user to the top when they arrive — coming
   // from a long dashboard page their scroll position would
@@ -174,67 +186,78 @@ export default function StorePage() {
               </p>
 
               <div className="flex items-center gap-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setNotified(true)}
-                  disabled={notified}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] text-white font-semibold transition-all"
-                  style={{
-                    fontSize: 13.5,
-                    background: notified ? '#0d5538' : ACCENT,
-                    border: `1px solid ${notified ? '#0d5538' : ACCENT}`,
-                    cursor: notified ? 'default' : 'pointer',
-                    boxShadow: notified
-                      ? '0 6px 14px rgba(19,109,74,0.30)'
-                      : '0 6px 14px rgba(19,109,74,0.30)',
-                    opacity: notified ? 0.95 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (notified) return;
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  {notified ? (
-                    <>
-                      <Check size={15} strokeWidth={2.2} />
-                      {t('store.notifyDone')}
-                    </>
-                  ) : (
-                    <>
+                {notified ? (
+                  <span
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] text-white font-semibold"
+                    style={{
+                      fontSize: 13.5,
+                      background: '#0d5538',
+                      border: '1px solid #0d5538',
+                      boxShadow: '0 6px 14px rgba(19,109,74,0.30)',
+                    }}
+                  >
+                    <Check size={15} strokeWidth={2.2} />
+                    {t('store.notifyDone')}
+                  </span>
+                ) : (
+                  <form
+                    onSubmit={submitNotify}
+                    className="flex items-center gap-2 flex-wrap"
+                  >
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t('store.notifyPlaceholder')}
+                      className="min-w-0"
+                      style={{
+                        width: 220,
+                        maxWidth: '100%',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 12,
+                        outline: 0,
+                        padding: '11px 14px',
+                        fontSize: 13.5,
+                        color: 'var(--text-ink)',
+                        fontFamily: 'inherit',
+                        transition:
+                          'border-color 0.15s ease, box-shadow 0.15s ease',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = ACCENT;
+                        e.currentTarget.style.boxShadow = `0 0 0 4px ${ACCENT_SOFT}`;
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor =
+                          'var(--border-default)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] text-white font-semibold transition-all"
+                      style={{
+                        fontSize: 13.5,
+                        background: ACCENT,
+                        border: `1px solid ${ACCENT}`,
+                        cursor: 'pointer',
+                        boxShadow: '0 6px 14px rgba(19,109,74,0.30)',
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
                       <BellRing size={15} strokeWidth={1.9} />
                       {t('store.notify')}
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] font-semibold transition-all"
-                  style={{
-                    fontSize: 13.5,
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-default)',
-                    color: 'var(--text-ink-soft)',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-strong)';
-                    e.currentTarget.style.background = 'var(--bg-cream)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-default)';
-                    e.currentTarget.style.background = 'var(--bg-surface)';
-                  }}
-                >
-                  <BackIcon size={14} strokeWidth={1.9} />
-                  {cameFromApp
-                    ? t('store.backDashboard')
-                    : t('store.backHome')}
-                </button>
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
 

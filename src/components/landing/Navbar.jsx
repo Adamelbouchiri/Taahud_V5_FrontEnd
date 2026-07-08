@@ -95,6 +95,12 @@ function navLinksFor(t) {
       href: '#plans',
     },
     {
+      key: 'partners',
+      label: t('nav.partners'),
+      to: '/partners',
+      route: true,
+    },
+    {
       key: 'contact',
       label: t('nav.contact'),
       to: '/contact',

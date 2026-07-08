@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import ar from './dictionaries/ar';
 import en from './dictionaries/en';
 import zh from './dictionaries/zh';
+import ur from './dictionaries/ur';
 
 /* ============================================================
  *  LanguageContext
@@ -17,15 +18,16 @@ import zh from './dictionaries/zh';
  *  `setLang(code)` flips the language, updates `<html lang>` +
  *  `<html dir>`, and persists the choice to localStorage.
  *
- *  Supported codes: 'ar' (RTL), 'en' (LTR), 'zh' (LTR).
+ *  Supported codes: 'ar' (RTL), 'en' (LTR), 'zh' (LTR), 'ur' (RTL).
  * ============================================================ */
 
-const DICTIONARIES = { ar, en, zh };
+const DICTIONARIES = { ar, en, zh, ur };
 
 export const LANGUAGES = [
   { code: 'ar', label: 'العربية', short: 'AR', dir: 'rtl' },
   { code: 'en', label: 'English', short: 'EN', dir: 'ltr' },
   { code: 'zh', label: '中文', short: '中文', dir: 'ltr' },
+  { code: 'ur', label: 'اردو', short: 'اردو', dir: 'rtl' },
 ];
 
 const STORAGE_KEY = 'taahud:lang';

@@ -3,11 +3,14 @@ import RequireArenaAccess from '../../components/RequireArenaAccess';
 import PublicProjectsPage from '../PublicProjectsPage';
 
 /* /projects/solidarity — ساحة التضامن
-   Contractor-to-contractor cooperation. Viewable by contractors only. */
+   Cross-discipline cooperation (developer / entrepreneur / engineering).
+   Paywalled — requires the solidarity_addon subscription. */
 export default function SolidarityArenaPage() {
   return (
     <RequireArenaAccess arena="solidarity">
-      <PublicProjectsPage arenaSlug="solidarity" />
+      {/* RequireArenaAccess already verified access (role + add-on), so
+          the inner page must not re-run the paywall gate. */}
+      <PublicProjectsPage arenaSlug="solidarity" accessGranted />
     </RequireArenaAccess>
   );
 }

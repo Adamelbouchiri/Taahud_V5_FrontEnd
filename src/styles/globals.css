@@ -10,7 +10,7 @@
  *  further down. Arabic stays on the locally-bundled Thmanyah
  *  family below.
  * ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
 
 /* ============================================================
  *  Thmanyah Typeface (self-hosted)
@@ -298,6 +298,17 @@ html[lang='zh'] {
   --font-serif: 'Noto Serif SC', serif;
 }
 
+/* Urdu — Arabic script but needs the Urdu-extended letters (ٹ ڈ ڑ
+   ں ہ ھ ے گ چ پ) that the Arabic-only Thmanyah face doesn't ship.
+   Noto Naskh Arabic covers them in a Naskh style consistent with
+   the Arabic UI; Thmanyah stays as fallback. RTL comes from the
+   `dir` attribute set by LanguageContext, not from these rules. */
+html[lang='ur'] {
+  --font-sans: 'Noto Naskh Arabic', 'Thmanyah Sans', system-ui, sans-serif;
+  --font-display: 'Noto Naskh Arabic', 'Thmanyah Serif Display', serif;
+  --font-serif: 'Noto Naskh Arabic', 'Thmanyah Serif Text', serif;
+}
+
 @layer base {
   html {
     height: 100%;
@@ -404,7 +415,12 @@ html[lang='zh'] {
     color: var(--text-ink);
     outline: none;
     transition: all 0.18s ease;
-    padding: 14px 44px 14px 16px;
+    /* Logical padding: the icon sits at the inline-end (end-[14px]), so the
+       44px gap must follow the writing direction too — otherwise in RTL the
+       gap is reserved on the wrong side and the placeholder runs under the
+       icon. */
+    padding-block: 14px;
+    padding-inline: 16px 44px;
     font-size: 14.5px;
   }
   .field::placeholder {
@@ -425,7 +441,7 @@ html[lang='zh'] {
     box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.1);
   }
   .field-no-icon {
-    padding-right: 16px;
+    padding-inline-end: 16px;
   }
 
   .field-label {
@@ -699,5 +715,44 @@ html[lang='zh'] {
   html.dark input[type='month']::-webkit-calendar-picker-indicator,
   html.dark input[type='week']::-webkit-calendar-picker-indicator {
     filter: invert(0.9) hue-rotate(180deg);
+  }
+
+  /* ---------- Identifier chip ----------
+     Compact copy-to-clipboard pill for the human-readable user
+     identifier (e.g. 260703R47). Used on the profile card and in
+     admin user views. See components/IdentifierChip.jsx. */
+  .identifier-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-default);
+    color: var(--text-ink-soft);
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+  .identifier-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--text-ink);
+  }
+  .identifier-chip__label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .identifier-chip code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: inherit;
+  }
+  .identifier-chip svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
   }
 }

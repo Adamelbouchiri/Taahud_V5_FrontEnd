@@ -35,7 +35,7 @@ import {
   PROJECT_DURATIONS,
   EXPERIENCE_LEVELS,
 } from '../config/projectConstants';
-import { CITIES } from '../config/constants';
+import { cityOptions } from '../config/cityTranslations';
 import { projects as projectsApi } from '../services';
 import { UserProvider, useUser } from '../contexts/UserContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -66,7 +66,7 @@ function EditProjectPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -349,7 +349,7 @@ function EditProjectPage() {
                 <SelectField
                   label={t('projects.create.steps.details.cityLabel')}
                   icon={MapPin}
-                  options={CITIES}
+                  options={cityOptions(lang)}
                   value={form.city}
                   onChange={(e) => update('city', e.target.value)}
                   error={errors.city}

@@ -20,14 +20,27 @@ export default function PhoneField({
   placeholder,
 }) {
   const { t } = useTranslation();
-  // Saudi numbers go in without the local leading zero (+966 5X…, not 05X…).
-  // Warn — don't block — when the user types a leading zero; submission
-  // strips it anyway.
-  const hasLeadingZero = /^\s*0/.test(value || '');
+  // Saudi numbers go in without the local leading zero (+966 5X…, not 05X…)
+  // and the local part always starts with 5. Warn — don't block — when the
+  // first digit is wrong: a leading zero gets stripped on submit, any other
+  // non-5 start just isn't a valid Saudi mobile.
+  const raw = value || '';
+  const digits = raw.replace(/\D/g, '');
+  const firstDigit = digits[0];
+  const hasLeadingZero = firstDigit === '0';
+  const hasInvalidStart = !!firstDigit && firstDigit !== '5' && !hasLeadingZero;
+  // Anything that isn't a digit or a formatting space (letters, +, -, #, …)
+  // doesn't belong in the number — warn so a stray symbol isn't silently
+  // stripped on submit.
+  const hasSymbols = /[^\d\s]/.test(raw);
   return (
     <div className="animate-fade-up">
       <label className="field-label">{label || t('auth.phoneFieldLabel')}</label>
-      <div className="flex gap-2">
+      {/* Force the whole phone row LTR so the +966 country code always sits on
+          the left of the input (it's the first flex child, which would flip to
+          the right in the RTL/Arabic layout) and the digits read left-to-right,
+          matching international phone-number convention. */}
+      <div className="flex gap-2" dir="ltr">
         <span className="phone-cc">
           {countryCode || t('auth.phoneCountryCode')}
         </span>
@@ -38,6 +51,11 @@ export default function PhoneField({
           <input
             type="tel"
             inputMode="numeric"
+            // Numbers read left-to-right, so keep the input LTR too. This also
+            // pins the icon's inline-end (end-[14px]) and the field's 44px
+            // padding-inline gap to the right — the same side — so the digits
+            // never run under the icon.
+            dir="ltr"
             placeholder={placeholder || t('auth.phonePlaceholder')}
             value={value}
             onChange={onChange}
@@ -54,7 +72,23 @@ export default function PhoneField({
           {t('auth.phoneLeadingZeroWarning')}
         </p>
       )}
-      {hint && !error && !hasLeadingZero && (
+      {!error && hasInvalidStart && (
+        <p
+          className="field-hint"
+          style={{ color: 'var(--accent-gold)', fontWeight: 600 }}
+        >
+          {t('auth.phoneMustStartWithFive')}
+        </p>
+      )}
+      {!error && !hasLeadingZero && !hasInvalidStart && hasSymbols && (
+        <p
+          className="field-hint"
+          style={{ color: 'var(--accent-gold)', fontWeight: 600 }}
+        >
+          {t('auth.phoneDigitsOnly')}
+        </p>
+      )}
+      {hint && !error && !hasLeadingZero && !hasInvalidStart && !hasSymbols && (
         <p className="field-hint">{hint}</p>
       )}
     </div>
