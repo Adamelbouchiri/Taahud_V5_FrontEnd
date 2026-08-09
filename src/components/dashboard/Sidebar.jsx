@@ -18,6 +18,7 @@ import {
   Briefcase,
   ShoppingBag,
   CreditCard,
+  Wallet,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -54,6 +55,16 @@ const NAV_ITEMS = [
     icon: Briefcase,
     // Suppliers don't have a project flow in V5; hide it for them.
     accountTypes: ['individual', 'entrepreneur', 'engineering', 'developer'],
+  },
+  // Escrow wallet. Only the account types that can be awarded a
+  // project (i.e. can bid) ever earn into one — individuals post work
+  // and suppliers have no project flow, so neither would see anything
+  // but an empty page.
+  {
+    to: '/dashboard/wallet',
+    labelKey: 'dashboard.sidebar.items.wallet',
+    icon: Wallet,
+    accountTypes: ['entrepreneur', 'engineering', 'developer'],
   },
   {
     to: '/dashboard/profile',

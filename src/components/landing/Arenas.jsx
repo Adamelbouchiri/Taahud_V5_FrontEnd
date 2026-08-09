@@ -181,6 +181,12 @@ export default function Arenas() {
           >
             {t('landing.arenasSection.subtitle')}
           </p>
+          <p
+            className="m-0 mt-1.5 animate-fade-up"
+            style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-muted)' }}
+          >
+            {t('landing.arenasSection.sampleNote')}
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { hasToken } from '../services/session';
 
 /* ============================================================
  *  RequireGuest
@@ -24,11 +25,7 @@ import { Navigate, useLocation } from 'react-router-dom';
  * ============================================================ */
 export default function RequireGuest({ children }) {
   const location = useLocation();
-  // Check both buckets — sessionStorage covers a no-remember_me login.
-  const token =
-    localStorage.getItem('token') || sessionStorage.getItem('token');
-
-  if (token) {
+  if (hasToken()) {
     // Already logged in — send to whatever was requested, or to
     // the dashboard as a sensible default.
     const params = new URLSearchParams(location.search);

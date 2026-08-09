@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import SolidarityAddonCard from '../SolidarityAddonCard';
+import { hasToken } from '../../services/session';
 
 /* ============================================================
  *  SolidarityAddon — landing section
@@ -13,9 +14,7 @@ export default function SolidarityAddon() {
   const navigate = useNavigate();
   // Signed-in visitors go straight to checkout; guests enter the
   // sign-up funnel first (mirrors the plans-grid CTAs above).
-  const hasToken =
-    typeof window !== 'undefined' &&
-    !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
+  const signedIn = typeof window !== 'undefined' && hasToken();
   return (
     <section
       id="solidarity-addon"
@@ -24,7 +23,7 @@ export default function SolidarityAddon() {
     >
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
         <SolidarityAddonCard
-          onSubscribe={() => navigate(hasToken ? '/subscribe' : '/register')}
+          onSubscribe={() => navigate(signedIn ? '/subscribe' : '/register')}
           onExplore={() => navigate('/projects/solidarity')}
         />
       </div>

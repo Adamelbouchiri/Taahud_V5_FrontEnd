@@ -7,6 +7,10 @@ import {
   Truck,
   ShieldCheck,
   GraduationCap,
+  HardHat,
+  Sofa,
+  BrainCircuit,
+  UsersRound,
 } from 'lucide-react';
 
 /* ============================================================
@@ -33,6 +37,10 @@ export const PARTNER_SECTORS = [
   { key: 'logistics',   canonical: 'لوجستيات وشحن',   icon: Truck,           accent: '#0e7490' },
   { key: 'insurance',   canonical: 'تأمين',           icon: ShieldCheck,     accent: '#7c3aed' },
   { key: 'training',    canonical: 'تدريب وتطوير',    icon: GraduationCap,   accent: '#be185d' },
+  { key: 'construction', canonical: 'البناء والتشطيب',        icon: HardHat,      accent: '#a16207' },
+  { key: 'interior',     canonical: 'التصميم الداخلي',        icon: Sofa,         accent: '#9d174d' },
+  { key: 'ai',           canonical: 'الذكاء الاصطناعي',       icon: BrainCircuit, accent: '#0f766e' },
+  { key: 'hr',           canonical: 'خدمات الموارد البشرية',  icon: UsersRound,   accent: '#4338ca' },
 ];
 
 // Look up a sector descriptor by its stable key OR by the canonical

@@ -12,6 +12,7 @@ import {
 import Logo from '../Logo';
 import LanguageThemeSwitcher from '../LanguageThemeSwitcher';
 import { auth } from '../../services';
+import { hasToken } from '../../services/session';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* Nav links — `href` starting with `#` triggers smooth-scroll to
@@ -127,7 +128,7 @@ function navLinksFor(t) {
  *  The landing page lives OUTSIDE the dashboard's UserProvider, so
  *  we read the auth state ourselves. The flow is:
  *
- *    1. Check localStorage for a token. If absent → logged out.
+ *    1. Ask services/session.js for a token. If absent → logged out.
  *    2. If a token exists, call auth.me() once to confirm it's
  *       still valid AND to fetch the user's name for the avatar.
  *    3. If me() rejects (401, network error, etc.), treat as
@@ -138,11 +139,7 @@ function useLandingAuth() {
   const [status, setStatus] = useState('loading'); // loading | guest | authed
 
   useEffect(() => {
-    // Token may live in localStorage (remember_me) or sessionStorage
-    // (tab-scoped). See services/auth.js.
-    const token =
-      localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!token) {
+    if (!hasToken()) {
       setStatus('guest');
       return;
     }

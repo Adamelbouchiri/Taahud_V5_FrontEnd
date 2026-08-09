@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions, auth } from '../../services';
+import { hasToken } from '../../services/session';
+import { snapshotPlanName } from '../../utils/subscriptionSnapshot';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -60,6 +62,14 @@ const AUDIENCE_BY_ACCOUNT_TYPE = {
   developer: 'developer',
   supplier: 'supplier',
 };
+
+// The public catalog only localizes `features_localized` in ar/en. Collapse
+// the four UI languages onto those two: RTL (ar, ur) → ar, LTR (en, zh) → en.
+// Names/descriptions come back in both languages regardless, so we still pick
+// those per the exact UI language client-side.
+function catalogLangFor(lang) {
+  return lang === 'ar' || lang === 'ur' ? 'ar' : 'en';
+}
 
 export default function Plans() {
   const navigate = useNavigate();
@@ -167,26 +177,115 @@ function GuestPlansBody({ t, lang, dir, navigate }) {
 
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
 
-  // The feature list comes from the active dictionary directly
-  // because t() only resolves leaf strings — arrays would otherwise
-  // round-trip as their JSON form.
-  const features = useMemo(() => {
-    const dict = DICTS[lang] || DICTS.ar;
-    return (
-      dict?.landing?.plans?.tiers?.[audience]?.[tier]?.features || []
-    );
-  }, [lang, audience, tier]);
+  // Live public catalog (GET /plans/catalog). While it loads — or if the
+  // request fails — every accessor below falls back to the marketing copy
+  // baked into the i18n dictionaries, so the section renders instantly and
+  // then progressively upgrades to the live prices/features once they land.
+  const { catalog } = useGuestCatalog(catalogLangFor(lang));
 
-  // Same trick for price lookup — the dictionary holds nested
-  // strings; we just walk it directly.
-  const priceFor = (aud, tr, per) => {
-    const dict = DICTS[lang] || DICTS.ar;
+  // account_type → catalog entry, for O(1) lookups by the selectors below.
+  // The catalog's contractor tier is keyed account_type="entrepreneur", but
+  // the guest tiles use the "contractor" audience id — so we also register
+  // each entry under its mapped UI-audience key (AUDIENCE_BY_ACCOUNT_TYPE)
+  // so typeMap.get('contractor') resolves the entrepreneur entry.
+  const typeMap = useMemo(() => {
+    const m = new Map();
+    for (const at of catalog?.account_types || []) {
+      m.set(at.account_type, at);
+      const uiAudience = AUDIENCE_BY_ACCOUNT_TYPE[at.account_type];
+      if (uiAudience && !m.has(uiAudience)) m.set(uiAudience, at);
+    }
+    return m;
+  }, [catalog]);
+
+  // The live plan for a given audience/tier/interval (null if absent). The
+  // catalog serves interval as a number; our period state is a string.
+  const livePlan = (aud, tr, per) => {
+    const entry = typeMap.get(aud);
+    if (!entry) return null;
     return (
-      dict?.landing?.plans?.tiers?.[aud]?.[tr]?.prices?.[per] || '—'
+      (entry.plans || []).find(
+        (p) =>
+          p.tier === tr &&
+          String(p.billing_interval_months) === String(per)
+      ) || null
     );
   };
 
-  const monthlyForRole = (aud) => priceFor(aud, 'basic', '1');
+  // The dictionary tier block, used as the fallback source everywhere the
+  // live catalog is missing (still loading, request failed, or zh/ur copy
+  // the API doesn't localize).
+  const dictTier = (aud, tr) =>
+    (DICTS[lang] || DICTS.ar)?.landing?.plans?.tiers?.[aud]?.[tr] || null;
+
+  // Feature list + description are interval-independent, so read them off the
+  // active tier's 1-month plan. Live features_localized wins; otherwise the
+  // curated dictionary list (which also covers zh/ur).
+  const tierPlan = livePlan(audience, tier, '1');
+  const features = useMemo(() => {
+    const live = tierPlan?.features_localized;
+    if (Array.isArray(live) && live.length) return live;
+    return dictTier(audience, tier)?.features || [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tierPlan, lang, audience, tier]);
+  const description =
+    pickPlanDescription(tierPlan, lang) ||
+    dictTier(audience, tier)?.description ||
+    '';
+
+  // Period total price. Live plan.price ("399.00" → formatted number) wins;
+  // dictionary string otherwise.
+  const priceFor = (aud, tr, per) => {
+    const p = livePlan(aud, tr, per);
+    if (p) return formatPrice(p.price, lang);
+    return dictTier(aud, tr)?.prices?.[per] || '—';
+  };
+
+  // Tile headline = the account type's cheapest 1-month price (starts_from).
+  const monthlyForRole = (aud) => {
+    const entry = typeMap.get(aud);
+    if (entry && entry.starts_from != null) {
+      return formatPrice(entry.starts_from, lang);
+    }
+    return priceFor(aud, 'basic', '1');
+  };
+
+  // Server-computed savings % vs the same tier's 1-month rate (null when 0 or
+  // unavailable). Falls back to computing it from the dictionary prices — the
+  // same math the component used before the catalog was wired in.
+  const savingsFor = (aud, tr, per) => {
+    const p = livePlan(aud, tr, per);
+    if (p && typeof p.savings_percent === 'number') {
+      return p.savings_percent > 0 ? String(p.savings_percent) : null;
+    }
+    const monthly = dictTier(aud, tr)?.prices?.['1'];
+    const periodPrice = dictTier(aud, tr)?.prices?.[per];
+    const m = parseFloat(String(monthly).replace(/[^\d.]/g, ''));
+    const pr = parseFloat(String(periodPrice).replace(/[^\d.]/g, ''));
+    const months = parseInt(per, 10);
+    if (m > 0 && pr > 0 && months > 1) {
+      const sticker = m * months;
+      const pct = ((sticker - pr) / sticker) * 100;
+      if (pct > 0) return pct.toFixed(1);
+    }
+    return null;
+  };
+
+  // Isnad add-on CTA — from catalog.addons when present, dictionary otherwise.
+  const isnadAddon = (catalog?.addons || []).find(
+    (a) => a.code === 'isnad_addon'
+  );
+  const isnadName =
+    pickPlanName(isnadAddon, lang) || t('landing.plans.addon.title');
+  const isnadBody =
+    pickPlanDescription(isnadAddon, lang) ||
+    t('landing.plans.addon.body', {
+      price: t('landing.plans.addon.price'),
+      threshold: t('landing.plans.addon.threshold'),
+    });
+  const isnadPrice = isnadAddon
+    ? formatPrice(isnadAddon.price, lang)
+    : t('landing.plans.addon.price');
 
   return (
     <>
@@ -327,18 +426,9 @@ function GuestPlansBody({ t, lang, dir, navigate }) {
             tier === 'premium'
               ? 'rgba(184,134,42,0.10)'
               : 'rgba(44,47,124,0.10)';
-          const monthly = priceFor(audience, tier, '1');
           const periodPrice = priceFor(audience, tier, per);
-          // Discount % vs. taking 1 month × N months at headline rate.
-          let discountPct = null;
-          const m = parseFloat(String(monthly).replace(/[^\d.]/g, ''));
-          const p = parseFloat(String(periodPrice).replace(/[^\d.]/g, ''));
-          const months = parseInt(per, 10);
-          if (m > 0 && p > 0 && months > 1) {
-            const sticker = m * months;
-            const pct = ((sticker - p) / sticker) * 100;
-            if (pct > 0) discountPct = pct.toFixed(1);
-          }
+          // Savings badge — server-computed vs the tier's 1-month rate.
+          const discountPct = savingsFor(audience, tier, per);
           return (
             <button
               key={per}
@@ -409,11 +499,10 @@ function GuestPlansBody({ t, lang, dir, navigate }) {
 
       {/* Two-panel feature content */}
       <FeaturePanels
-        audience={audience}
         tier={tier}
         features={features}
+        description={description}
         t={t}
-        lang={lang}
       />
 
       {/* Isnad addon */}
@@ -455,14 +544,11 @@ function GuestPlansBody({ t, lang, dir, navigate }) {
               className="font-display font-bold"
               style={{ fontSize: 15, color: 'var(--text-ink)' }}
             >
-              {t('landing.plans.addon.title')}
+              {isnadName}
             </span>
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-ink-soft)', lineHeight: 1.6 }}>
-            {t('landing.plans.addon.body', {
-              price: t('landing.plans.addon.price'),
-              threshold: t('landing.plans.addon.threshold'),
-            })}
+            {isnadBody}
           </div>
         </div>
         <div
@@ -478,7 +564,7 @@ function GuestPlansBody({ t, lang, dir, navigate }) {
               lineHeight: 1,
             }}
           >
-            {t('landing.plans.addon.price')}
+            {isnadPrice}
           </div>
           <div
             style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}
@@ -929,10 +1015,7 @@ function AuthPlansSkeleton() {
  *  Above lg the columns sit side-by-side; below lg they stack so
  *  the right panel stays the "primary" reading order.
  * ============================================================ */
-function FeaturePanels({ audience, tier, features, t, lang }) {
-  const dict = DICTS[lang] || DICTS.ar;
-  const description =
-    dict?.landing?.plans?.tiers?.[audience]?.[tier]?.description || '';
+function FeaturePanels({ tier, features, description, t }) {
   const accent = tier === 'premium' ? '#b8862a' : '#2c2f7c';
   const accentSoft =
     tier === 'premium' ? 'rgba(184,134,42,0.10)' : 'rgba(44,47,124,0.10)';
@@ -1069,6 +1152,49 @@ function FeaturePanels({ audience, tier, features, t, lang }) {
 
 
 /* ============================================================
+ *  useGuestCatalog
+ *  ----------------------------------------------------------------
+ *  Fetches the public pricing catalog (GET /plans/catalog) for the
+ *  anonymous landing view. No auth — this is the pre-login page.
+ *
+ *  Returns { loading, catalog, error }. `catalog` is null until the
+ *  first response lands (or on failure), which is exactly what lets
+ *  GuestPlansBody fall through to its dictionary defaults meanwhile —
+ *  the section never blocks on the network.
+ *
+ *  Re-fetches when `apiLang` flips (ar↔en) because that's the only
+ *  input that changes `features_localized`; the service caches per
+ *  language so a round-trip toggle is served from memory.
+ * ============================================================ */
+function useGuestCatalog(apiLang) {
+  const [state, setState] = useState({
+    loading: true,
+    catalog: null,
+    error: false,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    setState((s) => ({ ...s, loading: true }));
+    subscriptions
+      .getCatalog({ lang: apiLang })
+      .then((catalog) => {
+        if (!cancelled) setState({ loading: false, catalog, error: false });
+      })
+      .catch(() => {
+        if (!cancelled)
+          setState({ loading: false, catalog: null, error: true });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiLang]);
+
+  return state;
+}
+
+
+/* ============================================================
  *  usePlansData
  *  ----------------------------------------------------------------
  *  Decides the landing plans render path and feeds the auth view.
@@ -1083,13 +1209,11 @@ function FeaturePanels({ audience, tier, features, t, lang }) {
  *  API for anonymous visitors so they never generate a 401.
  * ============================================================ */
 function usePlansData() {
-  const hasToken =
-    typeof window !== 'undefined' &&
-    !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
+  const signedIn = typeof window !== 'undefined' && hasToken();
 
   const [state, setState] = useState({
-    auth: hasToken,
-    loading: hasToken,
+    auth: signedIn,
+    loading: signedIn,
     plans: [],
     status: null,
     user: null,
@@ -1097,7 +1221,7 @@ function usePlansData() {
   });
 
   useEffect(() => {
-    if (!hasToken) return undefined;
+    if (!signedIn) return undefined;
 
     let cancelled = false;
     Promise.all([
@@ -1124,7 +1248,7 @@ function usePlansData() {
     return () => {
       cancelled = true;
     };
-    // hasToken is derived from storage and stable for the session.
+    // signedIn is derived from storage and stable for the session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1151,7 +1275,8 @@ function SubscriptionStatusCard({ status, lang, t, onNavigate }) {
   );
 
   if (baseSub) {
-    const planName = pickPlanName(baseSub.plan, lang);
+    // The name the user subscribed under (snapshot), not the current plan.
+    const planName = snapshotPlanName(baseSub, lang);
     const date = formatPlanDate(baseSub.current_period_ends_at, lang);
     return (
       <StatusBanner

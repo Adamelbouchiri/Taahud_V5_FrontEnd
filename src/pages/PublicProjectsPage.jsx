@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Compass,
-  AlertCircle,
+  AlertTriangle,
   ArrowDownUp,
   LayoutDashboard,
   ShieldOff,
@@ -204,18 +204,12 @@ export default function PublicProjectsPage({ arenaSlug = null, accessGranted = f
                 setSort={setSort}
                 search={search}
                 setSearch={setSearch}
-                count={visible.length}
-                loading={loading}
               />
 
               {loading ? (
                 <SkeletonGrid />
               ) : error ? (
-                <Centered
-                  icon={AlertCircle}
-                  title={t('projects.list.errorTitle')}
-                  subtitle={error}
-                />
+                <WarningNotice message={error} />
               ) : visible.length === 0 ? (
                 <EmptyState search={search} onClear={clearFilters} />
               ) : (
@@ -433,7 +427,7 @@ function darken(hex) {
 /* ============================================================
  *  Toolbar
  * ============================================================ */
-function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearch, count, loading }) {
+function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearch }) {
   const { t, lang } = useTranslation();
   return (
     <div className="mb-6">
@@ -498,21 +492,48 @@ function Toolbar({ city, setCity, type, setType, sort, setSort, search, setSearc
         </div>
       </div>
 
-      {!loading && (
+    </div>
+  );
+}
+
+/* A soft warning strip — used when the list can't be loaded (e.g. the
+   arena needs an active subscription). Deliberately less alarming than
+   a full-page error state. */
+function WarningNotice({ message }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-3 p-5 rounded-[14px] animate-fade-up"
+      style={{
+        background: 'var(--bg-callout-warm)',
+        border: '1px solid var(--border-callout-warm)',
+      }}
+    >
+      <div
+        className="flex shrink-0 mt-0.5"
+        style={{ color: 'var(--accent-gold)' }}
+      >
+        <AlertTriangle size={18} strokeWidth={1.8} />
+      </div>
+      <div className="text-start">
         <div
-          className="flex items-center justify-between flex-wrap gap-3 mt-4 px-1"
-          style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
+          className="mb-1"
+          style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-ink)' }}
         >
-          <span>
-            {t(
-              count === 1
-                ? 'projects.list.countSingular'
-                : 'projects.list.countPlural',
-              { count }
-            )}
-          </span>
+          {t('projects.list.warningTitle')}
         </div>
-      )}
+        <p
+          className="m-0"
+          style={{
+            fontSize: 13.5,
+            lineHeight: 1.7,
+            color: 'var(--text-ink-soft)',
+          }}
+        >
+          {message}
+        </p>
+      </div>
     </div>
   );
 }

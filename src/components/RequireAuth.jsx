@@ -1,16 +1,16 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { hasToken } from '../services/session';
 
 /* ============================================================
  *  RequireAuth
  *  ----------------------------------------------------------------
- *  Wraps any route that requires a logged-in user. Checks for the
- *  presence of an auth token in either storage bucket:
+ *  Wraps any route that requires a logged-in user. Asks
+ *  services/session.js — the one module that owns the token, in
+ *  whichever bucket the user's remember_me choice put it — whether a
+ *  session exists.
  *
- *    - localStorage   → persistent session (login with remember_me)
- *    - sessionStorage → tab-scoped session (login without remember_me)
- *
- *  If either has a token → render protected children. Otherwise →
+ *  Token present → render protected children. Otherwise →
  *  redirect to /login, remembering the originally intended path in
  *  `location.state.from` so LoginPage can send the user back where
  *  they were headed after a successful login.
@@ -28,10 +28,7 @@ import { Navigate, useLocation } from 'react-router-dom';
  * ============================================================ */
 export default function RequireAuth({ children }) {
   const location = useLocation();
-  const token =
-    localStorage.getItem('token') || sessionStorage.getItem('token');
-
-  if (!token) {
+  if (!hasToken()) {
     return (
       <Navigate
         to="/login"

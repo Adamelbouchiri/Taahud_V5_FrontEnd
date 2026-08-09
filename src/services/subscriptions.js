@@ -95,6 +95,14 @@ function makeCache() {
 const statusCache = makeCache();
 const plansCache = makeCache();
 
+// The public catalog is localized per Accept-Language, so it can't share a
+// single slot — one cache entry per requested language ('ar' | 'en').
+const catalogCaches = new Map();
+function catalogCacheFor(lang) {
+  if (!catalogCaches.has(lang)) catalogCaches.set(lang, makeCache());
+  return catalogCaches.get(lang);
+}
+
 function invalidateStatus() {
   statusCache.value = null;
   statusCache.at = 0;
@@ -147,6 +155,43 @@ export const subscriptions = {
       if (Array.isArray(res?.plans)) return res.plans;
       if (Array.isArray(res?.data)) return res.data;
       return [];
+    });
+  },
+
+  /* ============================================================
+   *  GET /plans/catalog   (public — no auth)
+   *  ----------------------------------------------------------------
+   *  Powers the pre-login pricing view on the landing page. Unlike
+   *  /plans (which is account-type-scoped and requires a token), this
+   *  returns the full public catalog for anonymous visitors:
+   *
+   *    {
+   *      account_types: [
+   *        { account_type, currency, starts_from,
+   *          plans: Plan[] }          // every tier × interval combo
+   *      ],
+   *      addons: Plan[]               // cross-cutting CTAs (Isnad, Solidarity)
+   *    }
+   *
+   *  `lang` sets Accept-Language ('ar' | 'en'); it only affects each
+   *  plan's `features_localized` — name_ar/name_en + description_ar/en
+   *  are always returned in both languages so the client can pick.
+   *
+   *  Money note: `price` is a decimal STRING ("399.00"); `starts_from`,
+   *  `monthly_equivalent`, `savings_percent` are numbers. Cached per
+   *  language for the session TTL (this catalog rarely changes).
+   * ============================================================ */
+  async getCatalog({ lang = 'ar', force = false } = {}) {
+    return cached(catalogCacheFor(lang), force, async () => {
+      const res = await http.get('/plans/catalog', {
+        headers: { 'Accept-Language': lang },
+      });
+      return {
+        account_types: Array.isArray(res?.account_types)
+          ? res.account_types
+          : [],
+        addons: Array.isArray(res?.addons) ? res.addons : [],
+      };
     });
   },
 

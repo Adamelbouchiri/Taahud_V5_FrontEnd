@@ -27,6 +27,8 @@ import {
   Layers,
   Percent,
   Building2,
+  Milestone,
+  ChevronLeft,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
@@ -147,6 +149,9 @@ function ProjectDetailsPage() {
     );
 
   const isOwner = user && project.user_id === user.id;
+  // The awarded service provider. Steps (milestones) only exist once a
+  // partner is set, and only the owner + provider can act on them.
+  const isProvider = user && project.partner_id && project.partner_id === user.id;
   // Solidarity uses partnership offers instead of bids — the CTA,
   // owner inbox, and "already submitted" badge all fork on this.
   const isSolidarity = usesPartnershipOffers(project.arena);
@@ -306,6 +311,16 @@ function ProjectDetailsPage() {
           </div>
 
           <aside className="space-y-5">
+            {/* Milestones entry — surfaced to the owner and the awarded
+                provider once a partner is assigned. Both manage the step
+                plan on the dedicated /steps page. */}
+            {project.partner_id && (isOwner || isProvider) && (
+              <MilestonesCard
+                project={project}
+                isProvider={isProvider}
+                onOpen={() => navigate(`/projects/${project.id}/steps`)}
+              />
+            )}
             <FactsCard project={project} />
             <OwnerCard
               owner={project.owner}
@@ -1248,6 +1263,85 @@ function FactsCard({ project }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function MilestonesCard({ project, isProvider, onOpen }) {
+  const { t } = useTranslation();
+  const progress = Math.round(project.progress || 0);
+  const started = project.status === 'in_progress' || project.status === 'completed';
+  return (
+    <div
+      className="rounded-[14px] p-5"
+      style={{
+        background: 'rgba(44,47,124,0.03)',
+        border: '1px solid rgba(44,47,124,0.16)',
+      }}
+    >
+      <div
+        className="font-semibold uppercase mb-3 inline-flex items-center gap-1.5"
+        style={{ fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--text-brand)' }}
+      >
+        <Milestone size={12} strokeWidth={2} />
+        {t('projects.milestones.cardTitle')}
+      </div>
+      <p
+        className="m-0 mb-4"
+        style={{ fontSize: 13, lineHeight: 1.65, color: 'var(--text-ink-soft)' }}
+      >
+        {isProvider
+          ? t('projects.milestones.cardBodyProvider')
+          : t('projects.milestones.cardBodyOwner')}
+      </p>
+
+      {started && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {t('projects.milestones.progressLabel')}
+            </span>
+            <span className="font-bold" style={{ fontSize: 12.5, color: '#136d4a' }}>
+              {progress}%
+            </span>
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: 6,
+              borderRadius: 3,
+              background: 'var(--border-soft)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${progress}%`,
+                background: progress >= 100 ? '#136d4a' : 'linear-gradient(90deg, #2c2f7c, #136d4a)',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[10px] font-semibold transition-all"
+        style={{
+          fontSize: 13.5,
+          background: '#2c2f7c',
+          border: '1px solid #2c2f7c',
+          color: '#fff',
+          cursor: 'pointer',
+        }}
+      >
+        {isProvider
+          ? t('projects.milestones.cardCtaProvider')
+          : t('projects.milestones.cardCtaOwner')}
+        <ChevronLeft size={15} strokeWidth={2} style={{ transform: 'rotate(180deg)' }} />
+      </button>
     </div>
   );
 }

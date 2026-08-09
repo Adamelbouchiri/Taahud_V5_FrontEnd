@@ -12,8 +12,8 @@ import { OTP_ENABLED } from '../config/constants';
  *  platform — this closes the back-button bypass where a freshly
  *  logged-in (but unverified) user could navigate back into the app.
  *
- *  Reads the verification snapshot persisted by services/auth.js at
- *  login/register/verify time (savePhoneVerified). The BE's
+ *  Reads the verification snapshot that services/session.js persists
+ *  alongside the token at login/register/verify time. The BE's
  *  phone-verified middleware is the authoritative gate; this guard
  *  just keeps the UI from rendering for unverified users, and the
  *  http.js 403 interceptor catches anything that slips past the

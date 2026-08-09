@@ -28,6 +28,14 @@ import { hasSpecialty } from '../../config/constants';
 import { cityOptions } from '../../config/cityTranslations';
 import { auth, subscriptions } from '../../services';
 import { deriveArenaAddons } from '../../services/subscriptions';
+import {
+  snapshotPlanName,
+  snapshotPrice,
+  snapshotCurrency,
+  currentPlanPrice,
+  priceChanged,
+  isComped,
+} from '../../utils/subscriptionSnapshot';
 import Field from '../../components/form/Field';
 import SelectField from '../../components/form/SelectField';
 import PasswordField from '../../components/form/PasswordField';
@@ -771,9 +779,25 @@ function ActiveSubRow({
   cancelError,
   cancelInfo,
 }) {
-  const planName = pickPlanName(sub.plan, lang);
+  // Snapshot-first: show the plan name + price the user actually subscribed
+  // under, not the (possibly repriced/renamed) current plan values.
+  const planName = snapshotPlanName(sub, lang);
   const renewDate = formatRenewDate(sub.current_period_ends_at, lang);
   const isCanceled = !!sub.canceled_at;
+  const comped = isComped(sub);
+  const curLabel = currencyLabel(snapshotCurrency(sub), lang);
+  const price = snapshotPrice(sub);
+  const amountText =
+    price != null
+      ? t('subscribe.profile.active.amount', {
+          price: formatAmount(price, lang),
+          currency: curLabel,
+        })
+      : '';
+  // Surface an upcoming price change (current plan price differs from the
+  // frozen snapshot) so the renewal isn't a surprise. Not for comps.
+  const showPriceChange = !comped && !isCanceled && priceChanged(sub);
+  const newPriceText = formatAmount(currentPlanPrice(sub), lang);
 
   return (
     <div className="flex flex-col gap-3">
@@ -808,7 +832,9 @@ function ActiveSubRow({
                 letterSpacing: '0.04em',
               }}
             >
-              {t('subscribe.profile.active.label')}
+              {comped
+                ? t('subscribe.profile.active.comped')
+                : t('subscribe.profile.active.label')}
             </span>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
@@ -816,8 +842,29 @@ function ActiveSubRow({
               ? t('subscribe.profile.active.canceledPending')
               : t('subscribe.profile.active.period', { date: renewDate })}
           </div>
+          {!comped && amountText && (
+            <div style={{ fontSize: 12.5, color: 'var(--text-ink-soft)', marginTop: 2 }}>
+              {amountText}
+            </div>
+          )}
         </div>
       </div>
+
+      {showPriceChange && (
+        <div
+          className="flex items-start gap-2 px-3 py-2.5 rounded-[8px]"
+          style={{
+            background: 'rgba(184,134,42,0.08)',
+            border: '1px solid rgba(184,134,42,0.22)',
+            color: '#8a6a1f',
+            fontSize: 12.5,
+            lineHeight: 1.55,
+          }}
+        >
+          <AlertCircle size={14} strokeWidth={2} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>{t('subscribe.profile.active.priceChangeNote', { price: `${newPriceText} ${curLabel}` })}</span>
+        </div>
+      )}
 
       {cancelError && (
         <div
@@ -1042,11 +1089,20 @@ function AddonRow({ t, icon: Icon, accent, accentBg, labelKey, bodyKey }) {
   );
 }
 
-function pickPlanName(plan, lang) {
-  if (!plan) return '';
-  if (lang === 'ar' && plan.name_ar) return plan.name_ar;
-  if (plan.name_en) return plan.name_en;
-  return plan.name_ar || plan.code || '';
+function formatAmount(n, lang) {
+  if (n == null || Number.isNaN(n)) return '';
+  const locale = lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+  try {
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(n);
+  } catch {
+    return String(n);
+  }
+}
+
+/* Localized currency label — SAR renders as ر.س in Arabic-script UIs. */
+function currencyLabel(currency, lang) {
+  if ((lang === 'ar' || lang === 'ur') && currency === 'SAR') return 'ر.س';
+  return currency || 'SAR';
 }
 
 function formatRenewDate(d, lang) {

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { readToken, clearSession, writePhoneVerified } from './session';
 
 /* ============================================================
  *  HTTP CLIENT
@@ -7,7 +8,7 @@ import axios from 'axios';
  *  Centralizes the four things you'd otherwise repeat everywhere:
  *
  *    1. Base URL          — comes from VITE_API_URL (.env)
- *    2. Auth token        — auto-injected from localStorage
+ *    2. Auth token        — auto-injected from services/session.js
  *    3. JSON headers      — set by default
  *    4. Error normalization — every error has a clean .message
  *
@@ -81,18 +82,45 @@ export function resolveFileUrl(raw) {
 /* -------------------------------------------------------------
  * 2. Request interceptor — attach auth token
  * -------------------------------------------------------------
- * Token may live in either bucket depending on the user's
- * remember_me choice at login (see services/auth.js):
- *   localStorage   → persistent (remember_me = true)
- *   sessionStorage → tab-scoped (remember_me = false)
- * Read both; the active session can only have written to one.
+ * The token is read from services/session.js — the same module
+ * auth.js writes it through. That shared read is the invariant
+ * that keeps the wire and the UI describing the same user; any
+ * second place that reads or writes the raw storage keys can (and
+ * did) drift from it.
+ *
+ * Public auth endpoints are sent WITHOUT an Authorization header.
+ * Logging in while a previous account's token is still in storage
+ * would otherwise put a bearer for user A on the request that
+ * signs in user B — an ambiguity the BE shouldn't have to
+ * untangle, and one that hid the account-switch bug.
  * ----------------------------------------------------------- */
 
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
+
+function isPublicAuthPath(url = '') {
+  // Compare on the path only — callers pass relative paths, but be
+  // tolerant of a full URL sneaking in.
+  return PUBLIC_AUTH_PATHS.some((p) => url === p || url.endsWith(p));
+}
+
 http.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (isPublicAuthPath(config.url)) {
+    delete config.headers.Authorization;
+    return config;
+  }
+
+  const token = readToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    // No live session → make sure a header left over from a previous
+    // config (or a default) can't ride along.
+    delete config.headers.Authorization;
   }
   return config;
 });
@@ -108,14 +136,17 @@ http.interceptors.response.use(
 
   // ERROR: build a clean Error with .message + .status + .data.
   (error) => {
-    // 401 → token expired or invalid. Clear it from storage so the
-    // next navigation through RequireAuth bounces the user to /login.
+    // 401 → token expired or invalid. Tear the whole session down so
+    // the next navigation through RequireAuth bounces the user to
+    // /login. clearSession() (not just the token) matters: dropping
+    // the token alone used to leave the roles snapshot and the cached
+    // /auth/me user behind, so the app kept rendering the old
+    // identity — including its admin links — on a dead session.
     // We don't redirect here directly because that would do a full
     // page reload and lose React Router's `from` location state (which
     // powers the post-login redirect-back UX).
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('token');
+      clearSession();
     }
 
     // 403 + { code: 'phone_not_verified' } → the BE's phone-verified
@@ -129,17 +160,9 @@ http.interceptors.response.use(
       error.response?.status === 403 &&
       error.response?.data?.code === 'phone_not_verified'
     ) {
-      // Mirror savePhoneVerified() in auth.js: write '0' to the bucket
-      // the token lives in, clear the other. Kept as literals here to
-      // match the 401 handler above and avoid a circular import.
-      const persistent = Boolean(localStorage.getItem('token'));
-      if (persistent) {
-        localStorage.setItem('taahud:phone_verified', '0');
-        sessionStorage.removeItem('taahud:phone_verified');
-      } else {
-        sessionStorage.setItem('taahud:phone_verified', '0');
-        localStorage.removeItem('taahud:phone_verified');
-      }
+      // Write '0' to the bucket the live token occupies (session.js
+      // handles the bucket choice and clears the other one).
+      writePhoneVerified(false);
       if (window.location.pathname !== '/otp') {
         window.location.assign('/otp');
       }

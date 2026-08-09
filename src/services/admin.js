@@ -60,6 +60,11 @@ import http from './http';
  *    GET    /admin/payments                     list + summary + tab_counts (status, kind, payment_method, q, per_page)
  *    GET    /admin/payments/:id                 show
  *
+ *    Withdrawals (escrow payouts)
+ *    GET    /admin/withdrawals                  list (status=pending|approved|paid|rejected)
+ *    POST   /admin/withdrawals/:id/approve      status → approved (money stays debited)
+ *    POST   /admin/withdrawals/:id/reject       { reason } — credits the amount back
+ *
  *    Plans (catalog CRUD)
  *    GET    /admin/plans                        list (account_type, tier, is_addon, is_active)
  *    GET    /admin/plans/:id                    show (+ subscriptions_count)
@@ -761,6 +766,53 @@ export const admin = {
     /** GET /admin/payments/:id — one payment (404 if missing). */
     async get(id) {
       return unwrap(await http.get(`/admin/payments/${id}`));
+    },
+  },
+
+
+  /* ============================================================
+   * WITHDRAWALS — the escrow payout review queue
+   * ----------------------------------------------------------------
+   * Providers earn into a wallet when project owners pay for steps
+   * (see services/wallet.js). Requesting a withdrawal DEBITS the
+   * wallet immediately and parks the row as `pending`; this surface
+   * is where an admin settles it.
+   *
+   *   approve → status `approved`. The money stays debited. The actual
+   *             bank / stc payout happens OFF-PLATFORM for now, so
+   *             `approved → paid` is not a transition the API exposes.
+   *   reject  → status `rejected` AND the amount is credited back to
+   *             the provider's wallet. `reason` is required.
+   *
+   * Both 422 when the withdrawal isn't `pending` — so a row settled in
+   * another tab fails loudly instead of double-crediting.
+   *
+   * MONEY UNIT: `amount` is an INTEGER IN HALALAS (1 SAR = 100).
+   * ============================================================ */
+  withdrawals: {
+    /** GET /admin/withdrawals — every provider's withdrawals, newest
+     *  first, 20/page. `status` filters the queue: pending | approved |
+     *  paid | rejected (omit for all). */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/withdrawals', { params }));
+    },
+
+    /** POST /admin/withdrawals/:id/approve — no body. 422 if not pending. */
+    async approve(id) {
+      return unwrap(await http.post(`/admin/withdrawals/${id}/approve`));
+    },
+
+    /** POST /admin/withdrawals/:id/reject — { reason } REQUIRED.
+     *  Reverses the debit: the provider gets the amount back. */
+    async reject(id, reason) {
+      return unwrap(
+        await http.post(`/admin/withdrawals/${id}/reject`, { reason })
+      );
     },
   },
 

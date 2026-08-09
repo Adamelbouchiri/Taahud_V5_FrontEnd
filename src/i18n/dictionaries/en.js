@@ -392,6 +392,7 @@ export default {
     featuredProjects: {
       eyebrow: 'Featured projects',
       title: 'Real opportunities for contractors and developers',
+      sampleNote: 'The projects shown here are illustrative examples only.',
       seeAll: 'View all projects',
       cards: {
         residential: {
@@ -425,6 +426,7 @@ export default {
       title: 'An arena for every role',
       subtitle:
         '6 specialized arenas — preview a sample from each and discover what awaits.',
+      sampleNote: 'The projects shown here are illustrative examples only.',
       cards: {
         arena: {
           label: 'Arena pool',
@@ -1250,6 +1252,7 @@ export default {
         applications: 'Applications',
         partnerships: 'Partnerships',
         profile: 'Profile',
+        wallet: 'Wallet',
         ai: 'AI analytics',
         analytics: 'Analytics & Reports',
         messages: 'Messages',
@@ -1507,6 +1510,7 @@ export default {
       emptySearchSubtitle: 'Try other keywords or reset the filters for more results.',
       resetFilters: 'Reset filters',
       errorTitle: 'Something went wrong',
+      warningTitle: 'Heads up',
       loadError: "Couldn't load projects.",
       cardOpenLabel: 'Open project',
       gridLoadingLabel: 'Loading...',
@@ -1580,6 +1584,99 @@ export default {
         accept: 'Accept',
         reject: 'Reject',
         acceptedMix: 'Accepted partners',
+      },
+    },
+    milestones: {
+      crumb: 'Milestones',
+      pay: {
+        cta: 'Pay {amount}',
+        starting: 'Opening secure payment...',
+        successTitle: 'Payment received.',
+        successBody:
+          'The amount is now held for the provider and will be released when you approve this step.',
+        cancelledTitle: 'Payment cancelled.',
+        cancelledBody: 'Nothing was charged. You can pay this step whenever you’re ready.',
+        awaitingPayment: 'Awaiting payment from the project owner',
+        heldInEscrow: 'Paid — held until the owner approves this step',
+        released: 'Paid and released to your wallet',
+        errors: {
+          startFailed: "Couldn't start the payment. Please try again.",
+        },
+      },
+      heading: 'Project milestones',
+      progressLabel: 'Approved progress',
+      loadError: "Couldn't load the milestones",
+      saveError: "Couldn't save the plan.",
+      notAwarded:
+        'Milestones become available once the project is awarded to a provider.',
+      noAccess: 'Only the project owner and the assigned provider can manage milestones.',
+      backToProject: 'Back to project',
+      awaitingBanner: '{count} step(s) awaiting your review.',
+      role: {
+        owner: 'You are the owner',
+        provider: 'You are the provider',
+      },
+      cardTitle: 'Milestones',
+      cardBodyProvider:
+        'Break the work into amount-weighted steps and mark them finished for the owner to review.',
+      cardBodyOwner:
+        'Track the provider’s steps and review each one as it’s submitted.',
+      cardCtaProvider: 'Manage milestones',
+      cardCtaOwner: 'Review milestones',
+      summary: {
+        budget: 'Budget',
+        allocated: 'Allocated',
+        approved: 'Approved',
+        paid: 'Paid',
+        paidSub: '{paid} of {total} steps',
+        heldSub: '{amount} still in escrow',
+      },
+      builder: {
+        title: 'Define the step plan',
+        subtitle:
+          'The amounts must add up to the full budget. You can edit the plan until the first step is submitted.',
+        titlePlaceholder: 'Step title (e.g. Foundation)',
+        removeRow: 'Remove step',
+        addStep: 'Add step',
+        sum: 'Steps total',
+        budget: 'Budget',
+        difference: 'Difference',
+        fillRemainder: 'Fill remainder',
+        matchOk: 'The total matches the budget exactly. You can save the plan.',
+        matchHint: 'Adjust the amounts until the steps total equals the budget.',
+        cancel: 'Cancel',
+        save: 'Save plan',
+        saving: 'Saving...',
+      },
+      plan: {
+        title: 'Step plan',
+        subtitle: '{count} step(s)',
+        editPlan: 'Edit plan',
+        locked: 'Plan locked',
+        emptyProvider: 'No plan defined yet. Add steps to break down the work.',
+        emptyOwner: 'The provider hasn’t defined the step plan yet.',
+      },
+      status: {
+        pending: 'Pending',
+        submitted: 'Awaiting review',
+        approved: 'Approved',
+      },
+      step: {
+        paid: 'Paid',
+        submit: 'Mark as finished',
+        awaitingReview: 'Submitted — awaiting owner review',
+        review: 'Review step',
+      },
+      review: {
+        noteRequired: 'A note is required when you’re not pleased.',
+        noteLabel: 'Review note',
+        notePlaceholder: 'Explain what needs to change (required when not pleased)...',
+        pleased: 'Pleased',
+        notPleased: 'Not pleased',
+        cancel: 'Cancel',
+        pleasedLabel: 'Approved',
+        notPleasedLabel: 'Sent back for rework',
+        by: 'By {name}',
       },
     },
     create: {
@@ -2136,10 +2233,11 @@ export default {
         users: 'Users',
         projects: 'Projects',
         applications: 'Applications',
-        partnerships: 'Partnerships',
+        partnerships: 'Solidarity partnerships',
         partners: 'Taahud Partners',
         subscriptions: 'Subscriptions',
         payments: 'Payments',
+        withdrawals: 'Withdrawals',
         plans: 'Plans',
         roles: 'Roles',
         activity: 'Activity log',
@@ -2181,6 +2279,54 @@ export default {
       reasonPlaceholder: 'Minimum 10 characters — what triggered this action?',
       requiresReason: 'A reason is required.',
       filtersTitle: 'Filters',
+    },
+    withdrawals: {
+      eyebrow: 'Finance',
+      title: 'Withdrawals',
+      subtitle:
+        'Review provider payout requests. Approving keeps the money debited; rejecting credits it back to their wallet.',
+      listTitle: 'All withdrawals',
+      approved: 'Withdrawal #{id} for {amount} approved.',
+      rejected: 'Withdrawal #{id} for {amount} rejected — the amount was credited back.',
+      table: {
+        request: 'Request',
+        provider: 'Provider',
+        providerUnknown: 'Unknown provider',
+        amount: 'Amount',
+        method: 'Method',
+        destination: 'Destination',
+        status: 'Status',
+        actions: 'Actions',
+        empty: 'No withdrawal requests here.',
+      },
+      actions: {
+        approve: 'Approve',
+        reject: 'Reject',
+      },
+      approveDialog: {
+        title: 'Approve this withdrawal?',
+        body:
+          'This approves a payout of {amount} to {destination}. The money is already debited from the provider’s wallet — the transfer itself still has to be made manually.',
+      },
+      rejectDialog: {
+        title: 'Reject this withdrawal?',
+        body:
+          'Rejecting credits {amount} back to the provider’s wallet. The reason below is shown to them.',
+        reasonLabel: 'Rejection reason (shown to the provider)',
+        reasonPlaceholder: 'Explain why this request was rejected…',
+      },
+      details: {
+        title: 'Withdrawal #{id}',
+        requester: 'Requested by',
+        destination: 'Payout destination',
+        requestedAt: 'Requested',
+        reviewedAt: 'Reviewed',
+        reviewer: 'Reviewed by',
+        paidAt: 'Paid out',
+        rejectionReason: 'Rejection reason',
+        manualPayout:
+          'Approved. The bank / stc transfer happens outside the platform — record it in your own books once sent.',
+      },
     },
     overview: {
       eyebrow: 'Operations',
@@ -2815,6 +2961,8 @@ export default {
         accessOn: 'Active access',
         accessOff: 'No access',
         manualNoRenew: "Won't auto-renew",
+        priceChanged: 'Price changed',
+        currentAmount: 'current: {amount}',
       },
       period: {
         monthly: 'Monthly',
@@ -3182,6 +3330,7 @@ export default {
       secureNote: 'Secure payment powered by Moyasar',
       loading: 'Loading payment form…',
       backToPlans: 'Back to plans',
+      backToProject: 'Back to the project',
       errors: {
         expired: 'This checkout link has expired — please start again.',
         forbidden: "This checkout doesn't belong to your account.",
@@ -3204,6 +3353,9 @@ export default {
       active: {
         label: 'Subscribed',
         period: 'Renews on {date}',
+        amount: '{price} {currency} / period',
+        comped: 'Free subscription',
+        priceChangeNote: 'The new price {price} applies from your next renewal.',
         canceledPending: 'Cancellation requested — will apply shortly',
         cancelCta: 'Cancel subscription',
         canceling: 'Canceling...',
@@ -3253,6 +3405,10 @@ export default {
       logistics: 'Logistics & Shipping',
       insurance: 'Insurance',
       training: 'Training & Development',
+      construction: 'Construction & Finishing',
+      interior: 'Interior Design',
+      ai: 'Artificial Intelligence',
+      hr: 'HR Services',
     },
     card: {
       verified: 'Verified partner',
@@ -3306,6 +3462,73 @@ export default {
         title: 'Your request has been received',
         body: 'Thank you for your interest in joining Taahud Partners. Our team will review your application and reach out to you shortly.',
       },
+    },
+  },
+
+  /* ---- Escrow wallet (provider side) ---- */
+  wallet: {
+    eyebrow: 'Wallet',
+    title: 'Wallet & withdrawals',
+    subtitle:
+      'What project owners pay for your milestones lands here. Once the owner approves a step, its amount becomes withdrawable.',
+    loadError: "Couldn't load your wallet.",
+    balance: {
+      total: 'Total earnings',
+      totalSub: 'Available + in escrow',
+      available: 'Available',
+      availableSub: 'Withdrawable now',
+      held: 'In escrow',
+      heldSub: 'Released when steps are approved',
+      pending: 'Pending withdrawals',
+      pendingSub: 'Awaiting admin review',
+      unavailable: '—',
+      loadFailed: "Couldn't load your balances. Try refreshing.",
+      frozen: 'Your wallet is frozen, so withdrawals are blocked. Please contact support.',
+    },
+    methods: {
+      bank_transfer: 'Bank transfer',
+      stc_pay: 'stc pay',
+    },
+    statuses: {
+      pending: 'Pending',
+      approved: 'Approved',
+      paid: 'Paid out',
+      rejected: 'Rejected',
+    },
+    form: {
+      title: 'Request a withdrawal',
+      subtitle: 'The amount leaves your balance as soon as you submit.',
+      amount: 'Amount',
+      useMax: 'Withdraw everything ({amount})',
+      method: 'Payout method',
+      iban: 'IBAN',
+      holder: 'Account holder name',
+      holderPlaceholder: 'Exactly as it appears on the bank account',
+      mobile: 'stc pay mobile number',
+      debitNotice:
+        'The amount is debited immediately. If an admin rejects the request, it is credited back in full.',
+      submit: 'Request withdrawal',
+      submitting: 'Sending...',
+      success: 'Withdrawal request for {amount} submitted.',
+      blocked: {
+        frozen: 'Your wallet is frozen, so withdrawals are blocked. Please contact support.',
+        empty:
+          'You have nothing available to withdraw yet. Money becomes available once the project owner approves a step you were paid for.',
+      },
+      errors: {
+        minAmount: 'Enter an amount of at least {min}.',
+        overBalance: 'That is more than your available balance ({available}).',
+        iban: 'Enter a valid Saudi IBAN — SA followed by 22 digits.',
+        holder: 'Enter the account holder name.',
+        mobile: 'Enter a mobile number in the format +9665XXXXXXXX.',
+        generic: "Couldn't submit the request. Please try again.",
+      },
+    },
+    history: {
+      title: 'Withdrawal history',
+      empty: 'No withdrawal requests yet.',
+      rejectionReason: 'Rejection reason',
+      refunded: 'The amount was credited back to your wallet.',
     },
   },
 };

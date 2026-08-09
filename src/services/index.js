@@ -9,6 +9,8 @@
  *    - http.js          configured axios instance
  *    - auth.js          login / register / OTP / forgot password
  *    - projects.js      CRUD on projects + file uploads
+ *    - steps.js         project steps / milestones (define, submit, review, pay)
+ *    - wallet.js        escrow wallet — provider withdrawals (halalas)
  *    - applications.js  applications on projects
  *    - partnerships.js  solidarity-arena partnership offers
  *    - partners.js      "Become a Partner" program (apply + validate)
@@ -18,6 +20,8 @@
 
 export { auth } from './auth';
 export { projects } from './projects';
+export { steps } from './steps';
+export { wallet } from './wallet';
 export { applications } from './applications';
 export { partnerships } from './partnerships';
 export { partners } from './partners';

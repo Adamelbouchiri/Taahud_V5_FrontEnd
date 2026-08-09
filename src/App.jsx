@@ -23,6 +23,7 @@ import CookiesPolicyPage from './pages/legal/CookiesPolicyPage';
 // Project pages — outside the dashboard, full-screen
 import PublicProjectsPage from './pages/PublicProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import ProjectStepsPage from './pages/ProjectStepsPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import EditProjectPage from './pages/EditProjectPage';
 import ApplyPage from './pages/ApplyPage';
@@ -51,6 +52,7 @@ import DashboardHome from './pages/dashboard/DashboardHome';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ApplicationsPage from './pages/dashboard/ApplicationsPage';
 import PartnershipsPage from './pages/dashboard/PartnershipsPage';
+import WalletPage from './pages/dashboard/WalletPage';
 import ComingSoonPage from './pages/dashboard/ComingSoonPage';
 
 // Route guards
@@ -74,6 +76,7 @@ import AdminPartnershipsPage from './pages/admin/AdminPartnershipsPage';
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage';
 import AdminSubscriptionsPage from './pages/admin/AdminSubscriptionsPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
+import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage';
 import AdminPlansPage from './pages/admin/AdminPlansPage';
 import AdminRolesPage from './pages/admin/AdminRolesPage';
 import AdminActivityPage from './pages/admin/AdminActivityPage';
@@ -241,6 +244,22 @@ function AppShell() {
             </RequireAuth>
           }
         />
+        {/* Project steps / milestones — the provider defines an
+            amount-weighted plan and the owner reviews each step. Same
+            non-supplier gate as the detail page; the page itself scopes
+            actions to owner vs provider and blocks everyone else. */}
+        <Route
+          path="/projects/:id/steps"
+          element={
+            <RequireAuth>
+              <RequireVerified>
+                <RequireNonSupplier>
+                  <ProjectStepsPage />
+                </RequireNonSupplier>
+              </RequireVerified>
+            </RequireAuth>
+          }
+        />
         <Route
           path="/projects/:id/edit"
           element={
@@ -356,6 +375,11 @@ function AppShell() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="partnerships" element={<PartnershipsPage />} />
+          {/* Escrow wallet — where a provider requests a payout of the
+              money owners paid into their step milestones. The page is
+              harmless for a user with no wallet (empty history), so it
+              carries no extra gate beyond the dashboard's. */}
+          <Route path="wallet" element={<WalletPage />} />
 
           {/* Coming-soon features. Each renders the same component
               with a different variant preset. Add them here so the
@@ -403,6 +427,9 @@ function AppShell() {
           <Route path="partner-applications" element={<AdminPartnerApplicationsPage />} />
           <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />
+          {/* Escrow payout review queue — approve/reject provider
+              withdrawal requests. Rejecting credits the money back. */}
+          <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
           <Route path="plans" element={<AdminPlansPage />} />
           <Route path="activity" element={<AdminActivityPage />} />
           <Route

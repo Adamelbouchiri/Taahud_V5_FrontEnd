@@ -99,6 +99,12 @@ export default function FeaturedProjects() {
             >
               {t('landing.featuredProjects.title')}
             </h2>
+            <p
+              className="m-0 mt-3 animate-fade-up"
+              style={{ fontSize: 13.5, lineHeight: 1.7, color: 'var(--text-muted)' }}
+            >
+              {t('landing.featuredProjects.sampleNote')}
+            </p>
           </div>
 
           <button

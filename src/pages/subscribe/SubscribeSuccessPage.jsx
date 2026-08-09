@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
+import { snapshotPlanName } from '../../utils/subscriptionSnapshot';
 
 /* ============================================================
  *  SubscribeSuccessPage — /subscribe/success
@@ -66,7 +67,7 @@ export default function SubscribeSuccessPage() {
 
   const Arrow = dir === 'rtl' ? ArrowRight : ArrowLeft;
   const activeSub = status?.active_subscriptions?.[0];
-  const planName = activeSub ? pickName(activeSub.plan, lang) : '';
+  const planName = activeSub ? snapshotPlanName(activeSub, lang) : '';
 
   return (
     <div className="min-h-screen flex items-center justify-center px-5 py-12" style={{ background: 'var(--bg-canvas)' }}>
@@ -242,11 +243,4 @@ function bodyFor(state, t, planName) {
     return t('subscribe.success.confirmedBody', { name: planName });
   if (state === STATE.pending) return t('subscribe.success.pendingBody');
   return t('subscribe.success.verifyingHint');
-}
-
-function pickName(plan, lang) {
-  if (!plan) return '';
-  if (lang === 'ar' && plan.name_ar) return plan.name_ar;
-  if (plan.name_en) return plan.name_en;
-  return plan.name_ar || plan.code || '';
 }

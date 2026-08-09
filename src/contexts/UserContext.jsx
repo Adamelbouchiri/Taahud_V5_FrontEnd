@@ -61,10 +61,18 @@ export function UserProvider({ children }) {
     load();
   }, []);
 
+  /* auth.logout() clears storage in its own `finally`, so the local
+     state must come down even when the revoke request rejects
+     (offline, 401 on an already-dead token). Otherwise storage says
+     "guest" while this provider still hands the old user — and their
+     roles — to every page under it. */
   const logout = async () => {
-    await auth.logout();
-    setUser(null);
-    setRoles([]);
+    try {
+      await auth.logout();
+    } finally {
+      setUser(null);
+      setRoles([]);
+    }
   };
 
   const isAdmin = roles.includes('admin') || roles.includes('super-admin');

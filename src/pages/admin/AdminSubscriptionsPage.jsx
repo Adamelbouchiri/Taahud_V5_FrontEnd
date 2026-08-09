@@ -23,6 +23,13 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { admin } from '../../services';
+import {
+  snapshotPlanName,
+  snapshotPrice,
+  snapshotCurrency,
+  currentPlanPrice,
+  priceChanged,
+} from '../../utils/subscriptionSnapshot';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { printReportPdf, downloadReportExcel } from '../../utils/reportExport';
@@ -475,15 +482,16 @@ export default function AdminSubscriptionsPage() {
       { header: '#', get: (r) => r.id },
       { header: t('admin.subscriptions.table.user'), get: (r) => r.user?.name || '' },
       { header: t('admin.subscriptions.table.type'), get: (r) => accountTypeLabel(r.user?.account_type) },
-      { header: t('admin.subscriptions.table.plan'), get: (r) => planName(r.plan) },
+      { header: t('admin.subscriptions.table.plan'), get: (r) => snapshotPlanName(r, lang) },
       { header: t('admin.subscriptions.table.period'), get: (r) => periodLabel(r.plan?.billing_interval_months) },
       { header: t('admin.subscriptions.table.startsAt'), get: (r) => fmtDate(r.current_period_starts_at) },
       { header: t('admin.subscriptions.table.endsAt'), get: (r) => fmtDate(r.current_period_ends_at) },
       { header: t('admin.subscriptions.table.paymentMethod'), get: (r) => providerLabel(r.provider) },
-      { header: t('admin.subscriptions.table.amount'), get: (r) => fmtMoney(r.plan?.price, r.plan?.currency) },
+      // Amount = the snapshot price the user was actually charged.
+      { header: t('admin.subscriptions.table.amount'), get: (r) => fmtMoney(snapshotPrice(r), snapshotCurrency(r)) },
       { header: t('admin.subscriptions.table.status'), get: (r) => t(`admin.subStatuses.${r.status}`) },
     ],
-    [t, accountTypeLabel, planName, periodLabel, fmtDate, providerLabel, fmtMoney]
+    [t, lang, accountTypeLabel, planName, periodLabel, fmtDate, providerLabel, fmtMoney]
   );
 
   // Subtitle line under the logo: "Subscriptions report — <tab> — N subscriptions".
@@ -564,8 +572,17 @@ export default function AdminSubscriptionsPage() {
       {
         key: 'plan',
         label: t('admin.subscriptions.table.plan'),
+        // Show the snapshot name (what the user subscribed under); flag a
+        // repriced plan so admins can spot snapshot↔current drift at a glance.
         render: (row) => (
-          <span style={{ fontSize: 13, color: 'var(--text-ink)' }}>{planName(row.plan)}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span style={{ fontSize: 13, color: 'var(--text-ink)' }}>
+              {snapshotPlanName(row, lang)}
+            </span>
+            {priceChanged(row) && (
+              <Badge tone="warning">{t('admin.subscriptions.table.priceChanged')}</Badge>
+            )}
+          </div>
         ),
       },
       {
@@ -600,10 +617,21 @@ export default function AdminSubscriptionsPage() {
       {
         key: 'amount',
         label: t('admin.subscriptions.table.amount'),
+        // Snapshot = what the user was actually charged. When the plan was
+        // repriced since, show the current price underneath for context.
         render: (row) => (
-          <span style={{ fontWeight: 600, color: 'var(--text-ink)', fontSize: 13 }}>
-            {fmtMoney(row.plan?.price, row.plan?.currency)}
-          </span>
+          <div className="flex flex-col">
+            <span style={{ fontWeight: 600, color: 'var(--text-ink)', fontSize: 13 }}>
+              {fmtMoney(snapshotPrice(row), snapshotCurrency(row))}
+            </span>
+            {priceChanged(row) && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {t('admin.subscriptions.table.currentAmount', {
+                  amount: fmtMoney(currentPlanPrice(row), snapshotCurrency(row)),
+                })}
+              </span>
+            )}
+          </div>
         ),
       },
       {
@@ -677,7 +705,7 @@ export default function AdminSubscriptionsPage() {
         },
       },
     ],
-    [t, accountTypeLabel, planName, periodLabel, fmtDate, providerLabel, fmtMoney, isSuperAdmin]
+    [t, lang, accountTypeLabel, planName, periodLabel, fmtDate, providerLabel, fmtMoney, isSuperAdmin]
   );
 
   const summary = stats?.summary || {};
@@ -1316,11 +1344,11 @@ export default function AdminSubscriptionsPage() {
           <DetailsBody
             sub={details}
             t={t}
+            lang={lang}
             fmtDate={fmtDate}
             fmtDateTime={fmtDateTime}
             fmtMoney={fmtMoney}
             fmtNum={fmtNum}
-            planName={planName}
             periodLabel={periodLabel}
             providerLabel={providerLabel}
             accountTypeLabel={accountTypeLabel}
@@ -1674,11 +1702,11 @@ function DetailField({ label, children }) {
 function DetailsBody({
   sub,
   t,
+  lang,
   fmtDate,
   fmtDateTime,
   fmtMoney,
   fmtNum,
-  planName,
   periodLabel,
   providerLabel,
   accountTypeLabel,
@@ -1700,10 +1728,17 @@ function DetailsBody({
       {/* core fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
         <DetailField label={t('admin.subscriptions.details.plan')}>
-          {planName(sub.plan)} · {periodLabel(sub.plan?.billing_interval_months)}
+          {snapshotPlanName(sub, lang)} · {periodLabel(sub.plan?.billing_interval_months)}
         </DetailField>
         <DetailField label={t('admin.subscriptions.table.amount')}>
-          {fmtMoney(sub.plan?.price, sub.plan?.currency)}
+          {fmtMoney(snapshotPrice(sub), snapshotCurrency(sub))}
+          {priceChanged(sub) && (
+            <span style={{ fontSize: 11.5, color: 'var(--text-muted)', marginInlineStart: 6 }}>
+              {t('admin.subscriptions.table.currentAmount', {
+                amount: fmtMoney(currentPlanPrice(sub), snapshotCurrency(sub)),
+              })}
+            </span>
+          )}
         </DetailField>
         <DetailField label={t(f('period'))}>
           {fmtDate(sub.current_period_starts_at)} → {fmtDate(sub.current_period_ends_at)}

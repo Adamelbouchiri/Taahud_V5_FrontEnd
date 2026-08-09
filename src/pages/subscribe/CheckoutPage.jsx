@@ -10,13 +10,22 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
+import { loadMoyasar } from '../../utils/moyasar';
 
 /* ============================================================
  *  CheckoutPage — /pay/:sessionId
  *  ----------------------------------------------------------------
- *  Moyasar has no hosted subscription checkout like Stripe. Instead
- *  the backend hands us a session id and we render Moyasar.js's
- *  embedded card form on our OWN page (this one). The flow:
+ *  Moyasar has no hosted checkout like Stripe. Instead the backend
+ *  hands us a session id and we render Moyasar.js's embedded card form
+ *  on our OWN page (this one).
+ *
+ *  This page serves BOTH payment kinds — subscription checkout and
+ *  project-step escrow payments. It doesn't need to know which: the
+ *  backend built the session (amount, metadata, callback_url) and its
+ *  callback decides where to send the user afterwards. The only place
+ *  the difference shows is the error state's "back" link.
+ *
+ *  The flow:
  *
  *    1. Read :sessionId from the route.
  *    2. GET /payments/moyasar/checkout/:sessionId for the config
@@ -31,52 +40,9 @@ import { subscriptions } from '../../services';
  *  wrapper and keep the Moyasar form isolated as LTR so the app's
  *  direction never leaks into it.
  *
- *  CDN version: 1.19.0 is the latest Moyasar.js at time of writing
- *  (confirmed against cdn.moyasar.com — bump if a newer one ships).
+ *  The CDN loader lives in utils/moyasar.js — step payments render the
+ *  same form, so the pinned version has one home.
  * ============================================================ */
-
-const MOYASAR_VERSION = '1.19.0';
-const MOYASAR_CSS = `https://cdn.moyasar.com/mpf/${MOYASAR_VERSION}/moyasar.css`;
-const MOYASAR_JS = `https://cdn.moyasar.com/mpf/${MOYASAR_VERSION}/moyasar.js`;
-
-function loadCss(href) {
-  return new Promise((resolve) => {
-    if (document.querySelector(`link[href="${href}"]`)) return resolve();
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    link.onload = () => resolve();
-    // A failed stylesheet shouldn't block the (functional) form.
-    link.onerror = () => resolve();
-    document.head.appendChild(link);
-  });
-}
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    // If Moyasar.js already initialised globally, we're done — this also
-    // covers the case where the <script> finished loading on a previous
-    // visit (its one-shot `load` event won't fire again for a new listener).
-    if (window.Moyasar) return resolve();
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      if (existing.dataset.loaded === 'true' || window.Moyasar) return resolve();
-      existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', () =>
-        reject(new Error('Failed to load Moyasar.js')),
-      );
-      return;
-    }
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = () => {
-      s.dataset.loaded = 'true';
-      resolve();
-    };
-    s.onerror = () => reject(new Error('Failed to load Moyasar.js'));
-    document.body.appendChild(s);
-  });
-}
 
 export default function CheckoutPage() {
   const { sessionId } = useParams();
@@ -101,10 +67,19 @@ export default function CheckoutPage() {
 
         const config = await subscriptions.getMoyasarCheckout(sessionId);
 
-        await loadCss(MOYASAR_CSS);
-        await loadScript(MOYASAR_JS);
+        // Drop a stale step-payment breadcrumb: if this session is a
+        // subscription, a leftover value from an earlier step payment
+        // would send a failed checkout to the wrong page.
+        if (!config?.metadata?.step_id) {
+          try {
+            sessionStorage.removeItem('taahud:payReturn');
+          } catch {
+            // ignore
+          }
+        }
+
+        await loadMoyasar();
         if (cancelled) return;
-        if (!window.Moyasar) throw new Error('Moyasar.js unavailable');
 
         // Always start from a clean container. Moyasar.init appends its
         // form to the element; on a re-init (new session on the same
@@ -164,6 +139,20 @@ export default function CheckoutPage() {
   /* ---- Error state — mirrors the SubscribeCancel card style ---- */
   if (error) {
     const Arrow = dir === 'rtl' ? ArrowRight : ArrowLeft;
+    // This page serves subscription checkout AND project-step escrow
+    // payments. On a dead session we can't read the config to tell them
+    // apart, so the page that sent us here leaves a breadcrumb —
+    // otherwise a project owner whose session expired would be dumped
+    // on the subscription plans page.
+    let returnPath = '/subscribe';
+    try {
+      const stashed = sessionStorage.getItem('taahud:payReturn');
+      // Only honour an in-app absolute path, never an external URL.
+      if (stashed && /^\/(?!\/)/.test(stashed)) returnPath = stashed;
+    } catch {
+      // Storage unavailable — fall back to /subscribe.
+    }
+    const isStepReturn = returnPath !== '/subscribe';
     return (
       <div
         className="min-h-screen flex items-center justify-center px-5 py-12"
@@ -205,7 +194,14 @@ export default function CheckoutPage() {
 
           <button
             type="button"
-            onClick={() => navigate('/subscribe')}
+            onClick={() => {
+              try {
+                sessionStorage.removeItem('taahud:payReturn');
+              } catch {
+                // ignore
+              }
+              navigate(returnPath);
+            }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-white font-semibold transition-all"
             style={{
               fontSize: 13.5,
@@ -217,7 +213,9 @@ export default function CheckoutPage() {
             }}
           >
             <Arrow size={14} strokeWidth={2} />
-            {t('subscribe.pay.backToPlans')}
+            {isStepReturn
+              ? t('subscribe.pay.backToProject')
+              : t('subscribe.pay.backToPlans')}
           </button>
         </div>
       </div>
