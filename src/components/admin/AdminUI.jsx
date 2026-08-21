@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Search, SlidersHorizontal, RotateCcw, Check } from 'lucide-react';
 
 /* ============================================================
@@ -11,6 +11,7 @@ import { X, Search, SlidersHorizontal, RotateCcw, Check } from 'lucide-react';
  *    <Toolbar />        filter row above tables
  *    <DataTable />      header + rows + pagination
  *    <Pagination />     prev/next using meta.current_page / last_page
+ *    <CheckboxField />  form-sized boolean row (label + hint)
  *    <Badge />          colored chip for status / role
  *    <Modal />          centered dialog
  *    <EmptyState />     illustrated empty state for lists
@@ -456,6 +457,98 @@ export function FilterCheckbox({ label, checked, onChange }) {
         }}
       >
         {label}
+      </span>
+    </button>
+  );
+}
+
+
+/* ---------- CheckboxField ----------------------------------------
+ *  FilterCheckbox's form-sized sibling. Same visual language (custom
+ *  box, Check glyph, primary tint when on) but shaped as a field row
+ *  for edit forms: full width, `.field`-matching radius, and room for
+ *  a hint line under the label — a bare native checkbox gives a
+ *  boolean no space to explain what it actually does.
+ *
+ *  Renders a button, not an <input>: native checkboxes can't be
+ *  restyled consistently across browsers. role/aria-checked keep it
+ *  announced correctly, and type="button" stops it submitting the
+ *  form it usually lives in.
+ * ---------------------------------------------------------------- */
+export function CheckboxField({ label, hint, checked, onChange, disabled }) {
+  const [hover, setHover] = useState(false);
+  const active = Boolean(checked);
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={active}
+      disabled={disabled}
+      onClick={() => onChange(!active)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="w-full flex items-start gap-3 text-start"
+      style={{
+        background: active ? 'rgba(44,47,124,0.06)' : 'var(--bg-canvas)',
+        border: `1px solid ${
+          active
+            ? 'rgba(44,47,124,0.35)'
+            : hover && !disabled
+            ? 'var(--border-strong)'
+            : 'var(--border-default)'
+        }`,
+        borderRadius: 11,
+        padding: '13px 14px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.55 : 1,
+        fontFamily: 'inherit',
+        transition: 'background 0.15s ease, border-color 0.15s ease',
+      }}
+    >
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 5,
+          border: `1.5px solid ${
+            active ? 'var(--accent-primary)' : 'var(--border-strong)'
+          }`,
+          background: active ? 'var(--accent-primary)' : 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          // Nudge the box onto the label's optical baseline.
+          marginTop: 1,
+          transition: 'all 0.15s ease',
+        }}
+      >
+        {active && <Check size={12} color="white" strokeWidth={3} />}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span
+          style={{
+            fontSize: 13.5,
+            fontWeight: 600,
+            lineHeight: 1.35,
+            color: active ? 'var(--accent-primary)' : 'var(--text-ink)',
+          }}
+        >
+          {label}
+        </span>
+        {hint && (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 400,
+              lineHeight: 1.5,
+              color: 'var(--text-muted)',
+            }}
+          >
+            {hint}
+          </span>
+        )}
       </span>
     </button>
   );

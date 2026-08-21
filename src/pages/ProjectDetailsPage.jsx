@@ -1187,10 +1187,22 @@ function FactsCard({ project }) {
     { icon: MapPin, label: t('projects.details.meta.city'), value: project.city },
     // Budget is shown only to the owner / accepted partner; hidden
     // entirely from everyone else (no "sealed" placeholder).
+    // Once a bid is accepted the BE overwrites `budget` with the accepted
+    // amount, so the label has to say which number this is.
     project.budget != null && showBudget && {
       icon: Wallet,
-      label: t('projects.details.meta.budget'),
+      label:
+        project.original_budget_num != null
+          ? t('projects.details.meta.acceptedBudget')
+          : t('projects.details.meta.budget'),
       value: `${formatNumber(project.budget, lang)} ${t('common.currency')}`,
+    },
+    // The owner's pre-accept estimate, kept alongside so the change is
+    // visible rather than looking like the budget silently moved.
+    project.original_budget_num != null && showBudget && {
+      icon: Wallet,
+      label: t('projects.details.meta.originalBudget'),
+      value: `${formatNumber(project.original_budget_num, lang)} ${t('common.currency')}`,
     },
     project.expected_duration && {
       icon: Clock,

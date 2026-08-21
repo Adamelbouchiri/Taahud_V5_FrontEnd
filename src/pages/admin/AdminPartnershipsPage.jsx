@@ -45,7 +45,9 @@ function statusTone(status) {
 
 const EMPTY_PROXY = {
   project_id: '',
-  user_id: '',
+  // The user we're registering the offer FOR, by identifier — the BE
+  // dropped the numeric user_id on this endpoint.
+  user_identifier: '',
   offering_type: '',
   firm_name: '',
   capability_brief: '',
@@ -60,7 +62,11 @@ export default function AdminPartnershipsPage() {
   const [searchParams] = useSearchParams();
 
   const [projectId, setProjectId] = useState(searchParams.get('project_id') || '');
-  const [userId, setUserId] = useState(searchParams.get('user_id') || '');
+  // Partner lookup is by the offering user's human-readable identifier
+  // ("260703R47"); the numeric user_id filter is gone from the API.
+  const [partnerIdentifier, setPartnerIdentifier] = useState(
+    searchParams.get('partner_identifier') || ''
+  );
   const [status, setStatus] = useState('');
   const [offeringType, setOfferingType] = useState('');
   const [archived, setArchived] = useState(''); // '' | 'with' | 'only'
@@ -90,7 +96,7 @@ export default function AdminPartnershipsPage() {
     try {
       const res = await admin.partnerships.list({
         project_id: projectId || undefined,
-        user_id: userId || undefined,
+        partner_identifier: partnerIdentifier.trim() || undefined,
         status: status || undefined,
         offering_type: offeringType || undefined,
         with_trashed: archived === 'with',
@@ -105,15 +111,18 @@ export default function AdminPartnershipsPage() {
     } finally {
       setLoading(false);
     }
-  }, [projectId, userId, status, offeringType, archived, page, t]);
+  }, [projectId, partnerIdentifier, status, offeringType, archived, page, t]);
 
+  // Debounced — the identifier field is free text. An identifier that
+  // matches nobody comes back as an empty page, never an error.
   useEffect(() => {
-    load();
+    const id = setTimeout(load, 300);
+    return () => clearTimeout(id);
   }, [load]);
 
   useEffect(() => {
     setPage(1);
-  }, [projectId, userId, status, offeringType, archived]);
+  }, [projectId, partnerIdentifier, status, offeringType, archived]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -222,7 +231,7 @@ export default function AdminPartnershipsPage() {
     try {
       await admin.partnerships.proxyCreate({
         project_id: proxy.project_id ? Number(proxy.project_id) : undefined,
-        user_id: proxy.user_id ? Number(proxy.user_id) : undefined,
+        user_identifier: proxy.user_identifier.trim() || undefined,
         offering_type: proxy.offering_type,
         firm_name: proxy.firm_name.trim(),
         capability_brief: proxy.capability_brief.trim(),
@@ -273,8 +282,12 @@ export default function AdminPartnershipsPage() {
             <div className="truncate" style={{ fontSize: 13 }}>
               {row.firm_name || row.partner?.name || `#${row.user_id}`}
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-              {row.partner?.name ? `${row.partner.name} · #${row.partner.id}` : `#${row.user_id}`}
+            {/* Identifier rather than the numeric id — it's what the
+                partner filter above takes. */}
+            <div className="truncate" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+              {row.partner?.name
+                ? [row.partner.name, row.partner.identifier || `#${row.partner.id}`].join(' · ')
+                : `#${row.user_id}`}
             </div>
           </div>
         ),
@@ -326,7 +339,7 @@ export default function AdminPartnershipsPage() {
 
   const activeFilterCount =
     (projectId ? 1 : 0) +
-    (userId ? 1 : 0) +
+    (partnerIdentifier ? 1 : 0) +
     (status ? 1 : 0) +
     (offeringType ? 1 : 0) +
     (archived ? 1 : 0);
@@ -385,7 +398,7 @@ export default function AdminPartnershipsPage() {
         activeCount={activeFilterCount}
         onReset={() => {
           setProjectId('');
-          setUserId('');
+          setPartnerIdentifier('');
           setStatus('');
           setOfferingType('');
           setArchived('');
@@ -399,10 +412,11 @@ export default function AdminPartnershipsPage() {
           type="number"
         />
         <FilterText
-          label={t('admin.partnerships.filters.userId')}
-          value={userId}
-          onChange={setUserId}
-          type="number"
+          label={t('admin.partnerships.filters.partnerIdentifier')}
+          value={partnerIdentifier}
+          onChange={setPartnerIdentifier}
+          placeholder={t('admin.common.identifierPlaceholder')}
+          minWidth={190}
         />
         <FilterSelect
           label={t('admin.partnerships.columns.status')}
@@ -586,7 +600,11 @@ export default function AdminPartnershipsPage() {
                 {selected.project?.name || `#${selected.project_id}`}
               </DetailField>
               <DetailField label={t('admin.partnerships.detail.partner')}>
-                {selected.partner?.name || `#${selected.user_id}`}
+                {selected.partner?.name
+                  ? [selected.partner.name, selected.partner.identifier]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : `#${selected.user_id}`}
               </DetailField>
               <DetailField label={t('admin.partnerships.detail.firm')}>
                 {selected.firm_name || '—'}
@@ -761,7 +779,7 @@ export default function AdminPartnershipsPage() {
               disabled={
                 busy ||
                 Number(proxy.project_id) < 1 ||
-                Number(proxy.user_id) < 1 ||
+                !proxy.user_identifier.trim() ||
                 !proxy.offering_type ||
                 proxy.firm_name.trim().length < 2 ||
                 proxy.capability_brief.trim().length < 10 ||
@@ -795,17 +813,19 @@ export default function AdminPartnershipsPage() {
             />
           </div>
           <div>
-            <label className="field-label">{t('admin.partnerships.proxy.userId')}</label>
+            <label className="field-label">
+              {t('admin.partnerships.proxy.userIdentifier')}
+            </label>
             <input
-              className="field"
-              type="number"
-              min="1"
-              step="1"
-              value={proxy.user_id}
-              onChange={(e) =>
-                setProxy({ ...proxy, user_id: e.target.value.replace(/[^0-9]/g, '') })
-              }
+              className="field field-no-icon"
+              type="text"
+              value={proxy.user_identifier}
+              placeholder={t('admin.common.identifierPlaceholder')}
+              onChange={(e) => setProxy({ ...proxy, user_identifier: e.target.value })}
             />
+            <div className="field-hint">
+              {t('admin.partnerships.proxy.userIdentifierHint')}
+            </div>
           </div>
         </div>
         <div className="mt-3">

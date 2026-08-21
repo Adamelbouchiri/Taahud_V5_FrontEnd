@@ -7,14 +7,17 @@ import {
   Undo2,
   Trash2,
   RefreshCcw,
+  Pencil,
   UserPlus,
   ListChecks,
   Gavel,
+  Receipt,
 } from 'lucide-react';
 import { admin } from '../../services';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { ARENAS } from '../../config/projectConstants';
+import { formatSar } from '../../utils/money';
 import {
   PageHeader,
   Card,
@@ -22,15 +25,20 @@ import {
   Modal,
   ConfirmDialog,
 } from '../../components/admin/AdminUI';
+import { PaymentSummary, StepsTable } from '../../components/admin/ProjectFinance';
 
 /* ============================================================
  *  AdminProjectDetailPage — /admin/projects/:id
  *
  *  Mirrors the user-side ProjectDetailsPage layout (overview
  *  card + requirements + files), but adds the admin actions
- *  panel: force-status, force-partner, soft-delete, restore,
- *  hard-delete (super-admin only), and a shortcut to the
- *  activity log scoped to this project.
+ *  panel: edit, force-status, force-partner, soft-delete,
+ *  restore, hard-delete (super-admin only), and a shortcut to
+ *  the activity log scoped to this project.
+ *
+ *  Edit routes to AdminProjectEditPage (PATCH) for the project's
+ *  own fields; status and partner keep their force-* modals here
+ *  because those require a reason and log distinct audit actions.
  * ============================================================ */
 
 const STATUSES = [
@@ -75,7 +83,7 @@ function offerTone(status) {
 export default function AdminProjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { isSuperAdmin } = useUser();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -92,7 +100,9 @@ export default function AdminProjectDetailPage() {
 
   // Sub-form state for the multi-input modals
   const [newStatus, setNewStatus] = useState('open_for_bids');
-  const [partnerUserId, setPartnerUserId] = useState('');
+  // Force-partner takes the partner's human-readable identifier
+  // ("260703R47"), not a numeric user id.
+  const [partnerIdentifier, setPartnerIdentifier] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -135,7 +145,7 @@ export default function AdminProjectDetailPage() {
     setOpenModal(null);
     setReason('');
     setActionError('');
-    setPartnerUserId('');
+    setPartnerIdentifier('');
   };
 
   const showToast = (msg) => {
@@ -182,6 +192,10 @@ export default function AdminProjectDetailPage() {
 
   const isTrashed = !!project.deleted_at;
   const arenaObj = ARENAS.find((a) => a.value === project.arena);
+  const steps = Array.isArray(project.steps) ? project.steps : [];
+  // Older API builds don't ship the admin-only finance sections — hide
+  // the whole card rather than render an empty shell.
+  const hasFinance = !!project.payment_summary || steps.length > 0;
   const fmt = (s) =>
     s ? new Date(s).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
@@ -239,12 +253,20 @@ export default function AdminProjectDetailPage() {
               <Field label={t('admin.projects.create.name')} value={project.name} />
               <Field label={t('admin.projects.create.type')} value={project.type} />
               <Field label={t('admin.projects.create.city')} value={project.city} />
+              {/* Once a bid is accepted, `budget` IS the accepted amount
+                  and original_budget_num holds the owner's estimate — so
+                  the label changes with it, or the number reads as the
+                  owner's figure when it isn't. */}
               <Field
-                label={t('admin.projects.create.budget')}
+                label={
+                  project.original_budget_num != null
+                    ? t('admin.finance.acceptedBudget')
+                    : t('admin.projects.create.budget')
+                }
                 value={
-                  project.budget != null
-                    ? Number(project.budget).toLocaleString()
-                    : null
+                  project.budget != null ? (
+                    <BudgetValue project={project} lang={lang} t={t} />
+                  ) : null
                 }
               />
               <Field
@@ -263,22 +285,24 @@ export default function AdminProjectDetailPage() {
                 label={t('admin.projects.create.experience')}
                 value={project.experience}
               />
+              {/* Identifier over the numeric id — it's what the admin
+                  filters and force-partner take. */}
               <Field
                 label={t('admin.projects.columns.owner')}
-                value={
-                  project.owner?.name
-                    ? `${project.owner.name} (#${project.owner.id})`
-                    : null
-                }
+                value={userLabel(project.owner)}
               />
               <Field
                 label={t('admin.projects.columns.partner')}
-                value={
-                  project.partner?.name
-                    ? `${project.partner.name} (#${project.partner.id})`
-                    : null
-                }
+                value={userLabel(project.partner)}
               />
+              {/* What this partner earned from THIS project — sits next
+                  to the partner name so the two read together. */}
+              {project.partner_earnings_num != null && (
+                <Field
+                  label={t('admin.finance.partnerEarnings')}
+                  value={formatSar(project.partner_earnings_num, lang, t)}
+                />
+              )}
               <Field
                 label={t('admin.projects.columns.createdAt')}
                 value={fmt(project.created_at)}
@@ -313,6 +337,29 @@ export default function AdminProjectDetailPage() {
                   </li>
                 ))}
               </ul>
+            </Card>
+          )}
+
+          {/* ---------- Milestones & payments (admin-only) ----------
+              Present only on the admin project resource: the step plan
+              (proposals included), how much of the budget has actually
+              been paid, and the partner's earnings. */}
+          {hasFinance && (
+            <Card padded={false}>
+              <div className="px-5 pt-5 pb-4 flex flex-col gap-4">
+                <h3 className="font-display m-0" style={{ fontSize: 15, fontWeight: 700 }}>
+                  <Receipt size={16} style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />
+                  {t('admin.finance.title')}
+                  {steps.length > 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
+                      {' '}
+                      ({steps.length})
+                    </span>
+                  )}
+                </h3>
+                <PaymentSummary project={project} t={t} lang={lang} />
+              </div>
+              <StepsTable steps={steps} t={t} lang={lang} />
             </Card>
           )}
 
@@ -357,7 +404,7 @@ export default function AdminProjectDetailPage() {
                   >
                     <div className="min-w-0">
                       <div className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-ink)' }}>
-                        {o.applicant?.name || `#${o.user_id}`}
+                        {userLabel(o.applicant) || `#${o.user_id}`}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {t('admin.applications.columns.delivery')}: {o.delivery_date || '—'}
@@ -384,6 +431,16 @@ export default function AdminProjectDetailPage() {
               {t('admin.projects.columns.actions')}
             </h3>
             <div className="flex flex-col gap-2">
+              {/* Plain PATCH of the project's own fields. Hidden while
+                  archived — the BE route's model binding skips trashed
+                  rows, so the PATCH would 404. Restore first. */}
+              {!isTrashed && (
+                <ActionButton
+                  icon={Pencil}
+                  label={t('admin.projects.detail.actions.edit')}
+                  onClick={() => navigate(`/admin/projects/${project.id}/edit`)}
+                />
+              )}
               <ActionButton
                 icon={RefreshCcw}
                 label={t('admin.projects.detail.actions.forceStatus')}
@@ -530,7 +587,7 @@ export default function AdminProjectDetailPage() {
                   () =>
                     admin.projects.forcePartner(
                       id,
-                      parseInt(partnerUserId, 10),
+                      partnerIdentifier.trim(),
                       reason
                     ),
                   t('admin.projects.detail.forcePartner.done')
@@ -538,8 +595,7 @@ export default function AdminProjectDetailPage() {
               }
               disabled={
                 busy ||
-                !partnerUserId ||
-                Number.isNaN(parseInt(partnerUserId, 10)) ||
+                !partnerIdentifier.trim() ||
                 (reason || '').trim().length < 10
               }
             >
@@ -555,11 +611,15 @@ export default function AdminProjectDetailPage() {
           {t('admin.projects.detail.forcePartner.partnerLabel')}
         </label>
         <input
-          type="number"
+          type="text"
           className="field field-no-icon"
-          value={partnerUserId}
-          onChange={(e) => setPartnerUserId(e.target.value)}
+          value={partnerIdentifier}
+          placeholder={t('admin.common.identifierPlaceholder')}
+          onChange={(e) => setPartnerIdentifier(e.target.value)}
         />
+        <div className="field-hint">
+          {t('admin.projects.detail.forcePartner.partnerHint')}
+        </div>
         <div className="mt-3">
           <label className="field-label">{t('admin.common.reasonLabel')}</label>
           <textarea
@@ -651,6 +711,51 @@ export default function AdminProjectDetailPage() {
         busy={busy}
         error={actionError}
       />
+    </div>
+  );
+}
+
+/** "Name (260703R47)" — falls back to the numeric id for older
+ *  payloads that don't carry an identifier. */
+function userLabel(user) {
+  if (!user?.name) return null;
+  const tag = user.identifier || (user.id != null ? `#${user.id}` : '');
+  return tag ? `${user.name} (${tag})` : user.name;
+}
+
+/* Budget cell. With no acceptance snapshot it's just the amount; with
+   one, it shows the accepted bid over the owner's original estimate plus
+   the delta, which is the question support actually asks ("why did the
+   budget change?"). Under-estimate is a saving, over-estimate isn't —
+   hence the two tones rather than one signed number. */
+function BudgetValue({ project, lang, t }) {
+  const current = project.budget != null ? Number(project.budget) : null;
+  const original = project.original_budget_num;
+  if (current == null || Number.isNaN(current)) return null;
+
+  const currentLabel = formatSar(current, lang, t);
+  if (original == null) return currentLabel;
+
+  const delta = original - current;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span style={{ fontWeight: 700 }}>{currentLabel}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        {t('admin.finance.originalEstimate')}: {formatSar(original, lang, t)}
+      </span>
+      {delta !== 0 && (
+        <span>
+          <Badge tone={delta > 0 ? 'success' : 'warning'}>
+            {delta > 0
+              ? t('admin.finance.savings', {
+                  amount: formatSar(delta, lang, t),
+                })
+              : t('admin.finance.overrun', {
+                  amount: formatSar(-delta, lang, t),
+                })}
+          </Badge>
+        </span>
+      )}
     </div>
   );
 }

@@ -1,15 +1,19 @@
 import React from 'react';
+import FieldLabel from './FieldLabel';
 
 export default function TextareaField({
   label,
   error,
   hint,
   rows = 4,
+  // See Field.jsx — kept off the <textarea> so the browser doesn't
+  // start enforcing it alongside our own validation.
+  required,
   ...props
 }) {
   return (
     <div className="animate-fade-up">
-      <label className="field-label">{label}</label>
+      <FieldLabel label={label} required={required} />
       <textarea
         rows={rows}
         className={`field field-no-icon ${error ? 'error' : ''}`}

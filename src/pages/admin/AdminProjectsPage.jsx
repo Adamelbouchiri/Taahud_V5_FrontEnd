@@ -61,7 +61,9 @@ export default function AdminProjectsPage() {
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
   const [city, setCity] = useState('');
-  const [ownerId, setOwnerId] = useState('');
+  // Owner lookup is by the user's human-readable identifier
+  // ("260703R47"), not a numeric id — see the admin identifier filters.
+  const [ownerIdentifier, setOwnerIdentifier] = useState('');
   const [createdByAdmin, setCreatedByAdmin] = useState(false);
   const [createdByAdminId, setCreatedByAdminId] = useState('');
   const [withTrashed, setWithTrashed] = useState(false);
@@ -81,7 +83,7 @@ export default function AdminProjectsPage() {
         status: status || undefined,
         type: type || undefined,
         city: city || undefined,
-        owner_id: ownerId || undefined,
+        owner_identifier: ownerIdentifier.trim() || undefined,
         created_by_admin: createdByAdmin || undefined,
         created_by_admin_id: createdByAdminId || undefined,
         with_trashed: withTrashed,
@@ -102,7 +104,7 @@ export default function AdminProjectsPage() {
     status,
     type,
     city,
-    ownerId,
+    ownerIdentifier,
     createdByAdmin,
     createdByAdminId,
     withTrashed,
@@ -126,7 +128,7 @@ export default function AdminProjectsPage() {
     status,
     type,
     city,
-    ownerId,
+    ownerIdentifier,
     createdByAdmin,
     createdByAdminId,
     withTrashed,
@@ -193,9 +195,16 @@ export default function AdminProjectsPage() {
             <div className="truncate" style={{ fontSize: 13 }}>
               {row.owner?.name || `#${row.user_id || '—'}`}
             </div>
-            {row.owner?.account_type && (
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-                {t(`accountType.${row.owner.account_type}`)}
+            {/* Identifier, not the numeric id — it's what the owner
+                filter above takes, so the two read the same. */}
+            {(row.owner?.identifier || row.owner?.account_type) && (
+              <div className="truncate" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                {[
+                  row.owner?.identifier,
+                  row.owner?.account_type && t(`accountType.${row.owner.account_type}`),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             )}
           </div>
@@ -206,7 +215,14 @@ export default function AdminProjectsPage() {
         label: t('admin.projects.columns.partner'),
         render: (row) =>
           row.partner ? (
-            <span style={{ fontSize: 13 }}>{row.partner.name}</span>
+            <div className="min-w-0">
+              <div className="truncate" style={{ fontSize: 13 }}>{row.partner.name}</div>
+              {row.partner.identifier && (
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  {row.partner.identifier}
+                </div>
+              )}
+            </div>
           ) : (
             <span style={{ color: 'var(--text-muted)' }}>—</span>
           ),
@@ -214,11 +230,25 @@ export default function AdminProjectsPage() {
       {
         key: 'budget',
         label: t('admin.projects.columns.budget'),
+        /* List rows are raw (adaptAdminProject only runs on .get()), so
+           read original_budget off the payload rather than the parsed
+           _num twin. When it's set, `budget` is an accepted bid — show
+           the estimate it replaced so the column isn't misread as the
+           owner's own figure. */
         render: (row) =>
           row.budget != null ? (
-            <span style={{ fontSize: 13, fontWeight: 600 }}>
-              {Number(row.budget).toLocaleString()}
-            </span>
+            <div className="flex flex-col">
+              <span style={{ fontSize: 13, fontWeight: 600 }}>
+                {Number(row.budget).toLocaleString()}
+              </span>
+              {row.original_budget != null && (
+                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  {t('admin.finance.wasEstimate', {
+                    amount: Number(row.original_budget).toLocaleString(),
+                  })}
+                </span>
+              )}
+            </div>
           ) : (
             <span style={{ color: 'var(--text-muted)' }}>—</span>
           ),
@@ -266,7 +296,7 @@ export default function AdminProjectsPage() {
           (status ? 1 : 0) +
           (type ? 1 : 0) +
           (city ? 1 : 0) +
-          (ownerId ? 1 : 0) +
+          (ownerIdentifier ? 1 : 0) +
           (createdByAdmin ? 1 : 0) +
           (createdByAdminId ? 1 : 0) +
           (withTrashed ? 1 : 0) +
@@ -278,7 +308,7 @@ export default function AdminProjectsPage() {
           setStatus('');
           setType('');
           setCity('');
-          setOwnerId('');
+          setOwnerIdentifier('');
           setCreatedByAdmin(false);
           setCreatedByAdminId('');
           setWithTrashed(false);
@@ -318,10 +348,11 @@ export default function AdminProjectsPage() {
           onChange={setCity}
         />
         <FilterText
-          label={t('admin.projects.filters.ownerId')}
-          value={ownerId}
-          onChange={setOwnerId}
-          type="number"
+          label={t('admin.projects.filters.ownerIdentifier')}
+          value={ownerIdentifier}
+          onChange={setOwnerIdentifier}
+          placeholder={t('admin.common.identifierPlaceholder')}
+          minWidth={180}
         />
         <FilterText
           label={t('admin.projects.filters.createdByAdminId')}

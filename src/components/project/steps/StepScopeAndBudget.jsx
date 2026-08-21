@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Clock, Award } from 'lucide-react';
 import Field from '../../form/Field';
 import SelectField from '../../form/SelectField';
-import TextareaField from '../../form/TextareaField';
+import ScopePicker from '../ScopePicker';
 import {
   PROJECT_DURATIONS,
   EXPERIENCE_LEVELS,
@@ -15,14 +15,11 @@ export default function StepScopeAndBudget({ form, update, errors }) {
 
   return (
     <div className="flex flex-col gap-7">
-      <TextareaField
-        label={t(`${k}.scopeLabel`)}
-        rows={5}
-        placeholder={t(`${k}.scopePlaceholder`)}
-        value={form.scope}
-        onChange={(e) => update('scope', e.target.value)}
+      {/* Scope used to be a textarea. It's a fixed set of trades in
+          practice, so it's a chip picker now — see ScopePicker. */}
+      <ScopePicker
+        onChange={(val) => update('scope', val)}
         error={errors.scope}
-        hint={t(`${k}.scopeHint`)}
       />
 
       <div>
@@ -31,53 +28,46 @@ export default function StepScopeAndBudget({ form, update, errors }) {
           subtitle={t(`${k}.timelineSubtitle`)}
         />
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        {/* End date was dropped from this form: the client rarely knows
+            it up front, and the expected duration next to it answers the
+            same question without asking them to guess a date. */}
+        <div className="grid sm:grid-cols-2 gap-4">
           <Field
             label={t(`${k}.startDate`)}
             icon={Calendar}
             type="date"
+            required={false}
             value={form.start_date}
             onChange={(e) => update('start_date', e.target.value)}
             error={errors.start_date}
           />
-          <Field
-            label={t(`${k}.endDate`)}
-            icon={Calendar}
-            type="date"
-            value={form.end_date}
-            onChange={(e) => update('end_date', e.target.value)}
-            error={errors.end_date}
+
+          <SelectField
+            label={t(`${k}.durationLabel`)}
+            icon={Clock}
+            required={false}
+            options={PROJECT_DURATIONS}
+            value={form.expected_duration}
+            onChange={(e) => update('expected_duration', e.target.value)}
+            placeholder={t(`${k}.durationPlaceholder`)}
           />
         </div>
-
-        <SelectField
-          label={t(`${k}.durationLabel`)}
-          icon={Clock}
-          options={PROJECT_DURATIONS}
-          value={form.expected_duration}
-          onChange={(e) => update('expected_duration', e.target.value)}
-          placeholder={t(`${k}.durationPlaceholder`)}
-        />
       </div>
 
+      {/* Budget used to share this group. It moved up to the details
+          section (the required block) — what's left here is experience,
+          which is optional like everything else below. */}
       <div>
         <SectionHeader
-          title={t(`${k}.budgetReqsTitle`)}
-          subtitle={t(`${k}.budgetReqsSubtitle`)}
+          title={t(`${k}.experienceTitle`)}
+          subtitle={t(`${k}.experienceSubtitle`)}
         />
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-4">
-          <BudgetField
-            value={form.budget}
-            onChange={(e) => update('budget', e.target.value)}
-            error={errors.budget}
-            t={t}
-            kBase={k}
-          />
-
+        <div className="grid sm:grid-cols-2 gap-4">
           <SelectField
             label={t(`${k}.experienceLabel`)}
             icon={Award}
+            required={false}
             options={EXPERIENCE_LEVELS}
             value={form.experience}
             onChange={(e) => update('experience', e.target.value)}
@@ -115,26 +105,3 @@ function SectionHeader({ title, subtitle }) {
   );
 }
 
-function BudgetField({ value, onChange, error, t, kBase }) {
-  return (
-    <div className="animate-fade-up">
-      <label className="field-label">{t(`${kBase}.budgetLabel`)}</label>
-      <div className="flex gap-2">
-        <span className="phone-cc">{t('common.currency')}</span>
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          placeholder={t(`${kBase}.budgetPlaceholder`)}
-          value={value}
-          onChange={onChange}
-          className={`field field-no-icon ${error ? 'error' : ''}`}
-          style={{ flex: 1 }}
-        />
-      </div>
-      {error && <p className="field-err">{error}</p>}
-      {!error && <p className="field-hint">{t(`${kBase}.budgetHint`)}</p>}
-    </div>
-  );
-}

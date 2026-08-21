@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../i18n/LanguageContext';
+import FieldLabel from './FieldLabel';
 
 export default function Field({
   label,
@@ -7,12 +8,16 @@ export default function Field({
   type = 'text',
   error,
   hint,
+  // Three-state marker (see FieldLabel). Pulled out of `props` on
+  // purpose so it never lands on the <input> as the native `required`
+  // attribute — validation here is ours, not the browser's.
+  required,
   ...props
 }) {
   const { dir } = useTranslation();
   return (
     <div className="animate-fade-up">
-      <label className="field-label">{label}</label>
+      <FieldLabel label={label} required={required} />
       <div className="relative">
         {Icon && (
           <div className="absolute top-1/2 -translate-y-1/2 end-[14px] text-muted pointer-events-none flex">

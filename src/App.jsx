@@ -71,6 +71,7 @@ import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminProjectsPage from './pages/admin/AdminProjectsPage';
 import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage';
 import AdminProjectCreatePage from './pages/admin/AdminProjectCreatePage';
+import AdminProjectEditPage from './pages/admin/AdminProjectEditPage';
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
 import AdminPartnershipsPage from './pages/admin/AdminPartnershipsPage';
 import AdminPartnerApplicationsPage from './pages/admin/AdminPartnerApplicationsPage';
@@ -419,6 +420,11 @@ function AppShell() {
           <Route path="projects" element={<AdminProjectsPage />} />
           <Route path="projects/new" element={<AdminProjectCreatePage />} />
           <Route path="projects/:id" element={<AdminProjectDetailPage />} />
+          {/* PATCH /admin/projects/:id — admins bypass the owner-only
+              restriction on the user-facing EditProjectPage. Status and
+              partner stay on the detail page's force-* actions, which
+              carry a reason and their own audit entries. */}
+          <Route path="projects/:id/edit" element={<AdminProjectEditPage />} />
           <Route path="applications" element={<AdminApplicationsPage />} />
           <Route path="partnerships" element={<AdminPartnershipsPage />} />
           {/* "Become a Partner" program — separate from /partnerships

@@ -35,7 +35,10 @@ import http, { resolveFileUrl } from './http';
  *    - Accept/Reject: project owner only, pending applications only.
  *                     Accept cascades atomically: app → accepted,
  *                     project.partner_id → applicant, project.status
- *                     → awarded, sibling pendings → rejected.
+ *                     → awarded, sibling pendings → rejected, and
+ *                     project.budget → the accepted bid_amount (the
+ *                     owner's estimate is snapshotted to
+ *                     project.original_budget).
  *    - File ops:      applicant only, pending applications only.
  *                     Max 20 MB; PDF/JPG/JPEG/PNG/DOC/DOCX/XLS/XLSX.
  * ============================================================ */
@@ -142,10 +145,23 @@ export const applications = {
    * POST /api/applications/:id/accept
    *
    * Cascading effect on the server (transactional):
+   *   - project.original_budget → snapshot of the CURRENT project.budget
+   *   - project.budget          → this application's bid_amount
    *   - this application → 'accepted'
    *   - project.partner_id → this applicant
    *   - project.status     → 'awarded'
    *   - all sibling pending applications → 'rejected'
+   *
+   * NOTE the budget swap: after accept, `project.budget` is the ACCEPTED
+   * PRICE, not the owner's estimate — the estimate moves to
+   * `original_budget`. Everything downstream (milestones, escrow) reads
+   * budget, so it has to hold the real agreement. An admin override of
+   * the accept restores the snapshot and clears it back to null.
+   * See PROJECT_BUDGET_CHANGES_INTEGRATION.md.
+   *
+   * The nested `project` on the response is NOT run through
+   * adaptProject, so it carries the raw `original_budget` string with no
+   * `_num` twin. Refetch via projects.get() if you need the parsed view.
    */
   async accept(applicationId) {
     const res = await http.post(`/applications/${applicationId}/accept`);

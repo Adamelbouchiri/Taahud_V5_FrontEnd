@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   ArrowRight,
   X,
   Send,
@@ -10,13 +9,10 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import LanguageThemeSwitcher from '../components/LanguageThemeSwitcher';
-import Stepper from '../components/project/Stepper';
 import StepDetails from '../components/project/steps/StepDetails';
 import StepScopeAndBudget from '../components/project/steps/StepScopeAndBudget';
-import StepFilesAndRequirements from '../components/project/steps/StepFilesAndRequirements';
-import StepReview from '../components/project/steps/StepReview';
+import StepAttachments from '../components/project/steps/StepAttachments';
 import {
-  PROJECT_STEPS,
   defaultArenaFor,
   arenaConfig,
   canPostArena,
@@ -27,7 +23,32 @@ import { useTranslation } from '../i18n/LanguageContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 /* ============================================================
- *  CreateProjectPage — 4-step wizard.
+ *  CreateProjectPage — SINGLE-PAGE project form.
+ *  ----------------------------------------------------------------
+ *  Was a 4-step wizard (details → scope/budget → files → review).
+ *  Now every field is on one scrollable page, grouped into three
+ *  labelled sections, with one submit at the end.
+ *
+ *  Why one page: only 5 of ~14 fields are actually required, so the
+ *  wizard's gate-per-step rhythm made an otherwise short form feel
+ *  long, and hid from the user how little was mandatory. On one page
+ *  they can see the whole shape up front, fill the 5 required fields,
+ *  and skip the rest.
+ *
+ *  Required vs optional is now stated on every label (see
+ *  components/form/FieldLabel) instead of being implicit. The five
+ *  required fields — arena, name, type, city, budget — are the exact
+ *  set the BE still enforces; the rest (start_date, expected_duration,
+ *  experience) were relaxed to nullable, see
+ *  PROJECT_BUDGET_CHANGES_INTEGRATION.md.
+ *
+ *  End date, requirements and required documents were dropped from this
+ *  form entirely — clients don't have that detail when they post. The
+ *  columns still exist and stay editable from the edit/admin forms.
+ *
+ *  Validation is all-at-once on submit rather than per step, and
+ *  scrolls to the first offending field — on a long page an error
+ *  above the fold is otherwise invisible.
  * ============================================================ */
 
 const INITIAL_FORM = {
@@ -38,20 +59,16 @@ const INITIAL_FORM = {
   description: '',
   scope: '',
   start_date: '',
-  end_date: '',
   expected_duration: '',
   budget: '',
   experience: '',
-  requirements: [],
   files: [],
-  required_documents: '',
   is_started_externally: false,
 };
 
 export default function CreateProjectPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -105,53 +122,52 @@ export default function CreateProjectPage() {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const validateStep = (s) => {
+  /* Everything the BE still requires, checked in one pass. The
+     nullable fields are absent on purpose — nothing about them can be
+     wrong on its own now that the end-date ordering check is gone. */
+  const validateAll = () => {
     const e = {};
-    if (s === 0) {
-      if (!form.arena) e.arena = t('projects.create.validate.arena');
-      else if (!canPostArena(form.arena, accountType, addons)) {
-        // Gated arena without the add-on — block here so the user can't
-        // proceed to a guaranteed 403 on submit.
-        e.arena = t('projects.create.validate.arenaLocked');
-      }
-      if (!form.name.trim()) e.name = t('projects.create.validate.name');
-      if (!form.type) e.type = t('projects.create.validate.type');
-      if (!form.city) e.city = t('projects.create.validate.city');
+
+    if (!form.arena) e.arena = t('projects.create.validate.arena');
+    else if (!canPostArena(form.arena, accountType, addons)) {
+      // Gated arena without the add-on — block here so submit can't
+      // walk into a guaranteed 403.
+      e.arena = t('projects.create.validate.arenaLocked');
     }
-    if (s === 1) {
-      if (form.start_date && form.end_date && form.end_date < form.start_date) {
-        e.end_date = t('projects.create.validate.dateOrder');
-      }
-      if (form.budget && Number(form.budget) < 0) {
-        e.budget = t('projects.create.validate.budgetPositive');
-      }
+    if (!form.name.trim()) e.name = t('projects.create.validate.name');
+    if (!form.type) e.type = t('projects.create.validate.type');
+    if (!form.city) e.city = t('projects.create.validate.city');
+
+    if (!String(form.budget).trim()) {
+      e.budget = t('projects.create.validate.budgetRequired');
+    } else if (Number(form.budget) < 0) {
+      e.budget = t('projects.create.validate.budgetPositive');
     }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const goNext = () => {
-    if (!validateStep(step)) return;
-    setStep((s) => Math.min(s + 1, PROJECT_STEPS.length - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const goBack = () => {
-    if (step === 0) return navigate(-1);
-    setStep((s) => Math.max(s - 1, 0));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const jumpTo = (i) => {
-    if (i <= step) {
-      setStep(i);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  /* On a page this tall the first error is often off-screen, so the
+     form would look like it silently refused to submit. Errors render
+     as .field-err, so wait one frame for them to mount and jump to the
+     topmost one. */
+  const scrollToFirstError = () => {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.field-err');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(step)) return;
     setSubmitError('');
+
+    if (!validateAll()) {
+      setSubmitError(t('projects.create.onePage.fixErrors'));
+      scrollToFirstError();
+      return;
+    }
+
     setSubmitting(true);
     setUploadProgress(null);
 
@@ -163,13 +179,10 @@ export default function CreateProjectPage() {
       description: form.description || null,
       scope: form.scope || null,
       start_date: form.start_date || null,
-      end_date: form.end_date || null,
       expected_duration: form.expected_duration || null,
       budget: form.budget ? Number(form.budget) : null,
       experience: form.experience || null,
-      required_documents: form.required_documents || null,
       is_started_externally: !!form.is_started_externally,
-      requirements: form.requirements,
     };
 
     try {
@@ -209,6 +222,7 @@ export default function CreateProjectPage() {
       } else {
         setSubmitError(err.message || t('projects.create.submitFailed'));
       }
+      scrollToFirstError();
     } finally {
       setSubmitting(false);
     }
@@ -230,7 +244,7 @@ export default function CreateProjectPage() {
     );
   }
 
-  const isLast = step === PROJECT_STEPS.length - 1;
+  const k = 'projects.create.onePage';
 
   return (
     <div
@@ -272,12 +286,7 @@ export default function CreateProjectPage() {
 
       <main className="flex-1 py-10 lg:py-14">
         <div className="max-w-[860px] mx-auto px-6 lg:px-10">
-          <Stepper steps={PROJECT_STEPS} current={step} onJump={jumpTo} />
-
-          <div
-            className="text-center mt-12 lg:mt-14 mb-10 animate-fade-up"
-            key={`head-${step}`}
-          >
+          <div className="text-center mb-8 animate-fade-up">
             <div
               className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full"
               style={{
@@ -288,10 +297,7 @@ export default function CreateProjectPage() {
                 letterSpacing: '0.05em',
               }}
             >
-              {t('projects.create.stepLabel', {
-                current: step + 1,
-                total: PROJECT_STEPS.length,
-              })}
+              {t(`${k}.eyebrow`)}
             </div>
 
             <h1
@@ -304,7 +310,7 @@ export default function CreateProjectPage() {
                 color: 'var(--text-ink)',
               }}
             >
-              {t(`projects.create.step${step + 1}.label`)}
+              {t(`${k}.title`)}
             </h1>
             <p
               className="m-0 max-w-xl mx-auto"
@@ -314,13 +320,15 @@ export default function CreateProjectPage() {
                 color: 'var(--text-muted)',
               }}
             >
-              {t(`projects.create.step${step + 1}.description`)}
+              {t(`${k}.subtitle`)}
             </p>
           </div>
 
-          {submitError && isLast && (
+          <Legend t={t} k={k} />
+
+          {submitError && (
             <div
-              className="max-w-[700px] mx-auto mb-5 p-4 rounded-[12px] animate-fade-up flex items-start gap-3"
+              className="mb-5 p-4 rounded-[12px] animate-fade-up flex items-start gap-3"
               style={{
                 background: 'rgba(185,28,28,0.06)',
                 border: '1px solid rgba(185,28,28,0.18)',
@@ -337,16 +345,12 @@ export default function CreateProjectPage() {
             </div>
           )}
 
-          <div
-            className="p-6 sm:p-8 lg:p-10 rounded-[18px] animate-fade-up"
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-default)',
-              boxShadow: 'var(--shadow-card)',
-            }}
-            key={`card-${step}`}
-          >
-            {step === 0 && (
+          <div className="flex flex-col gap-5">
+            <FormSection
+              number={1}
+              title={t(`${k}.sections.basics.title`)}
+              desc={t(`${k}.sections.basics.desc`)}
+            >
               <StepDetails
                 form={form}
                 update={update}
@@ -355,14 +359,39 @@ export default function CreateProjectPage() {
                 accountLoaded={accountLoaded && !addonsLoading}
                 addons={addons}
               />
-            )}
-            {step === 1 && (
-              <StepScopeAndBudget form={form} update={update} errors={errors} />
-            )}
-            {step === 2 && (
-              <StepFilesAndRequirements form={form} update={update} />
-            )}
-            {step === 3 && <StepReview form={form} onJumpToStep={jumpTo} />}
+            </FormSection>
+
+            {/* Every required field is above this line. Say so, and give
+                the user a way to act on it — otherwise the two sections
+                below read as more work they still have to do. */}
+            <SkipNotice
+              t={t}
+              k={k}
+              onPublish={handleSubmit}
+              submitting={submitting}
+            />
+
+            <FormSection
+              number={2}
+              title={t(`${k}.sections.scope.title`)}
+              desc={t(`${k}.sections.scope.desc`)}
+              badge={t('form.optionalLabel')}
+            >
+              <StepScopeAndBudget
+                form={form}
+                update={update}
+                errors={errors}
+              />
+            </FormSection>
+
+            <FormSection
+              number={3}
+              title={t(`${k}.sections.extras.title`)}
+              desc={t(`${k}.sections.extras.desc`)}
+              badge={t('form.optionalLabel')}
+            >
+              <StepAttachments form={form} update={update} />
+            </FormSection>
           </div>
 
           {submitting && uploadProgress && (
@@ -381,7 +410,7 @@ export default function CreateProjectPage() {
         <div className="max-w-[860px] mx-auto px-6 lg:px-10 h-[78px] flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={goBack}
+            onClick={handleExit}
             disabled={submitting}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] font-semibold transition-all"
             style={{
@@ -404,102 +433,42 @@ export default function CreateProjectPage() {
             }}
           >
             <ArrowRight size={16} />
-            <span>
-              {step === 0
-                ? t('projects.create.cancelStep')
-                : t('projects.create.backStep')}
-            </span>
+            <span>{t('projects.create.cancelStep')}</span>
           </button>
 
-          <div
-            className="hidden md:flex flex-col items-center"
-            style={{ minWidth: 200 }}
-          >
-            <div
-              className="font-semibold mb-1.5"
-              style={{ fontSize: 12, color: 'var(--text-muted)' }}
-            >
-              {Math.round(((step + 1) / PROJECT_STEPS.length) * 100)}%
-            </div>
-            <div
-              style={{
-                width: 180,
-                height: 4,
-                borderRadius: 2,
-                background: 'var(--border-soft)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${((step + 1) / PROJECT_STEPS.length) * 100}%`,
-                  background: 'linear-gradient(90deg, #2c2f7c, #136d4a)',
-                  transition: 'width 0.3s ease',
-                }}
-              />
-            </div>
-          </div>
-
-          {isLast ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-[10px] text-white font-semibold transition-all"
-              style={{
-                fontSize: 14.5,
-                background: '#136d4a',
-                border: '1px solid #136d4a',
-                cursor: submitting ? 'wait' : 'pointer',
-                boxShadow: '0 6px 14px rgba(19,109,74,0.25)',
-                opacity: submitting ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!submitting) {
-                  e.currentTarget.style.background = '#0d5538';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#136d4a';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <span>
-                {submitting
-                  ? uploadProgress
-                    ? t('projects.create.uploading')
-                    : t('projects.create.submitting')
-                  : t('projects.create.submit')}
-              </span>
-              {!submitting && <Send size={15} />}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-[10px] text-white font-semibold transition-all"
-              style={{
-                fontSize: 14.5,
-                background: '#2c2f7c',
-                border: '1px solid #2c2f7c',
-                cursor: 'pointer',
-                boxShadow: '0 6px 14px rgba(44,47,124,0.22)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#1f2258';
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-[10px] text-white font-semibold transition-all"
+            style={{
+              fontSize: 14.5,
+              background: '#136d4a',
+              border: '1px solid #136d4a',
+              cursor: submitting ? 'wait' : 'pointer',
+              boxShadow: '0 6px 14px rgba(19,109,74,0.25)',
+              opacity: submitting ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!submitting) {
+                e.currentTarget.style.background = '#0d5538';
                 e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#2c2f7c';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <span>{t('projects.create.nextStep')}</span>
-              <ArrowLeft size={16} />
-            </button>
-          )}
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#136d4a';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <span>
+              {submitting
+                ? uploadProgress
+                  ? t('projects.create.uploading')
+                  : t('projects.create.submitting')
+                : t('projects.create.submit')}
+            </span>
+            {!submitting && <Send size={15} />}
+          </button>
         </div>
       </footer>
 
@@ -514,6 +483,220 @@ export default function CreateProjectPage() {
         tone="danger"
       />
     </div>
+  );
+}
+
+/* ============================================================
+ *  Legend — spells out the two markers used on the labels below.
+ *  Without it the asterisk is convention-by-assumption; with it the
+ *  "you can skip most of this" message lands before the user starts
+ *  scrolling.
+ * ============================================================ */
+function Legend({ t, k }) {
+  return (
+    <div
+      className="mb-5 px-4 py-3 rounded-[12px] flex flex-wrap items-center gap-x-6 gap-y-2 animate-fade-up"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+      }}
+    >
+      <span className="inline-flex items-center gap-2">
+        <span
+          style={{
+            color: 'var(--accent-danger)',
+            fontWeight: 700,
+            fontSize: 15,
+            lineHeight: 1,
+          }}
+        >
+          *
+        </span>
+        <span style={{ fontSize: 12.5, color: 'var(--text-ink)', fontWeight: 600 }}>
+          {t(`${k}.legendRequired`)}
+        </span>
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: 'var(--text-muted)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 999,
+            padding: '2px 8px',
+          }}
+        >
+          {t('form.optionalLabel')}
+        </span>
+        <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          {t(`${k}.legendOptional`)}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/* ============================================================
+ *  SkipNotice — the "you're done, if you want to be" marker.
+ *  ----------------------------------------------------------------
+ *  Sits directly under section 1, which holds all five required
+ *  fields. Without it a user who filled those five still sees two more
+ *  numbered sections below and reasonably assumes they're mandatory —
+ *  the whole point of flattening the wizard was to make the short path
+ *  visible, so it needs saying at the exact point it becomes true.
+ *
+ *  Publish here runs the same handleSubmit as the footer, so an
+ *  incomplete block 1 still validates and scrolls back up rather than
+ *  failing silently.
+ * ============================================================ */
+function SkipNotice({ t, k, onPublish, submitting }) {
+  return (
+    <div
+      className="p-5 rounded-[16px] animate-fade-up flex flex-col sm:flex-row sm:items-center gap-4"
+      style={{
+        background: 'rgba(19,109,74,0.05)',
+        border: '1px solid rgba(19,109,74,0.22)',
+      }}
+    >
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 11,
+          background: 'rgba(19,109,74,0.12)',
+          color: '#0d5538',
+        }}
+      >
+        <CheckCircle2 size={20} strokeWidth={1.9} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-display font-bold"
+          style={{ fontSize: 15, color: '#0d5538', lineHeight: 1.35 }}
+        >
+          {t(`${k}.skip.title`)}
+        </div>
+        <p
+          className="m-0 mt-1"
+          style={{
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: 'var(--text-ink-soft)',
+          }}
+        >
+          {t(`${k}.skip.desc`)}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onPublish}
+        disabled={submitting}
+        className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-[11px] font-semibold transition-all flex-shrink-0"
+        style={{
+          fontSize: 13.5,
+          background: '#136d4a',
+          border: '1px solid #136d4a',
+          color: 'white',
+          cursor: submitting ? 'wait' : 'pointer',
+          boxShadow: '0 6px 14px rgba(19,109,74,0.22)',
+          opacity: submitting ? 0.7 : 1,
+        }}
+        onMouseEnter={(e) => {
+          if (!submitting) e.currentTarget.style.background = '#0d5538';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = '#136d4a';
+        }}
+      >
+        <Send size={14} />
+        <span>{t(`${k}.skip.cta`)}</span>
+      </button>
+    </div>
+  );
+}
+
+/* ============================================================
+ *  FormSection — one titled card. Replaces what used to be a wizard
+ *  step, so the grouping survives the flattening: the numbers keep
+ *  the page's reading order obvious without gating anything.
+ * ============================================================ */
+function FormSection({ number, title, desc, badge, children }) {
+  return (
+    <section
+      className="p-6 sm:p-8 rounded-[18px] animate-fade-up"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
+      <div
+        className="flex items-start gap-3.5 mb-6 pb-5"
+        style={{ borderBottom: '1px solid var(--border-soft)' }}
+      >
+        <div
+          className="flex items-center justify-center flex-shrink-0 font-display font-bold"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: 'rgba(44,47,124,0.08)',
+            color: 'var(--text-brand-deep)',
+            fontSize: 14,
+          }}
+        >
+          {number}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2
+              className="font-display m-0"
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                color: 'var(--text-ink)',
+              }}
+            >
+              {title}
+            </h2>
+            {badge && (
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  background: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 999,
+                  padding: '3px 9px',
+                }}
+              >
+                {badge}
+              </span>
+            )}
+          </div>
+          {desc && (
+            <p
+              className="m-0 mt-1.5"
+              style={{
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: 'var(--text-muted)',
+              }}
+            >
+              {desc}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {children}
+    </section>
   );
 }
 

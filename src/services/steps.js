@@ -18,6 +18,10 @@ import http from './http';
  *    POST  /projects/:project/steps/:step/review   owner: pleased | not_pleased
  *    POST  /projects/:project/steps/:step/pay      owner: open a server-built
  *                                                  Moyasar checkout session
+ *    POST  /projects/:project/steps/propose        provider: add a step to a live
+ *                                                  project (→ status `proposed`)
+ *    POST  /projects/:project/steps/:step/approve-proposal   owner: accept it
+ *    POST  /projects/:project/steps/:step/reject-proposal    owner: discard it
  *
  *  Auth: same stack as projects — bearer token + not-suspended +
  *  active subscription + verified phone. Steps exist only after a
@@ -29,6 +33,15 @@ import http from './http';
  *      pending ──submit(provider)──▶ submitted ──review:pleased(owner)──▶ approved
  *         ▲                              │
  *         └──────review:not_pleased──────┘   (note required, step reopens)
+ *
+ *  `proposed` sits OUTSIDE that machine (see PROPOSED_STEPS_FRONTEND.md):
+ *  a step the provider adds after the plan is live, waiting for the owner.
+ *
+ *      proposed ──approve-proposal(owner)──▶ pending  (+budget if amount > 0)
+ *               ──reject-proposal(owner)───▶ discarded (soft-deleted)
+ *
+ *  A proposed step is not in the plan: it doesn't count toward the budget
+ *  or progress, can't be submitted, and can't be paid (422).
  *
  *  Money note: `amount` is a decimal STRING ("30000.00"), same as
  *  project.budget — parseFloat() before any math or comparison.
@@ -110,6 +123,27 @@ export const steps = {
   },
 
   /**
+   * POST /api/projects/:projectId/steps/propose
+   * Provider only. Adds ONE step to a project whose plan is already live,
+   * outside the sum-equals-budget rule: it lands as `proposed` and the
+   * budget only moves if/when the owner approves it.
+   *
+   * `amount` is decimal SAR like the rest of the plan (NOT halalas) and
+   * min 0 — a 0 step is a legitimate free clarification / sub-task, which
+   * is why this is a different endpoint from savePlan (that one demands
+   * min 0.01 per step).
+   *
+   * 403 if the caller isn't the provider.
+   */
+  async propose(projectId, { title, amount } = {}) {
+    const res = await http.post(`/projects/${projectId}/steps/propose`, {
+      title,
+      amount: Number.parseFloat(amount) || 0,
+    });
+    return adaptStep(res?.data ?? res);
+  },
+
+  /**
    * POST /api/projects/:projectId/steps/:stepId/submit
    * Provider only, no body. `pending → submitted`. Legal only from
    * `pending` (422 otherwise).
@@ -172,5 +206,36 @@ export const steps = {
       checkout_url: body?.checkout_url || '',
       session_id: body?.session_id || '',
     };
+  },
+
+  /**
+   * POST /api/projects/:projectId/steps/:stepId/approve-proposal
+   * Owner only, no body. `proposed → pending` (a normal plan step), and if
+   * the amount > 0 the PROJECT BUDGET GROWS by it server-side. Callers must
+   * re-read the project afterwards — anything showing the budget or a
+   * paid-vs-budget bar is stale the moment this resolves.
+   *
+   * 403 if not the owner; 422 if the step isn't `proposed`.
+   */
+  async approveProposal(projectId, stepId) {
+    const res = await http.post(
+      `/projects/${projectId}/steps/${stepId}/approve-proposal`
+    );
+    return adaptStep(res?.data ?? res);
+  },
+
+  /**
+   * POST /api/projects/:projectId/steps/:stepId/reject-proposal
+   * Owner only, no body. The proposal is discarded (soft-deleted server-side
+   * for audit) and the budget is untouched — the frontend just drops it from
+   * view. Returns { message }, not a step.
+   *
+   * 403 if not the owner; 422 if the step isn't `proposed`.
+   */
+  async rejectProposal(projectId, stepId) {
+    const res = await http.post(
+      `/projects/${projectId}/steps/${stepId}/reject-proposal`
+    );
+    return res?.data ?? res;
   },
 };

@@ -35,7 +35,9 @@ export default function AdminProjectCreatePage() {
     end_date: '',
     expected_duration: '',
     budget: '',
-    experience: 'senior',
+    // Optional on create — default to unset rather than claiming
+    // "senior" the admin never actually chose.
+    experience: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -56,11 +58,13 @@ export default function AdminProjectCreatePage() {
         city: form.city,
         description: form.description || undefined,
         scope: form.scope || undefined,
-        start_date: form.start_date,
-        end_date: form.end_date,
+        // start_date / end_date / expected_duration / experience are all
+        // optional on create now — omit blanks rather than posting ''.
+        start_date: form.start_date || undefined,
+        end_date: form.end_date || undefined,
         expected_duration: form.expected_duration || undefined,
         budget: form.budget ? Number(form.budget) : undefined,
-        experience: form.experience,
+        experience: form.experience || undefined,
       };
       const ownerId = form.owner_user_id
         ? parseInt(form.owner_user_id, 10)
@@ -172,10 +176,14 @@ export default function AdminProjectCreatePage() {
               <label className="field-label">
                 {t('admin.projects.create.budget')}
               </label>
+              {/* Budget stays REQUIRED on create — downstream milestone
+                  and escrow logic keys off it. */}
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 className="field field-no-icon"
+                required
                 value={form.budget}
                 onChange={(e) => set('budget', e.target.value)}
               />
@@ -188,7 +196,6 @@ export default function AdminProjectCreatePage() {
               <input
                 type="date"
                 className="field field-no-icon"
-                required
                 value={form.start_date}
                 onChange={(e) => set('start_date', e.target.value)}
               />
@@ -201,7 +208,6 @@ export default function AdminProjectCreatePage() {
               <input
                 type="date"
                 className="field field-no-icon"
-                required
                 value={form.end_date}
                 onChange={(e) => set('end_date', e.target.value)}
               />
@@ -228,6 +234,9 @@ export default function AdminProjectCreatePage() {
                 value={form.experience}
                 onChange={(e) => set('experience', e.target.value)}
               >
+                <option value="">
+                  {t('admin.projects.edit.experienceNone')}
+                </option>
                 {EXPERIENCE_OPTIONS.map((x) => (
                   <option key={x} value={x}>
                     {x}

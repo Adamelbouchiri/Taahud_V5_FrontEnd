@@ -46,6 +46,7 @@ import http, { resolveFileUrl } from './http';
  *    - user_id:      from owner.id (owner stays nested too)
  *    - partner_id:   from partner?.id
  *    - is_accepted:  true once a partner is assigned
+ *    - original_budget_num: parsed budget-on-accept snapshot (or null)
  *    - requirements: flatten [{id, requirement}] → string[]
  *    - files[]:      alias .url → .file_path so existing FE renders work
  * ============================================================ */
@@ -57,6 +58,15 @@ function adaptProject(p) {
   if (p.owner) out.user_id = p.owner.id;
   out.partner_id = p.partner?.id ?? null;
   out.is_accepted = !!p.partner;
+
+  /* Budget-on-accept snapshot. Accepting a bid overwrites `budget` with
+     the accepted bid_amount and parks the owner's estimate here; an admin
+     override restores it and clears this back to null. So null means
+     "no active acceptance" — NOT "no budget". */
+  out.original_budget_num =
+    p.original_budget != null && Number.isFinite(Number(p.original_budget))
+      ? Number(p.original_budget)
+      : null;
 
   if (Array.isArray(p.requirements)) {
     out.requirements = p.requirements.map((r) =>

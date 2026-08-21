@@ -116,6 +116,8 @@ export default {
 
   form: {
     selectPlaceholder: 'اختر...',
+    requiredLabel: 'مطلوب',
+    optionalLabel: 'اختياري',
     passwordShow: 'إظهار كلمة المرور',
     passwordHide: 'إخفاء كلمة المرور',
   },
@@ -1551,6 +1553,8 @@ export default {
         city: 'المدينة',
         duration: 'المدة المتوقعة',
         budget: 'الميزانية',
+        acceptedBudget: 'العرض المقبول',
+        originalBudget: 'التقدير الأصلي',
         budgetSealed: 'تُكشف بعد قبول العرض',
         experience: 'الخبرة المطلوبة',
         startDate: 'تاريخ البداية',
@@ -1651,7 +1655,38 @@ export default {
         emptyProvider: 'لم تُحدَّد خطّة بعد. أضِف مراحل لتقسيم العمل.',
         emptyOwner: 'لم يحدّد المزوّد خطّة المراحل بعد.',
       },
+      proposals: {
+        add: 'إضافة مرحلة',
+        addTitle: 'إضافة مرحلة إلى المشروع',
+        addSubtitle:
+          'عمل إضافي أو مرحلة توضيحية بدون مقابل. يجب أن يوافق صاحب المشروع عليها قبل أن تُصبح جزءاً من الخطّة.',
+        titlePlaceholder: 'عنوان المرحلة (مثال: أعمال كهربائية إضافية)',
+        amountHint: 'اترك المبلغ 0 إذا كانت مرحلة توضيحية بدون مقابل.',
+        amountEffect: 'في حال موافقة صاحب المشروع، ستزيد ميزانية المشروع بمقدار {amount}.',
+        submit: 'إرسال للموافقة',
+        submitting: 'جارٍ الإرسال...',
+        cancel: 'إلغاء',
+        addError: 'تعذّر إضافة المرحلة. الرجاء المحاولة مرة أخرى.',
+        title: 'مراحل مُضافة',
+        subtitleOwner: '{count} مرحلة أضافها المزوّد — بانتظار قرارك.',
+        subtitleProvider: '{count} مرحلة أضفتها — بانتظار قرار صاحب المشروع.',
+        bannerOwner: 'لديك {count} مرحلة مُضافة بانتظار موافقتك.',
+        badgeOwner: 'بانتظار موافقتك',
+        badgeProvider: 'بانتظار موافقة صاحب المشروع',
+        free: 'بدون مقابل',
+        freeNote: 'بدون مقابل — الموافقة تضيف المرحلة إلى الخطّة دون تغيير الميزانية.',
+        costNote: 'الموافقة تضيف {amount} إلى ميزانية المشروع (الإجمالي الجديد: {total}).',
+        approve: 'موافقة',
+        approving: 'جارٍ الموافقة...',
+        reject: 'رفض',
+        rejecting: 'جارٍ الرفض...',
+        awaitingOwner: 'بانتظار موافقة صاحب المشروع على هذه المرحلة، ولا يمكن دفعها قبل ذلك.',
+        actionError: 'تعذّر تنفيذ الإجراء. الرجاء المحاولة مرة أخرى.',
+        planWarning:
+          'حفظ الخطّة سيُلغي {count} مرحلة مُضافة ما زالت بانتظار موافقة صاحب المشروع.',
+      },
       status: {
+        proposed: 'مقترحة',
         pending: 'قيد الانتظار',
         submitted: 'بانتظار المراجعة',
         approved: 'معتمدة',
@@ -1676,6 +1711,34 @@ export default {
     },
     create: {
       title: 'إنشاء مشروع جديد',
+      onePage: {
+        eyebrow: 'مشروع جديد',
+        title: 'انشر مشروعك',
+        subtitle:
+          'خمسة حقول فقط تكفي للنشر. وما تبقّى يمكنك إضافته الآن أو لاحقاً.',
+        legendRequired: 'مطلوب للنشر',
+        legendOptional: 'وما تبقّى يمكن إضافته لاحقاً',
+        fixErrors: 'يرجى إكمال الحقول المطلوبة المشار إليها أدناه.',
+        skip: {
+          title: 'هذا كلّ ما نحتاجه',
+          desc: 'يمكنك نشر المشروع الآن واستقبال العروض. القسمان أدناه تفاصيل اختياريّة — أضفها الآن أو عدّل المشروع لاحقاً.',
+          cta: 'انشر الآن',
+        },
+        sections: {
+          basics: {
+            title: 'تفاصيل المشروع',
+            desc: 'كلّ ما هو مطلوب للنشر موجود في هذا القسم.',
+          },
+          scope: {
+            title: 'النطاق والجدول الزمني',
+            desc: 'مجالات العمل والتاريخ والمدّة والخبرة — تفيد في دقّة العروض، ويمكنك إضافتها في أيّ وقت.',
+          },
+          extras: {
+            title: 'المرفقات',
+            desc: 'المخطّطات والصور والمستندات التي تساعد مقدّمي العروض على التسعير بدقّة.',
+          },
+        },
+      },
       stepLabel: 'الخطوة {current} من {total}',
       stepNumber: 'الخطوة',
       saveDraft: 'حفظ كمسوّدة',
@@ -1720,6 +1783,7 @@ export default {
         city: 'المدينة مطلوبة',
         dateOrder: 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية',
         budgetPositive: 'الميزانية يجب أن تكون رقماً موجباً',
+        budgetRequired: 'الميزانية مطلوبة',
       },
       step1: { label: 'تفاصيل المشروع', description: 'المعلومات الأساسية عن مشروعك' },
       step2: { label: 'النطاق والميزانية', description: 'نطاق العمل والجدول الزمني والخبرة' },
@@ -1741,6 +1805,21 @@ export default {
           descriptionPlaceholder:
             'اكتب وصفاً مفصّلاً عن مشروعك، الأهداف، والمواقع المعنيّة...',
           descriptionHint: 'اختياري — لكن وصفٌ جيّد يساعد الشركاء على فهم احتياجاتك.',
+          publicModal: {
+            titleSuffix: ' — مصدرها خارجي',
+            subtitle:
+              'الفرص في هذه الساحة تُجمَع تلقائيّاً من منصّات خارجيّة، لذا لا تُنشَر المشاريع هنا عبر تعاهد. ولا توجد إضافة تغيّر ذلك.',
+            bullets: [
+              'مجمّعة من اعتماد وفرصة ومقاول ومصادر مشابهة.',
+              'تُعرض على المقاولين والمكاتب الهندسيّة للاستكشاف.',
+              'تُقدَّم العروض على المنصّة المصدر، لا على تعاهد.',
+            ],
+            insteadLabel: 'أين تنشر بدلاً من ذلك',
+            insteadBody:
+              'اختر الساحة الخاصّة لنشر مشروعك، أو ساحة التضامن إن كنت تبحث عن شريك بدلاً من مقاول.',
+            browseCta: 'تصفّح هذه الساحة',
+            ok: 'فهمت',
+          },
           isnadModal: {
             titleSuffix: ' — ترقية اختياريّة',
             subtitle:
@@ -1759,12 +1838,6 @@ export default {
           },
         },
         filesReqs: {
-          requirementsTitle: 'المتطلبات',
-          requirementsSubtitle: 'أضف المتطلبات التي يجب أن يستوفيها العرض.',
-          documentsLabel: 'الوثائق المطلوبة',
-          documentsPlaceholder:
-            'مثال: رخصة مقاول سارية، سجل تجاري، شهادة زكاة وضريبة...',
-          documentsHint: 'قائمة نصّية بالوثائق التي يجب على المتقدّم تقديمها.',
           filesTitle: 'المرفقات',
           filesSubtitle: 'مخططات، صور، وثائق — حدّ أقصى ١٠ ميجابايت لكل ملف.',
           startedExternallyTitle: 'بدأ المشروع خارج المنصة',
@@ -1810,17 +1883,25 @@ export default {
         },
         scopeBudget: {
           scopeLabel: 'نطاق العمل',
-          scopePlaceholder:
-            'حدّد بالتفصيل نطاق العمل المطلوب، المراحل، والنتائج المتوقعة...',
-          scopeHint: 'كلّما كان النطاق أوضح، كانت العروض أدقّ.',
+          scopeHint: 'اختر ما يشمله المشروع — يمكنك اختيار أكثر من مجال.',
+          scopeOptions: {
+            execution: 'تنفيذ',
+            finishing: 'تشطيب',
+            restoration: 'ترميم',
+            electrical: 'كهرباء',
+            maintenance: 'صيانة',
+          },
+          scopeOther: 'أخرى',
+          scopeOtherPlaceholder: 'اكتب نطاق العمل المطلوب...',
           timelineTitle: 'الجدول الزمني',
-          timelineSubtitle: 'حدّد تواريخ البداية والنهاية أو المدة المتوقعة',
+          timelineSubtitle: 'حدّد تاريخ البداية أو المدة المتوقعة',
           startDate: 'تاريخ البداية',
-          endDate: 'تاريخ الانتهاء',
           durationLabel: 'المدة المتوقعة',
           durationPlaceholder: 'اختر المدة',
           budgetReqsTitle: 'الميزانية والمتطلبات',
           budgetReqsSubtitle: 'بياناتٌ تساعد الشركاء على تقديم عروض دقيقة',
+          experienceTitle: 'مستوى الخبرة',
+          experienceSubtitle: 'السجلّ الذي تريده من مقدّمي العروض',
           experienceLabel: 'الخبرة المطلوبة',
           experiencePlaceholder: 'اختر مستوى الخبرة',
           budgetLabel: 'الميزانية المتوقعة',
@@ -2260,6 +2341,7 @@ export default {
       anyArena: 'كل الساحات',
       anyRole: 'كل الأدوار',
       anyAction: 'كل الإجراءات',
+      identifierPlaceholder: 'مثال: 260703R47',
       noRows: 'لا توجد سجلات بعد.',
       copy: 'نسخ',
       copied: 'تم النسخ',
@@ -2494,7 +2576,7 @@ export default {
         searchPlaceholder: 'بحث باسم المشروع أو المدينة…',
         type: 'النوع',
         city: 'المدينة',
-        ownerId: 'معرّف المالك',
+        ownerIdentifier: 'معرّف المالك',
         createdByAdmin: 'المُنشَأة نيابةً فقط',
         createdByAdminId: 'مُنشَأ بواسطة المشرف',
       },
@@ -2518,6 +2600,7 @@ export default {
         noOffers: 'لا توجد عروض على هذا المشروع بعد.',
         viewAllOffers: 'عرض الكل',
         actions: {
+          edit: 'تعديل المشروع',
           forceStatus: 'تعديل الحالة قسريّاً',
           forcePartner: 'تعيين شريك قسريّاً',
           restore: 'استعادة',
@@ -2535,7 +2618,8 @@ export default {
         forcePartner: {
           title: 'تعيين شريك قسريّاً',
           description: 'يتجاوز نظام العروض ويعيّن شريكًا مباشرة. ستصبح حالة المشروع "مرسى عليه".',
-          partnerLabel: 'معرّف المستخدم الشريك',
+          partnerLabel: 'معرّف الشريك',
+          partnerHint: 'معرّف المستخدم الخاص بالشريك، مثال: 260703R47.',
           confirm: 'تعيين الشريك',
           done: 'تم تعيين الشريك.',
         },
@@ -2580,6 +2664,32 @@ export default {
         done: 'تم إنشاء المشروع.',
         doneProxy: 'تم إنشاء المشروع نيابة عن المستخدم {id}.',
       },
+      edit: {
+        title: 'تعديل المشروع',
+        subtitle: 'صحّح أيّ حقل في هذا المشروع.',
+        submit: 'حفظ التعديلات',
+        submitting: 'جارٍ الحفظ…',
+        done: 'تم تحديث المشروع.',
+        noChanges: 'لا توجد تعديلات للحفظ.',
+        statusNote:
+          'تُعدّل الحالة والشريك من صفحة المشروع. هذه الإجراءات تتطلّب سبباً وتُسجّل بشكل منفصل.',
+        trashedBlocked: 'هذا المشروع مؤرشف ولا يمكن تعديله. استعده أولاً.',
+        datePairRequired:
+          'حدّد تاريخ البداية أيضاً — لا يمكن حفظ تاريخ النهاية بمفرده.',
+        dateOrder: 'يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.',
+        progress: 'نسبة الإنجاز (%)',
+        startedExternally: 'بدأ خارج المنصّة',
+        startedExternallyHint:
+          'بدأ العمل قبل نشر المشروع هنا، لذا قد لا تغطّيه خطّة المراحل من البداية.',
+        budgetAcceptedNote:
+          'هذا هو العرض المقبول، وليس تقدير المالك ({amount}). تغييره يعني تعديل السعر المتّفق عليه.',
+        requiredDocuments: 'المستندات المطلوبة',
+        requirements: 'المتطلّبات',
+        addRequirement: 'إضافة متطلّب',
+        removeRequirement: 'إزالة المتطلّب',
+        requirementPlaceholder: 'مثال: شهادة تصنيف مقاولين سارية',
+        experienceNone: 'غير محدّدة',
+      },
     },
     applications: {
       eyebrow: 'العمليات · العروض',
@@ -2587,7 +2697,7 @@ export default {
       subtitle: 'ابحث في أي عرض على المنصّة وتدخّل في القرارات عند الحاجة.',
       filters: {
         projectId: 'معرّف المشروع',
-        userId: 'معرّف مقدّم العرض',
+        applicantIdentifier: 'معرّف مقدّم العرض',
       },
       columns: {
         application: 'العرض',
@@ -2601,6 +2711,13 @@ export default {
       empty: 'لا توجد عروض مطابقة للفلاتر الحاليّة.',
       detail: {
         coverLetter: 'الرسالة',
+        submittedAt: 'تاريخ التقديم',
+        applicantTitle: 'مقدّم العرض',
+        projectTitle: 'المشروع',
+        openProfile: 'فتح الملف الشخصي',
+        openProject: 'فتح المشروع',
+        projectsCount: 'المشاريع',
+        applicationsCount: 'العروض',
         actions: {
           override: 'إلغاء القرار',
         },
@@ -2621,7 +2738,7 @@ export default {
       archived: 'مؤرشف',
       filters: {
         projectId: 'معرّف المشروع',
-        userId: 'معرّف الشريك',
+        partnerIdentifier: 'معرّف الشريك',
         archived: 'المؤرشفة',
         archivedActive: 'النشطة فقط',
         archivedWith: 'تضمين المؤرشفة',
@@ -2688,7 +2805,8 @@ export default {
         description:
           'تسجيل عرض شراكة لمستخدم (مثلاً اتصل بالدعم). يتجاوز اشتراط الإضافة لكنه يتحقق من ساحة التضامن، وعدم كونه صاحب المشروع، وعدم وجود عرض مكرر.',
         projectId: 'معرّف المشروع',
-        userId: 'معرّف المستخدم (المنوب عنه)',
+        userIdentifier: 'معرّف المستخدم (المنوب عنه)',
+        userIdentifierHint: 'يجب أن يطابق مستخدمًا قائمًا، مثال: 260703R47.',
         offeringPlaceholder: 'اختر نوع المساهمة',
         reasonPlaceholder: 'مثال: اتصل المستخدم بالدعم، وتم التحقق من الهوية عبر الهاتف.',
         confirm: 'إنشاء بالنيابة',
@@ -2869,6 +2987,42 @@ export default {
           title: 'تعديل بيانات الشريك',
           done: 'تم حفظ التعديلات.',
         },
+      },
+    },
+    finance: {
+      title: 'المراحل والمدفوعات',
+      budget: 'الميزانية',
+      paid: 'المدفوع',
+      partnerEarnings: 'أرباح الشريك',
+      acceptedBudget: 'العرض المقبول',
+      originalEstimate: 'التقدير الأصلي',
+      savings: 'أقل من التقدير بـ {amount}',
+      overrun: 'أعلى من التقدير بـ {amount}',
+      wasEstimate: 'التقدير {amount}',
+      stepsPaid: 'المراحل المدفوعة',
+      stepsPaidValue: '{paid} من {total}',
+      paidOfBudget: 'تم دفع {paid} من {budget}',
+      proposedCallout:
+        'هناك {count} مرحلة مقترحة من المنفّذ بانتظار موافقة صاحب المشروع — غير محتسبة في الخطة أعلاه.',
+      mismatch:
+        'إجمالي المدفوع ({paid}) لا يطابق أرباح الشريك ({earnings}) في هذا المشروع. من المفترض أن يمثّلا المبلغ نفسه — يستدعي المراجعة.',
+      noSteps: 'لا توجد خطة مراحل لهذا المشروع بعد.',
+      columns: {
+        sequence: '#',
+        step: 'المرحلة',
+        amount: 'المبلغ',
+        status: 'الحالة',
+        payment: 'الدفع',
+      },
+      payment: {
+        paid: 'مدفوعة',
+        unpaid: 'غير مدفوعة',
+      },
+      stepStatuses: {
+        proposed: 'مقترحة',
+        pending: 'قيد الانتظار',
+        submitted: 'بانتظار المراجعة',
+        approved: 'معتمدة',
       },
     },
     statuses: {

@@ -22,24 +22,28 @@ import http from './http';
  *    POST   /admin/users/:id/force-password-reset  → returns new_password ONCE
  *
  *    Projects
- *    GET    /admin/projects                     list (arena, status, with_trashed, only_trashed)
+ *    GET    /admin/projects                     list (arena, status, owner_identifier,
+ *                                               with_trashed, only_trashed)
  *    POST   /admin/projects                     create (optionally `owner_user_id` to proxy-create)
- *    GET    /admin/projects/:id                 show
+ *    GET    /admin/projects/:id                 show (+ steps, payment_summary,
+ *                                               partner_earnings — admin-only)
  *    PATCH  /admin/projects/:id                 update
  *    DELETE /admin/projects/:id                 soft-delete
  *    POST   /admin/projects/:id/restore         restore
  *    DELETE /admin/projects/:id/force-delete    { reason } — super-admin
  *    POST   /admin/projects/:id/force-status    { status, reason }
- *    POST   /admin/projects/:id/force-partner   { partner_user_id, reason }
+ *    POST   /admin/projects/:id/force-partner   { partner_identifier, reason }
  *
  *    Applications
- *    GET    /admin/applications                 list (project_id, status, user_id)
- *    GET    /admin/applications/:id             show
+ *    GET    /admin/applications                 list (project_id, status,
+ *                                               applicant_identifier)
+ *    GET    /admin/applications/:id             show (+ full applicant & the
+ *                                               admin-rich project)
  *    POST   /admin/applications/:id/override    { reason }
  *
  *    Partnership requests (Solidarity offers)
- *    GET    /admin/partnership-requests              list (project_id, user_id, status, offering_type, with/only_trashed)
- *    POST   /admin/partnership-requests              proxy-create { project_id, user_id, ...offer, reason }
+ *    GET    /admin/partnership-requests              list (project_id, partner_identifier, status, offering_type, with/only_trashed)
+ *    POST   /admin/partnership-requests              proxy-create { project_id, user_identifier, ...offer, reason }
  *    GET    /admin/partnership-requests/:id          show (incl. trashed)
  *    POST   /admin/partnership-requests/:id/override { new_status, reason }
  *    DELETE /admin/partnership-requests/:id          soft-delete { reason }
@@ -107,6 +111,77 @@ function strip(obj) {
 
 function unwrap(res) {
   return res?.data ?? res;
+}
+
+function num(v) {
+  const n = typeof v === 'string' ? Number.parseFloat(v) : v;
+  return Number.isFinite(n) ? n : 0;
+}
+
+
+/* ============================================================
+ *  Adapters — enriched admin detail resources
+ *  ----------------------------------------------------------------
+ *  See ADMIN_ENRICHED_VIEWS_FRONTEND.md. The admin project detail
+ *  carries three admin-only sections the user-facing resource does
+ *  NOT have: `steps`, `payment_summary` and `partner_earnings`.
+ *
+ *  Money on this view is SAR-decimal STRINGS ("120000.00") across
+ *  the board — budget, original_budget, total_paid, partner_earnings,
+ *  step amounts.
+ *  No halalas here (unlike wallet/withdrawals). We keep the raw
+ *  strings and add parsed `*_num` twins so components can compare
+ *  and compute without re-running parseFloat in render.
+ * ============================================================ */
+
+function adaptAdminProject(p) {
+  if (!p || typeof p !== 'object') return p;
+
+  // `steps` INCLUDES provider proposals (status: 'proposed') so admins
+  // can see what's awaiting the owner — badge them distinctly.
+  const steps = Array.isArray(p.steps)
+    ? p.steps.map((s) => ({ ...s, amount_num: num(s.amount) }))
+    : [];
+
+  // payment_summary counts only IN-PLAN steps; proposed_count is a
+  // separate callout for proposals still awaiting owner approval.
+  const ps = p.payment_summary;
+  const payment_summary =
+    ps && typeof ps === 'object'
+      ? {
+          ...ps,
+          budget_num: num(ps.budget),
+          total_paid_num: num(ps.total_paid),
+          steps_total: Number(ps.steps_total) || 0,
+          steps_paid: Number(ps.steps_paid) || 0,
+          proposed_count: Number(ps.proposed_count) || 0,
+        }
+      : null;
+
+  return {
+    ...p,
+    steps,
+    payment_summary,
+    // What the partner earned from THIS project. Should equal
+    // total_paid — a divergence is worth surfacing, not hiding.
+    partner_earnings_num:
+      p.partner_earnings != null ? num(p.partner_earnings) : null,
+    /* Budget-on-accept snapshot (PROJECT_BUDGET_CHANGES_INTEGRATION.md).
+       null  → no active acceptance; `budget` is authoritative on its own.
+       value → an acceptance is live: `budget` IS the accepted bid_amount
+               and this holds the owner's pre-accept estimate.
+       Kept as null (not 0) when absent so "no snapshot" stays
+       distinguishable from "estimate was zero". */
+    original_budget_num:
+      p.original_budget != null ? num(p.original_budget) : null,
+  };
+}
+
+function adaptAdminApplication(a) {
+  if (!a || typeof a !== 'object') return a;
+  // The nested `project` is the full AdminProjectResource (steps +
+  // payment_summary + partner_earnings), so it gets the same treatment.
+  return a.project ? { ...a, project: adaptAdminProject(a.project) } : a;
 }
 
 function unwrapPage(res) {
@@ -254,10 +329,15 @@ export const admin = {
      *    - type            exact match on project type
      *    - city            exact match on city (precise vs fuzzy
      *                      search)
-     *    - owner_id        all projects owned by a given user
-     *                      (investigative)
+     *    - owner_identifier   all projects owned by the user with this
+     *                      human-readable identifier ("260703R47") —
+     *                      investigative. Replaced the old numeric
+     *                      `owner_id`, which the BE no longer reads.
+     *                      An unknown identifier returns an EMPTY page
+     *                      (200), not a 4xx — treat it as "no matches".
      *    - created_by_admin       0/1 — proxy-created only
-     *    - created_by_admin_id    audit trail by admin id
+     *    - created_by_admin_id    audit trail by admin id (still numeric:
+     *                      it's the acting admin, not a filtered subject)
      */
     async list(filters = {}) {
       const params = strip({
@@ -266,7 +346,7 @@ export const admin = {
         status: filters.status,
         type: filters.type,
         city: filters.city,
-        owner_id: filters.owner_id,
+        owner_identifier: filters.owner_identifier,
         created_by_admin:
           filters.created_by_admin === true
             ? 1
@@ -282,9 +362,19 @@ export const admin = {
       return unwrapPage(await http.get('/admin/projects', { params }));
     },
 
-    /** GET /admin/projects/:id */
+    /**
+     * GET /admin/projects/:id
+     * Admin-rich: everything the project resource returns PLUS
+     * `steps` (incl. proposals), `payment_summary` and
+     * `partner_earnings`. See adaptAdminProject above for the
+     * parsed `*_num` twins added on top.
+     */
     async get(id) {
-      return unwrap(await http.get(`/admin/projects/${id}`));
+      const body = unwrap(await http.get(`/admin/projects/${id}`));
+      // Some builds nest the resource one level deeper — adapt whichever
+      // one is the actual project so the `*_num` twins never land on a
+      // wrapper object.
+      return adaptAdminProject(body?.project ?? body);
     },
 
     /**
@@ -327,11 +417,16 @@ export const admin = {
       );
     },
 
-    /** POST /admin/projects/:id/force-partner  { partner_user_id, reason } */
-    async forcePartner(id, partnerUserId, reason) {
+    /**
+     * POST /admin/projects/:id/force-partner  { partner_identifier, reason }
+     * Takes the partner's human-readable identifier ("260703R47"), not a
+     * numeric user id — the BE resolves it against users.identifier and
+     * 422s (`partner_identifier`) when nothing matches.
+     */
+    async forcePartner(id, partnerIdentifier, reason) {
       return unwrap(
         await http.post(`/admin/projects/${id}/force-partner`, {
-          partner_user_id: partnerUserId,
+          partner_identifier: partnerIdentifier,
           reason,
         })
       );
@@ -343,24 +438,44 @@ export const admin = {
    * APPLICATIONS
    * ============================================================ */
   applications: {
-    /** GET /admin/applications */
+    /** GET /admin/applications
+     *  `applicant_identifier` filters by the bidder's human-readable
+     *  identifier ("260703R47") and replaced the old numeric `user_id`.
+     *  `project_id` stays numeric — projects have no identifier.
+     *  An unknown identifier returns an empty page, not an error. */
     async list(filters = {}) {
       const params = strip({
         project_id: filters.project_id,
         status: filters.status,
-        user_id: filters.user_id,
+        applicant_identifier: filters.applicant_identifier,
         per_page: filters.per_page,
         page: filters.page,
       });
       return unwrapPage(await http.get('/admin/applications', { params }));
     },
 
-    /** GET /admin/applications/:id */
+    /**
+     * GET /admin/applications/:id
+     * Admin-rich: `applicant` is the admin user block (identity +
+     * standing + projects_count / applications_count — never secrets)
+     * and `project` is the full AdminProjectResource, steps and
+     * payment_summary included, so an admin can judge the bid without
+     * leaving the screen. The LIST rows stay lean — fetch this on open.
+     */
     async get(id) {
-      return unwrap(await http.get(`/admin/applications/${id}`));
+      return adaptAdminApplication(
+        unwrap(await http.get(`/admin/applications/${id}`))
+      );
     },
 
-    /** POST /admin/applications/:id/override  { reason } */
+    /** POST /admin/applications/:id/override  { reason }
+     *  Reversing an ACCEPTED bid also restores the money: project.budget
+     *  goes back to project.original_budget and the snapshot clears to
+     *  null (alongside partner_id → null, status → open_for_bids).
+     *  Overriding a PENDING bid just rejects it — no cascade, no budget
+     *  change. Siblings auto-rejected at accept time stay rejected.
+     *  The audit payload gains budget_before_override,
+     *  original_budget_before_override and budget_restored_to. */
     async override(id, reason) {
       return unwrap(
         await http.post(`/admin/applications/${id}/override`, { reason })
@@ -383,12 +498,15 @@ export const admin = {
    * ============================================================ */
   partnerships: {
     /** GET /admin/partnership-requests — every offer system-wide.
-     *  Filters: project_id, user_id, status, offering_type, plus
-     *  with_trashed / only_trashed (0/1) for archived rows. */
+     *  Filters: project_id, partner_identifier, status, offering_type,
+     *  plus with_trashed / only_trashed (0/1) for archived rows.
+     *  `partner_identifier` is the offering user's human-readable
+     *  identifier and replaced the old numeric `user_id`; an unknown
+     *  one returns an empty page, not an error. */
     async list(filters = {}) {
       const params = strip({
         project_id: filters.project_id,
-        user_id: filters.user_id,
+        partner_identifier: filters.partner_identifier,
         status: filters.status,
         offering_type: filters.offering_type,
         with_trashed: filters.with_trashed ? 1 : undefined,
@@ -407,14 +525,18 @@ export const admin = {
     /**
      * POST /admin/partnership-requests — proxy-create on behalf of a user.
      * Bypasses the addon gate but still validates solidarity-arena,
-     * non-owner, and no-duplicate. Body: { project_id, user_id,
+     * non-owner, and no-duplicate. Body: { project_id, user_identifier,
      * offering_type, firm_name, capability_brief, proposed_share?,
      * message, reason }.
+     *
+     * `user_identifier` (the string identifier, replacing the old numeric
+     * `user_id`) is required and must exist — unlike the LIST filters, a
+     * miss here is a 422 with errors.user_identifier, not an empty result.
      */
     async proxyCreate(payload) {
       const body = strip({
         project_id: payload.project_id,
-        user_id: payload.user_id,
+        user_identifier: payload.user_identifier,
         offering_type: payload.offering_type,
         firm_name: payload.firm_name,
         capability_brief: payload.capability_brief,

@@ -12,6 +12,7 @@ import {
   Clock,
   Hourglass,
   Plus,
+  PlusCircle,
   Trash2,
   Save,
   Pencil,
@@ -54,6 +55,9 @@ const BRAND = '#136d4a';
 const BRAND_DARK = '#0d5538';
 const DANGER = '#b91c1c';
 const AMBER = '#8a6620';
+// Proposals are a different KIND of thing from plan steps (they're not in the
+// plan yet), so they get the brand indigo rather than a step status colour.
+const INDIGO = '#2c2f7c';
 
 export default function ProjectStepsPageRoute() {
   return (
@@ -209,27 +213,37 @@ function ProjectStepsPage() {
 function StepsBoard({ project, steps, isOwner, isProvider, onChanged }) {
   const { t } = useTranslation();
 
+  // `proposed` steps sit OUTSIDE the plan until the owner accepts them, so
+  // they're excluded from every total here exactly as the API excludes them
+  // from the budget/progress invariant (ProjectStepStatus::inPlan()).
+  const planSteps = steps.filter((s) => s.status !== 'proposed');
+  const proposals = steps.filter((s) => s.status === 'proposed');
+
   const budget = parseAmount(project.budget);
-  const allocated = steps.reduce((sum, s) => sum + (s.amount_num || 0), 0);
-  const approvedAmount = steps
+  const allocated = planSteps.reduce((sum, s) => sum + (s.amount_num || 0), 0);
+  const approvedAmount = planSteps
     .filter((s) => s.status === 'approved')
     .reduce((sum, s) => sum + (s.amount_num || 0), 0);
-  const paidSteps = steps.filter((s) => s.paid_at);
+  const paidSteps = planSteps.filter((s) => s.paid_at);
   const paidAmount = paidSteps.reduce((sum, s) => sum + (s.amount_num || 0), 0);
   // Paid AND approved = out of escrow and withdrawable by the provider.
   const releasedAmount = paidSteps
     .filter((s) => s.status === 'approved')
     .reduce((sum, s) => sum + (s.amount_num || 0), 0);
-  const awaiting = steps.filter((s) => s.status === 'submitted').length;
+  const awaiting = planSteps.filter((s) => s.status === 'submitted').length;
 
-  // The plan is editable (provider only) while EVERY step is still
-  // pending — mirrors the API rule so the user isn't surprised by a 422.
-  const planLocked = steps.some((s) => s.status !== 'pending');
+  // The plan is editable (provider only) until a step is actually started.
+  // Mirrors the API rule — which keys off submitted/approved only, so a
+  // pending PROPOSAL must not freeze the builder.
+  const planLocked = planSteps.some(
+    (s) => s.status === 'submitted' || s.status === 'approved'
+  );
   const canEditPlan = isProvider && !planLocked;
-  const hasPlan = steps.length > 0;
+  const hasPlan = planSteps.length > 0;
 
   // Start in builder mode when the provider has no plan yet.
   const [editing, setEditing] = useState(canEditPlan && !hasPlan);
+  const [proposing, setProposing] = useState(false);
 
   return (
     <div className="space-y-6 mt-2">
@@ -240,7 +254,7 @@ function StepsBoard({ project, steps, isOwner, isProvider, onChanged }) {
         paidAmount={paidAmount}
         releasedAmount={releasedAmount}
         paidCount={paidSteps.length}
-        totalCount={steps.length}
+        totalCount={planSteps.length}
       />
 
       {awaiting > 0 && (
@@ -260,11 +274,52 @@ function StepsBoard({ project, steps, isOwner, isProvider, onChanged }) {
         </div>
       )}
 
+      {isOwner && proposals.length > 0 && (
+        <div
+          className="flex items-center gap-2 px-4 py-3 rounded-[12px]"
+          style={{
+            background: 'rgba(44,47,124,0.06)',
+            border: '1px solid rgba(44,47,124,0.2)',
+            color: INDIGO,
+            fontSize: 13,
+          }}
+        >
+          <PlusCircle size={15} strokeWidth={1.9} />
+          <span className="font-semibold">
+            {t('projects.milestones.proposals.bannerOwner', {
+              count: proposals.length,
+            })}
+          </span>
+        </div>
+      )}
+
+      {proposing && (
+        <ProposeForm
+          project={project}
+          onCancel={() => setProposing(false)}
+          onProposed={async () => {
+            await onChanged();
+            setProposing(false);
+          }}
+        />
+      )}
+
+      {proposals.length > 0 && (
+        <ProposalList
+          project={project}
+          proposals={proposals}
+          budget={budget}
+          isOwner={isOwner}
+          onChanged={onChanged}
+        />
+      )}
+
       {editing ? (
         <PlanBuilder
           project={project}
           budget={budget}
-          initial={steps}
+          initial={planSteps}
+          proposalCount={proposals.length}
           onCancel={hasPlan ? () => setEditing(false) : null}
           onSaved={async () => {
             await onChanged();
@@ -274,11 +329,15 @@ function StepsBoard({ project, steps, isOwner, isProvider, onChanged }) {
       ) : (
         <StepList
           project={project}
-          steps={steps}
+          steps={planSteps}
           isOwner={isOwner}
           isProvider={isProvider}
           canEditPlan={canEditPlan}
           onEditPlan={() => setEditing(true)}
+          // Adding a step only makes sense once a plan exists — before that
+          // the provider should just define (or re-define) the plan itself.
+          canPropose={isProvider && hasPlan && !proposing}
+          onPropose={() => setProposing(true)}
           onChanged={onChanged}
         />
       )}
@@ -393,7 +452,7 @@ function SummaryStrip({
  *  Live-sums the amounts and gates "Save" until they equal the
  *  budget exactly, mirroring the API rule.
  * ============================================================ */
-function PlanBuilder({ project, budget, initial, onCancel, onSaved }) {
+function PlanBuilder({ project, budget, initial, proposalCount = 0, onCancel, onSaved }) {
   const { t, lang } = useTranslation();
 
   const seed = useMemo(() => {
@@ -461,6 +520,26 @@ function PlanBuilder({ project, budget, initial, onCancel, onSaved }) {
       icon={Pencil}
     >
       {error && <InlineError>{error}</InlineError>}
+
+      {/* Saving replaces the WHOLE plan server-side, which wipes any step
+          still waiting on the owner. Warn before that's a surprise. */}
+      {proposalCount > 0 && (
+        <div
+          className="flex items-start gap-2 p-3 rounded-[10px] mb-3.5"
+          style={{
+            background: 'rgba(184,134,42,0.07)',
+            border: '1px solid rgba(184,134,42,0.22)',
+            color: AMBER,
+            fontSize: 12.5,
+            lineHeight: 1.65,
+          }}
+        >
+          <AlertCircle size={14} strokeWidth={2} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>
+            {t('projects.milestones.proposals.planWarning', { count: proposalCount })}
+          </span>
+        </div>
+      )}
 
       <div className="space-y-2.5">
         {rows.map((row, i) => (
@@ -640,6 +719,332 @@ function PlanBuilder({ project, budget, initial, onCancel, onSaved }) {
   );
 }
 
+/* ============================================================
+ *  Propose form — provider adds ONE step to a live project.
+ *  ----------------------------------------------------------------
+ *  Deliberately not part of PlanBuilder: this bypasses the
+ *  sum-equals-budget rule (the budget GROWS on approval instead) and
+ *  allows amount 0 for a free clarification step.
+ * ============================================================ */
+function ProposeForm({ project, onCancel, onProposed }) {
+  const { t, lang } = useTranslation();
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const amountNum = parseFloat(amount) || 0;
+  const canSave = title.trim().length > 0 && amountNum >= 0 && !saving;
+
+  const submit = async () => {
+    if (!canSave) return;
+    setSaving(true);
+    setError('');
+    try {
+      await stepsApi.propose(project.id, {
+        title: title.trim(),
+        amount: amountNum,
+      });
+      await onProposed();
+    } catch (err) {
+      setError(err.message || t('projects.milestones.proposals.addError'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Panel
+      title={t('projects.milestones.proposals.addTitle')}
+      subtitle={t('projects.milestones.proposals.addSubtitle')}
+      icon={PlusCircle}
+    >
+      {error && <InlineError>{error}</InlineError>}
+
+      <div className="flex items-start gap-2.5 flex-wrap">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={255}
+          placeholder={t('projects.milestones.proposals.titlePlaceholder')}
+          className="flex-1"
+          style={{ ...inputStyle, minWidth: 220 }}
+        />
+        <div className="relative" style={{ width: 170, flexShrink: 0 }}>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0"
+            className="w-full"
+            style={{ ...inputStyle, paddingInlineEnd: 44, textAlign: 'start' }}
+          />
+          <span
+            className="absolute top-1/2 -translate-y-1/2"
+            style={{
+              insetInlineEnd: 12,
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              pointerEvents: 'none',
+            }}
+          >
+            {t('common.currency')}
+          </span>
+        </div>
+      </div>
+
+      <p
+        className="m-0 mt-2.5"
+        style={{ fontSize: 12, lineHeight: 1.65, color: 'var(--text-muted)' }}
+      >
+        {amountNum > 0
+          ? t('projects.milestones.proposals.amountEffect', {
+              amount: money(amountNum, lang, t),
+            })
+          : t('projects.milestones.proposals.amountHint')}
+      </p>
+
+      <div className="flex items-center justify-end gap-2 mt-5">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="px-4 py-2.5 rounded-[10px] font-semibold transition-colors"
+          style={{
+            fontSize: 13.5,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            color: 'var(--text-ink-soft)',
+            cursor: saving ? 'wait' : 'pointer',
+          }}
+        >
+          {t('projects.milestones.proposals.cancel')}
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canSave}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-white font-semibold transition-all"
+          style={{
+            fontSize: 13.5,
+            background: canSave ? BRAND : 'var(--border-strong)',
+            border: `1px solid ${canSave ? BRAND : 'var(--border-strong)'}`,
+            cursor: canSave ? 'pointer' : 'not-allowed',
+            boxShadow: canSave ? '0 6px 14px rgba(19,109,74,0.22)' : 'none',
+          }}
+        >
+          {saving ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <Send size={15} strokeWidth={1.9} />
+          )}
+          {saving
+            ? t('projects.milestones.proposals.submitting')
+            : t('projects.milestones.proposals.submit')}
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
+/* ============================================================
+ *  Proposal list — steps waiting on the owner's decision.
+ *  Kept visually separate from the plan: these aren't part of it yet.
+ * ============================================================ */
+function ProposalList({ project, proposals, budget, isOwner, onChanged }) {
+  const { t } = useTranslation();
+  return (
+    <Panel
+      title={t('projects.milestones.proposals.title')}
+      subtitle={
+        isOwner
+          ? t('projects.milestones.proposals.subtitleOwner', { count: proposals.length })
+          : t('projects.milestones.proposals.subtitleProvider', { count: proposals.length })
+      }
+      icon={PlusCircle}
+    >
+      <div className="space-y-3">
+        {proposals.map((step) => (
+          <ProposalCard
+            key={step.id}
+            project={project}
+            step={step}
+            budget={budget}
+            isOwner={isOwner}
+            onChanged={onChanged}
+          />
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function ProposalCard({ project, step, budget, isOwner, onChanged }) {
+  const { t, lang } = useTranslation();
+  const [acting, setActing] = useState(null); // null | 'approve' | 'reject'
+  const [error, setError] = useState('');
+
+  const isFree = (step.amount_num || 0) <= 0;
+
+  const decide = async (verdict) => {
+    setActing(verdict);
+    setError('');
+    try {
+      if (verdict === 'approve') {
+        await stepsApi.approveProposal(project.id, step.id);
+      } else {
+        await stepsApi.rejectProposal(project.id, step.id);
+      }
+      // onChanged re-reads the PROJECT too — approving a paid proposal grew
+      // the budget server-side, so every total on this page is now stale.
+      await onChanged();
+    } catch (err) {
+      setError(err.message || t('projects.milestones.proposals.actionError'));
+      setActing(null);
+    }
+  };
+
+  return (
+    <article
+      className="rounded-[13px] overflow-hidden"
+      style={{
+        background: 'var(--bg-canvas)',
+        border: '1px solid rgba(44,47,124,0.22)',
+      }}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="flex items-start gap-3 min-w-0">
+            <span
+              className="flex items-center justify-center flex-shrink-0"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: 'rgba(44,47,124,0.1)',
+                color: INDIGO,
+              }}
+            >
+              <PlusCircle size={16} strokeWidth={1.9} />
+            </span>
+            <div className="min-w-0">
+              <div
+                className="font-semibold"
+                style={{ fontSize: 14.5, color: 'var(--text-ink)', lineHeight: 1.35 }}
+              >
+                {step.title}
+              </div>
+              <div
+                className="inline-flex items-center gap-1.5 mt-1 font-semibold"
+                style={{ fontSize: 13, color: 'var(--text-ink-soft)' }}
+              >
+                <Wallet size={12.5} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
+                {isFree
+                  ? t('projects.milestones.proposals.free')
+                  : money(step.amount_num, lang, t)}
+              </div>
+            </div>
+          </div>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap"
+            style={{
+              fontSize: 11,
+              padding: '4px 10px',
+              background: 'rgba(44,47,124,0.08)',
+              color: INDIGO,
+              border: '1px solid rgba(44,47,124,0.22)',
+            }}
+          >
+            <Hourglass size={12} strokeWidth={2} />
+            {isOwner
+              ? t('projects.milestones.proposals.badgeOwner')
+              : t('projects.milestones.proposals.badgeProvider')}
+          </span>
+        </div>
+
+        {/* The owner is consenting to a budget increase — say so in numbers. */}
+        <p
+          className="m-0 mt-3 p-3 rounded-[10px]"
+          style={{
+            fontSize: 12.5,
+            lineHeight: 1.7,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-soft)',
+            color: 'var(--text-ink-soft)',
+          }}
+        >
+          {isFree
+            ? t('projects.milestones.proposals.freeNote')
+            : t('projects.milestones.proposals.costNote', {
+                amount: money(step.amount_num, lang, t),
+                total: money(round2(budget + (step.amount_num || 0)), lang, t),
+              })}
+        </p>
+
+        {error && (
+          <div className="mt-3">
+            <InlineError>{error}</InlineError>
+          </div>
+        )}
+
+        {isOwner ? (
+          <div className="flex items-center justify-end gap-2 mt-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => decide('reject')}
+              disabled={!!acting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[9px] font-semibold transition-colors"
+              style={{
+                fontSize: 12.5,
+                background: 'var(--bg-surface)',
+                border: '1px solid rgba(185,28,28,0.3)',
+                color: DANGER,
+                cursor: acting ? 'wait' : 'pointer',
+                opacity: acting && acting !== 'reject' ? 0.6 : 1,
+              }}
+            >
+              <XCircle size={13} strokeWidth={1.8} />
+              {acting === 'reject'
+                ? t('projects.milestones.proposals.rejecting')
+                : t('projects.milestones.proposals.reject')}
+            </button>
+            <button
+              type="button"
+              onClick={() => decide('approve')}
+              disabled={!!acting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[9px] text-white font-semibold transition-colors"
+              style={{
+                fontSize: 12.5,
+                background: BRAND,
+                border: `1px solid ${BRAND}`,
+                cursor: acting ? 'wait' : 'pointer',
+                opacity: acting && acting !== 'approve' ? 0.6 : 1,
+              }}
+            >
+              <CheckCircle2 size={13} strokeWidth={1.8} />
+              {acting === 'approve'
+                ? t('projects.milestones.proposals.approving')
+                : t('projects.milestones.proposals.approve')}
+            </button>
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-1.5 mt-3"
+            style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
+          >
+            <Clock size={13} strokeWidth={1.9} />
+            {t('projects.milestones.proposals.awaitingOwner')}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
 function SumStat({ label, value, tone, prefix = '' }) {
   const color =
     tone === 'ok' ? BRAND : tone === 'warn' ? AMBER : 'var(--text-ink)';
@@ -662,7 +1067,17 @@ function SumStat({ label, value, tone, prefix = '' }) {
 /* ============================================================
  *  Step list — read view with per-step actions.
  * ============================================================ */
-function StepList({ project, steps, isOwner, isProvider, canEditPlan, onEditPlan, onChanged }) {
+function StepList({
+  project,
+  steps,
+  isOwner,
+  isProvider,
+  canEditPlan,
+  onEditPlan,
+  canPropose,
+  onPropose,
+  onChanged,
+}) {
   const { t } = useTranslation();
 
   if (steps.length === 0) {
@@ -679,31 +1094,52 @@ function StepList({ project, steps, isOwner, isProvider, canEditPlan, onEditPlan
       subtitle={t('projects.milestones.plan.subtitle', { count: steps.length })}
       icon={Milestone}
       action={
-        canEditPlan ? (
-          <button
-            type="button"
-            onClick={onEditPlan}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] font-semibold transition-colors"
-            style={{
-              fontSize: 12.5,
-              background: 'var(--bg-canvas)',
-              border: '1px solid var(--border-default)',
-              color: 'var(--text-ink-soft)',
-              cursor: 'pointer',
-            }}
-          >
-            <Pencil size={13} strokeWidth={1.8} />
-            {t('projects.milestones.plan.editPlan')}
-          </button>
-        ) : isProvider ? (
-          <span
-            className="inline-flex items-center gap-1.5"
-            style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
-          >
-            <Lock size={12} strokeWidth={1.9} />
-            {t('projects.milestones.plan.locked')}
-          </span>
-        ) : null
+        <div className="flex items-center gap-2 flex-wrap">
+          {canEditPlan ? (
+            <button
+              type="button"
+              onClick={onEditPlan}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] font-semibold transition-colors"
+              style={{
+                fontSize: 12.5,
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-ink-soft)',
+                cursor: 'pointer',
+              }}
+            >
+              <Pencil size={13} strokeWidth={1.8} />
+              {t('projects.milestones.plan.editPlan')}
+            </button>
+          ) : isProvider ? (
+            <span
+              className="inline-flex items-center gap-1.5"
+              style={{ fontSize: 11.5, color: 'var(--text-muted)' }}
+            >
+              <Lock size={12} strokeWidth={1.9} />
+              {t('projects.milestones.plan.locked')}
+            </span>
+          ) : null}
+          {/* A locked plan can still GROW — that's the whole point of a
+              proposal, so this CTA lives outside the lock branch. */}
+          {canPropose && (
+            <button
+              type="button"
+              onClick={onPropose}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] font-semibold transition-colors"
+              style={{
+                fontSize: 12.5,
+                background: 'rgba(44,47,124,0.06)',
+                border: '1px solid rgba(44,47,124,0.24)',
+                color: INDIGO,
+                cursor: 'pointer',
+              }}
+            >
+              <PlusCircle size={13} strokeWidth={1.9} />
+              {t('projects.milestones.proposals.add')}
+            </button>
+          )}
+        </div>
       }
     >
       <div className="space-y-3">
@@ -1496,6 +1932,15 @@ function ErrorView({ message, onBack }) {
  *  Constants + helpers
  * ============================================================ */
 const STEP_STATUS = {
+  // Proposals render through ProposalCard, not StepCard — this entry exists so
+  // a `proposed` step that somehow reaches a generic badge still reads right.
+  proposed: {
+    icon: PlusCircle,
+    color: INDIGO,
+    bg: 'rgba(44,47,124,0.08)',
+    softBg: 'rgba(44,47,124,0.1)',
+    border: 'rgba(44,47,124,0.22)',
+  },
   pending: {
     icon: Clock,
     color: '#7a7a8c',

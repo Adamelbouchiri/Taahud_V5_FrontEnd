@@ -115,6 +115,8 @@ export default {
 
   form: {
     selectPlaceholder: 'Choose...',
+    requiredLabel: 'Required',
+    optionalLabel: 'optional',
     passwordShow: 'Show password',
     passwordHide: 'Hide password',
   },
@@ -1554,6 +1556,8 @@ export default {
         city: 'City',
         duration: 'Expected duration',
         budget: 'Budget',
+        acceptedBudget: 'Accepted bid',
+        originalBudget: 'Original estimate',
         budgetSealed: 'Revealed once a bid is accepted',
         experience: 'Required experience',
         startDate: 'Start date',
@@ -1656,7 +1660,40 @@ export default {
         emptyProvider: 'No plan defined yet. Add steps to break down the work.',
         emptyOwner: 'The provider hasn’t defined the step plan yet.',
       },
+      proposals: {
+        add: 'Add a step',
+        addTitle: 'Add a step to this project',
+        addSubtitle:
+          'Extra work, or a clarification at no cost. The owner has to approve it before it joins the plan.',
+        titlePlaceholder: 'Step title (e.g. Extra electrical work)',
+        amountHint: 'Leave the amount at 0 for a no-cost clarification step.',
+        amountEffect: 'If the owner approves, the project budget grows by {amount}.',
+        submit: 'Send for approval',
+        submitting: 'Sending...',
+        cancel: 'Cancel',
+        addError: "Couldn't add the step. Please try again.",
+        title: 'Added steps',
+        subtitleOwner: '{count} step(s) the provider added — awaiting your decision.',
+        subtitleProvider: '{count} step(s) you added — awaiting the owner’s decision.',
+        bannerOwner: '{count} added step(s) awaiting your approval.',
+        badgeOwner: 'Awaiting your approval',
+        badgeProvider: 'Awaiting owner approval',
+        free: 'Free',
+        freeNote:
+          'No cost — approving adds this step to the plan and leaves the budget unchanged.',
+        costNote: 'Approving adds {amount} to the project budget (new total: {total}).',
+        approve: 'Approve',
+        approving: 'Approving...',
+        reject: 'Reject',
+        rejecting: 'Rejecting...',
+        awaitingOwner:
+          'Waiting for the owner to approve this step. It isn’t payable until then.',
+        actionError: "Couldn't complete that. Please try again.",
+        planWarning:
+          'Saving the plan discards the {count} added step(s) still awaiting the owner’s approval.',
+      },
       status: {
+        proposed: 'Proposed',
         pending: 'Pending',
         submitted: 'Awaiting review',
         approved: 'Approved',
@@ -1681,6 +1718,36 @@ export default {
     },
     create: {
       title: 'Create a new project',
+      // Single-page form copy. The stepLabel / nextStep / backStep keys
+      // below belong to the retired wizard.
+      onePage: {
+        eyebrow: 'NEW PROJECT',
+        title: 'Post a project',
+        subtitle:
+          'Five fields are all we need to publish. Everything else you can add now or fill in later.',
+        legendRequired: 'Required to publish',
+        legendOptional: 'Everything else can be added later',
+        fixErrors: 'Please complete the required fields highlighted below.',
+        skip: {
+          title: "That's everything we need",
+          desc: 'You can publish the project now and let bids come in. The two sections below are optional detail — add them now, or edit the project later.',
+          cta: 'Publish now',
+        },
+        sections: {
+          basics: {
+            title: 'Project details',
+            desc: 'Everything required to publish lives in this section.',
+          },
+          scope: {
+            title: 'Scope & timeline',
+            desc: 'Trades, dates, duration and experience — useful for accurate bids, but you can add them whenever.',
+          },
+          extras: {
+            title: 'Attachments',
+            desc: 'Drawings, photos and documents that help bidders price accurately.',
+          },
+        },
+      },
       stepLabel: 'Step {current} of {total}',
       stepNumber: 'Step',
       saveDraft: 'Save as draft',
@@ -1726,6 +1793,7 @@ export default {
         city: 'City is required',
         dateOrder: 'End date must be after the start date',
         budgetPositive: 'Budget must be a positive number',
+        budgetRequired: 'Budget is required',
       },
       step1: { label: 'Project details', description: 'Basic information about your project' },
       step2: { label: 'Scope & budget', description: 'Scope of work, timeline, and experience' },
@@ -1748,6 +1816,21 @@ export default {
             'Write a detailed description of your project, goals, and relevant locations...',
           descriptionHint:
             'Optional — but a good description helps partners understand your needs.',
+          publicModal: {
+            titleSuffix: ' — sourced externally',
+            subtitle:
+              "Opportunities in this arena are aggregated automatically from external platforms, so projects here aren't posted through Taahud. There's no add-on that changes this.",
+            bullets: [
+              'Collected from Etimad, Forsa, Muqawil and similar sources.',
+              'Shown to contractors and engineering offices for discovery.',
+              'Bids are submitted on the source platform, not on Taahud.',
+            ],
+            insteadLabel: 'Where to post instead',
+            insteadBody:
+              'Choose the Private arena to post your own project, or Solidarity if you are looking for a partner rather than a contractor.',
+            browseCta: 'Browse this arena',
+            ok: 'Got it',
+          },
           isnadModal: {
             titleSuffix: ' — optional upgrade',
             subtitle:
@@ -1766,12 +1849,6 @@ export default {
           },
         },
         filesReqs: {
-          requirementsTitle: 'Requirements',
-          requirementsSubtitle: 'Add the requirements bids must satisfy.',
-          documentsLabel: 'Required documents',
-          documentsPlaceholder:
-            'e.g. valid contractor license, commercial registration, ZATCA certificate...',
-          documentsHint: 'Free-text list of documents an applicant must provide.',
           filesTitle: 'Attachments',
           filesSubtitle: 'Plans, photos, documents — up to 10 MB per file.',
           startedExternallyTitle: 'Project started outside the platform',
@@ -1817,17 +1894,25 @@ export default {
         },
         scopeBudget: {
           scopeLabel: 'Scope of work',
-          scopePlaceholder:
-            'Describe the scope, phases, and expected outcomes in detail...',
-          scopeHint: 'The clearer the scope, the more accurate the bids.',
+          scopeHint: 'Pick what the project covers — you can choose more than one.',
+          scopeOptions: {
+            execution: 'Execution',
+            finishing: 'Finishing',
+            restoration: 'Restoration',
+            electrical: 'Electrical',
+            maintenance: 'Maintenance',
+          },
+          scopeOther: 'Other',
+          scopeOtherPlaceholder: 'Describe the scope you need...',
           timelineTitle: 'Timeline',
-          timelineSubtitle: 'Set start/end dates or the expected duration',
+          timelineSubtitle: 'Set the start date or the expected duration',
           startDate: 'Start date',
-          endDate: 'End date',
           durationLabel: 'Expected duration',
           durationPlaceholder: 'Choose duration',
           budgetReqsTitle: 'Budget & requirements',
           budgetReqsSubtitle: 'Information that helps partners submit accurate bids',
+          experienceTitle: 'Experience level',
+          experienceSubtitle: 'The track record you want from bidders',
           experienceLabel: 'Required experience',
           experiencePlaceholder: 'Choose experience level',
           budgetLabel: 'Estimated budget',
@@ -2270,6 +2355,7 @@ export default {
       anyArena: 'Any arena',
       anyRole: 'Any role',
       anyAction: 'Any action',
+      identifierPlaceholder: 'e.g. 260703R47',
       noRows: 'No records yet.',
       copy: 'Copy',
       copied: 'Copied',
@@ -2505,7 +2591,7 @@ export default {
         searchPlaceholder: 'Search by project name or city…',
         type: 'Type',
         city: 'City',
-        ownerId: 'Owner ID',
+        ownerIdentifier: 'Owner identifier',
         createdByAdmin: 'Proxy-created only',
         createdByAdminId: 'Created by admin ID',
       },
@@ -2529,6 +2615,7 @@ export default {
         noOffers: 'No offers on this project yet.',
         viewAllOffers: 'View all',
         actions: {
+          edit: 'Edit project',
           forceStatus: 'Force status',
           forcePartner: 'Force partner',
           restore: 'Restore',
@@ -2548,7 +2635,8 @@ export default {
           title: 'Force-set partner',
           description:
             'Skip the bid flow and pin a partner directly. The project status will move to "awarded".',
-          partnerLabel: 'Partner user ID',
+          partnerLabel: 'Partner identifier',
+          partnerHint: 'The user identifier of the partner, e.g. 260703R47.',
           confirm: 'Assign partner',
           done: 'Partner assigned.',
         },
@@ -2593,6 +2681,33 @@ export default {
         done: 'Project created.',
         doneProxy: 'Project created on behalf of user {id}.',
       },
+      edit: {
+        title: 'Edit project',
+        subtitle: 'Correct any field on this project.',
+        submit: 'Save changes',
+        submitting: 'Saving…',
+        done: 'Project updated.',
+        noChanges: 'Nothing changed — no fields to save.',
+        statusNote:
+          'Status and partner are changed from the project page. Those actions require a reason and are logged separately.',
+        trashedBlocked:
+          'This project is archived and cannot be edited. Restore it first.',
+        datePairRequired:
+          'Set a start date too — the end date cannot be saved on its own.',
+        dateOrder: 'The end date must be on or after the start date.',
+        progress: 'Progress (%)',
+        startedExternally: 'Started outside the platform',
+        startedExternallyHint:
+          'Work began before the project was posted here, so the milestone plan may not cover it from day one.',
+        budgetAcceptedNote:
+          'This is the accepted bid, not the owner’s estimate ({amount}). Changing it rewrites the agreed price.',
+        requiredDocuments: 'Required documents',
+        requirements: 'Requirements',
+        addRequirement: 'Add requirement',
+        removeRequirement: 'Remove requirement',
+        requirementPlaceholder: 'e.g. Valid contractor classification certificate',
+        experienceNone: 'Not specified',
+      },
     },
     applications: {
       eyebrow: 'Operations · Applications',
@@ -2600,7 +2715,7 @@ export default {
       subtitle: 'Look up any bid across the platform and override decisions when something is off.',
       filters: {
         projectId: 'Project ID',
-        userId: 'Applicant ID',
+        applicantIdentifier: 'Applicant identifier',
       },
       columns: {
         application: 'Application',
@@ -2614,6 +2729,13 @@ export default {
       empty: 'No applications match the current filters.',
       detail: {
         coverLetter: 'Cover letter',
+        submittedAt: 'Submitted',
+        applicantTitle: 'Applicant',
+        projectTitle: 'Project',
+        openProfile: 'Open profile',
+        openProject: 'Open project',
+        projectsCount: 'Projects',
+        applicationsCount: 'Applications',
         actions: {
           override: 'Override decision',
         },
@@ -2634,7 +2756,7 @@ export default {
       archived: 'Archived',
       filters: {
         projectId: 'Project ID',
-        userId: 'Partner ID',
+        partnerIdentifier: 'Partner identifier',
         archived: 'Archived',
         archivedActive: 'Active only',
         archivedWith: 'Include archived',
@@ -2701,7 +2823,8 @@ export default {
         description:
           'Register a partnership offer for a user (e.g. they called support). Bypasses the add-on gate but still validates solidarity arena, non-owner, and no duplicate.',
         projectId: 'Project ID',
-        userId: 'User ID (on behalf of)',
+        userIdentifier: 'User identifier (on behalf of)',
+        userIdentifierHint: 'Must match an existing user, e.g. 260703R47.',
         offeringPlaceholder: 'Choose offering type',
         reasonPlaceholder: 'e.g. User called support, identity verified by phone.',
         confirm: 'Create on behalf',
@@ -2882,6 +3005,42 @@ export default {
           title: 'Edit partner details',
           done: 'Changes saved.',
         },
+      },
+    },
+    finance: {
+      title: 'Milestones & payments',
+      budget: 'Budget',
+      paid: 'Paid',
+      partnerEarnings: 'Partner earnings',
+      acceptedBudget: 'Accepted bid',
+      originalEstimate: 'Original estimate',
+      savings: '{amount} under estimate',
+      overrun: '{amount} over estimate',
+      wasEstimate: 'est. {amount}',
+      stepsPaid: 'Steps paid',
+      stepsPaidValue: '{paid} of {total}',
+      paidOfBudget: '{paid} of {budget} paid',
+      proposedCallout:
+        '{count} proposed step(s) from the provider awaiting the owner’s approval — not counted in the plan above.',
+      mismatch:
+        'Total paid ({paid}) does not match the partner’s earnings ({earnings}) on this project. Both should represent the same money — worth investigating.',
+      noSteps: 'No milestone plan on this project yet.',
+      columns: {
+        sequence: '#',
+        step: 'Step',
+        amount: 'Amount',
+        status: 'Status',
+        payment: 'Payment',
+      },
+      payment: {
+        paid: 'Paid',
+        unpaid: 'Unpaid',
+      },
+      stepStatuses: {
+        proposed: 'Proposed',
+        pending: 'Pending',
+        submitted: 'Awaiting review',
+        approved: 'Approved',
       },
     },
     statuses: {
