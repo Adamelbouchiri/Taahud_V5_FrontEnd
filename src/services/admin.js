@@ -1025,6 +1025,105 @@ export const admin = {
 
 
   /* ============================================================
+   * BROKERS — the approval queue for `broker` accounts
+   * ----------------------------------------------------------------
+   * A broker registers through the normal /auth/register with
+   * account_type='broker' and lands on `pending_review`. Nothing in
+   * the broker workspace opens until an admin approves here.
+   *
+   * Lifecycle (BROKER_SYSTEM_INTEGRATION.md):
+   *   pending_review → active     approve()
+   *   pending_review → rejected   reject(reason)
+   *   active         → suspended  suspend(reason)
+   *   suspended      → active     reactivate()
+   *   suspended      → rejected   reject(reason)
+   *
+   * approve/reject/suspend/reactivate all return { message, broker }.
+   * Re-running a transition that no longer applies 422s with a plain
+   * message (e.g. "هذا الوسيط نشط بالفعل.").
+   * ============================================================ */
+  brokers: {
+    /** GET /admin/brokers?status=pending_review */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        search: filters.search,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/brokers', { params }));
+    },
+
+    /** POST /admin/brokers/:id/approve → broker_status becomes active. */
+    async approve(id) {
+      return http.post(`/admin/brokers/${id}/approve`);
+    },
+
+    /** POST /admin/brokers/:id/reject  { reason } — reason REQUIRED.
+     *  Permanent: surfaces to the broker as broker_rejection_reason. */
+    async reject(id, reason) {
+      return http.post(`/admin/brokers/${id}/reject`, { reason });
+    },
+
+    /** POST /admin/brokers/:id/suspend  { reason } — reason REQUIRED.
+     *  Reversible; the broker's existing data is preserved. */
+    async suspend(id, reason) {
+      return http.post(`/admin/brokers/${id}/suspend`, { reason });
+    },
+
+    /** POST /admin/brokers/:id/reactivate — suspended back to active. */
+    async reactivate(id) {
+      return http.post(`/admin/brokers/${id}/reactivate`);
+    },
+  },
+
+
+  /* ============================================================
+   * OPPORTUNITIES — the review queue for broker-registered
+   * introductions.
+   * ----------------------------------------------------------------
+   * approve() is the consequential one: it starts the 90-day hold
+   * (`held_until`), which blocks any other broker from registering
+   * the same project_owner national_id. reject() and cancel() both
+   * require a reason.
+   * ============================================================ */
+  opportunities: {
+    /** GET /admin/opportunities?status=pending_review */
+    async list(filters = {}) {
+      const params = strip({
+        status: filters.status,
+        search: filters.search,
+        broker_id: filters.broker_id,
+        per_page: filters.per_page,
+        page: filters.page,
+      });
+      return unwrapPage(await http.get('/admin/opportunities', { params }));
+    },
+
+    /** GET /admin/opportunities/:id — includes broker + parties. */
+    async get(id) {
+      return unwrap(await http.get(`/admin/opportunities/${id}`));
+    },
+
+    /** POST /admin/opportunities/:id/approve — starts the 90-day hold. */
+    async approve(id) {
+      return http.post(`/admin/opportunities/${id}/approve`);
+    },
+
+    /** POST /admin/opportunities/:id/reject  { reason } — REQUIRED. */
+    async reject(id, reason) {
+      return http.post(`/admin/opportunities/${id}/reject`, { reason });
+    },
+
+    /** POST /admin/opportunities/:id/cancel  { reason } — REQUIRED.
+     *  Allowed at any live stage: draft, pending_review, or active. */
+    async cancel(id, reason) {
+      return http.post(`/admin/opportunities/${id}/cancel`, { reason });
+    },
+  },
+
+
+  /* ============================================================
    * ROLES — super-admin only
    * ============================================================ */
   roles: {

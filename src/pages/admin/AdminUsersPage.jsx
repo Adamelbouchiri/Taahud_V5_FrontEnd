@@ -24,7 +24,7 @@ import {
  *  detail screen so the admin sees the surrounding context.
  * ============================================================ */
 
-const ACCOUNT_TYPES = ['individual', 'entrepreneur', 'engineering', 'developer', 'supplier'];
+const ACCOUNT_TYPES = ['individual', 'entrepreneur', 'engineering', 'developer', 'supplier', 'broker'];
 
 export default function AdminUsersPage() {
   const navigate = useNavigate();

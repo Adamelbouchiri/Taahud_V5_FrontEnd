@@ -17,6 +17,8 @@ import {
   LogOut,
   X,
   ShoppingBag,
+  UserCheck,
+  Target,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
@@ -42,6 +44,8 @@ const NAV_ITEMS = [
   { to: '/admin/applications', labelKey: 'admin.sidebar.items.applications', icon: ClipboardList, roles: ['admin', 'super-admin'] },
   { to: '/admin/partnerships', labelKey: 'admin.sidebar.items.partnerships', icon: Handshake, roles: ['admin', 'super-admin'] },
   { to: '/admin/partner-applications', labelKey: 'admin.sidebar.items.partners', icon: Store, roles: ['admin', 'super-admin'] },
+  { to: '/admin/brokers', labelKey: 'admin.sidebar.items.brokers', icon: UserCheck, roles: ['admin', 'super-admin'] },
+  { to: '/admin/opportunities', labelKey: 'admin.sidebar.items.opportunities', icon: Target, roles: ['admin', 'super-admin'] },
   { to: '/admin/subscriptions', labelKey: 'admin.sidebar.items.subscriptions', icon: CreditCard, roles: ['admin', 'super-admin'] },
   { to: '/admin/payments', labelKey: 'admin.sidebar.items.payments', icon: Receipt, roles: ['admin', 'super-admin'] },
   { to: '/admin/withdrawals', labelKey: 'admin.sidebar.items.withdrawals', icon: Banknote, roles: ['admin', 'super-admin'] },

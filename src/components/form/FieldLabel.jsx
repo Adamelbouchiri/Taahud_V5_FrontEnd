@@ -31,6 +31,10 @@ export default function FieldLabel({ label, required, htmlFor }) {
           aria-label={t('form.requiredLabel')}
           title={t('form.requiredLabel')}
           style={{
+            // Same shaping guard as the optional marker below. "*" is
+            // non-joining so it can't trigger it today, but this keeps
+            // the label safe if the marker ever becomes a word.
+            display: 'inline-block',
             marginInlineStart: 4,
             color: 'var(--accent-danger)',
             fontWeight: 700,
@@ -42,6 +46,14 @@ export default function FieldLabel({ label, required, htmlFor }) {
       {required === false && (
         <span
           style={{
+            // `inline-block` is load-bearing in RTL, not cosmetic.
+            // Browsers continue Arabic shaping across a plain inline
+            // boundary, so a label ending in ع ("وصف المشروع") joined
+            // rightward into the ا of "اختياري" and rendered as the
+            // medial ﻌ — the final letter looked sliced off. An atomic
+            // inline-level box ends the shaping run so each word
+            // shapes on its own.
+            display: 'inline-block',
             marginInlineStart: 6,
             fontSize: 11,
             fontWeight: 500,

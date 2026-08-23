@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, User, MapPin, Briefcase, ArrowLeft } from 'lucide-react';
+import { Mail, User, MapPin, Briefcase, ArrowLeft, Handshake } from 'lucide-react';
 import AuthShell from '../components/auth/AuthShell';
 import Field from '../components/form/Field';
 import SelectField from '../components/form/SelectField';
@@ -15,6 +15,8 @@ import {
 } from '../config/constants';
 import { cityOptions } from '../config/cityTranslations';
 import { auth } from '../services';
+import useBrokerReferral from '../hooks/useBrokerReferral';
+import { BROKER_STATUS } from '../config/brokerConstants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 // constants.js stores `service_provider` with an underscore but our
@@ -52,6 +54,11 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  // ?broker=… on the URL, or a value stored from an earlier visit.
+  // `referral.broker` is only set once the lookup confirms an active
+  // broker; `referral.identifier` rides along on submit regardless.
+  const referral = useBrokerReferral();
 
   const isServiceProviderCategory = categoryChoice === 'service_provider';
   const showSpecialtyDropdown = hasSpecialty(accountType);
@@ -103,7 +110,22 @@ export default function RegisterPage() {
         phone: normalizedPhone,
         email: email.trim(),
         password,
+        // Raw and unvalidated by design — see useBrokerReferral.
+        broker_identifier: referral.identifier || undefined,
       });
+      // GTM conversion event. auth.register() throws on failure, so
+      // reaching this line means the account was actually created.
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'registration_complete' });
+
+      // A broker lands on pending_review and has nothing to do in the
+      // dashboard until an admin approves, so send them straight to
+      // the status screen rather than through OTP into an empty app.
+      if (res?.user?.broker_status === BROKER_STATUS.PENDING) {
+        navigate('/broker/status');
+        return;
+      }
+
       // OTP_ENABLED is the kill switch — until an SMS provider is
       // wired up we skip the /otp step entirely and drop the user
       // on the dashboard. When the flag flips back to true, also
@@ -155,19 +177,61 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* Referral banner — only once the lookup confirms an ACTIVE
+            broker. An unknown or inactive identifier shows nothing at
+            all, but still travels with the submit. */}
+        {referral.broker && (
+          <div
+            className="p-3.5 rounded-[11px] animate-fade-up flex items-start gap-3"
+            style={{
+              background: 'rgba(19,109,74,0.06)',
+              border: '1px solid rgba(19,109,74,0.18)',
+              fontSize: 13.5,
+            }}
+          >
+            <Handshake
+              size={17}
+              strokeWidth={1.8}
+              style={{ color: '#136d4a', flexShrink: 0, marginTop: 1 }}
+            />
+            <div className="min-w-0 flex-1">
+              <div style={{ color: 'var(--text-ink)', fontWeight: 600 }}>
+                {t('auth.register.referral.title', { name: referral.broker.name })}
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12.5, marginTop: 2 }}>
+                {t('auth.register.referral.hint')}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={referral.clear}
+              className="btn-ghost"
+              style={{ padding: 0, fontSize: 12.5, flexShrink: 0 }}
+            >
+              {t('auth.register.referral.dismiss')}
+            </button>
+          </div>
+        )}
+
         {/* Account category cards */}
         <div className="animate-fade-up">
           <label className="field-label">{t('auth.register.accountTypeLabel')}</label>
           <div className="grid grid-cols-2 gap-2.5">
-            {ACCOUNT_CATEGORIES.map((c) => {
+            {ACCOUNT_CATEGORIES.map((c, i) => {
               const Icon = c.icon;
               const active = categoryChoice === c.value;
               const k = ACCOUNT_TYPE_KEY[c.value] || c.value;
+              // An odd number of cards leaves the last one orphaned in
+              // a 2-column grid — let it span the full row instead of
+              // sitting in a half-empty line.
+              const orphan =
+                ACCOUNT_CATEGORIES.length % 2 === 1 &&
+                i === ACCOUNT_CATEGORIES.length - 1;
               return (
                 <button
                   type="button"
                   key={c.value}
-                  className={`acct ${active ? 'active' : ''}`}
+                  className={`acct ${active ? 'active' : ''} ${orphan ? 'col-span-2' : ''}`}
                   onClick={() => handleCategoryChange(c.value)}
                 >
                   <div className="ico">

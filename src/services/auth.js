@@ -156,6 +156,15 @@ export const auth = {
       device_name: deviceName(),
     };
 
+    // Broker referral (BROKER_SYSTEM_INTEGRATION.md part 2). Sent RAW
+    // and unvalidated: the BE silently ignores an identifier that is
+    // unknown, belongs to a non-broker, or belongs to a broker who
+    // isn't active, and registers the user with
+    // referred_by_broker_user_id: null. Never let it fail the signup.
+    if (payload.broker_identifier) {
+      body.broker_identifier = payload.broker_identifier;
+    }
+
     const res = await http.post('/auth/register', body);
     // Registration always lands on /otp next, so the token has to
     // survive a tab-close mid-verification → persistent bucket. Users

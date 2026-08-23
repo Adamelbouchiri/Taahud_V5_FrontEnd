@@ -1,4 +1,4 @@
-import { UserRound, HardHat, Truck, Building2, Compass } from 'lucide-react';
+import { UserRound, HardHat, Truck, Building2, Compass, Handshake } from 'lucide-react';
 
 /* Sales WhatsApp — used by the "الاشتراكات" nav link and the Plans
    "subscribe" CTA. Local number 0537372053 → international 966537372053
@@ -78,6 +78,10 @@ export const ACCOUNT_TYPE = {
   ENGINEERING: 'engineering',
   SUPPLIER: 'supplier',
   DEVELOPER: 'developer',
+  // Registers like any other type, but the BE stamps
+  // broker_status='pending_review' and nothing in the broker
+  // workspace opens until an admin approves. See brokerConstants.js.
+  BROKER: 'broker',
 };
 
 /* Pretty labels for any account_type — useful in the user menu,
@@ -88,6 +92,7 @@ export const ACCOUNT_TYPE_LABELS = {
   engineering: 'مكتب هندسي',
   supplier: 'مورّد',
   developer: 'مطور عقاري',
+  broker: 'وسيط',
 };
 
 
@@ -120,6 +125,12 @@ export const ACCOUNT_CATEGORIES = [
     label: 'مطور عقاري',
     desc: 'مشاريع ومجمعات',
     icon: Building2,
+  },
+  {
+    value: 'broker', // IS a database account_type (unlike service_provider)
+    label: 'وسيط',
+    desc: 'ربط أصحاب المشاريع بالمنفذين',
+    icon: Handshake,
   },
 ];
 

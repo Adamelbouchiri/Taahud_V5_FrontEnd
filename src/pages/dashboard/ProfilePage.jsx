@@ -587,6 +587,7 @@ function EditForm({ user, nameLabel, isCompanyAccount, onCancel, onSaved }) {
  *  ----------------------------------------------------------------
  *  Reads /api/subscriptions/me on mount, then renders one of:
  *    - "individual" tier → hidden entirely (free, no sub needed)
+ *    - "broker" tier → hidden entirely (no plans in V5)
  *    - active base sub → status row + cancel button
  *    - on trial only → trial countdown + "choose a plan" CTA
  *    - trial expired, no sub → red callout + "subscribe" CTA
@@ -619,7 +620,10 @@ function SubscriptionCard({ user, navigate }) {
   }, []);
 
   // Individuals are on the free tier and don't see a subscription panel.
-  if (user.account_type === 'individual') return null;
+  // Brokers have no plans in V5 — the whole subscribe flow is hidden for
+  // them, so this panel (which links to /subscribe) is hidden too.
+  if (user.account_type === 'individual' || user.account_type === 'broker')
+    return null;
 
   if (loading) {
     return (

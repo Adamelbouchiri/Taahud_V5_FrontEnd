@@ -151,9 +151,19 @@ function MethodCard({ method, delay, t }) {
         style={{
           fontSize: 14,
           color: method.accent,
+          // The value is an email / phone / handle, so its characters
+          // must run LTR even in Arabic.
           direction: 'ltr',
-          display: 'inline-block',
           unicodeBidi: 'isolate',
+          // …but the BOX still has to sit on the reading side of the
+          // card. This is a flex item, so `display: inline-block` is
+          // blockified and ignored — it stretched full width and the
+          // ltr direction then pushed the text to the left edge of an
+          // otherwise right-aligned Arabic card. `align-self` is the
+          // cross-axis control that actually applies here, and it
+          // follows the writing direction: right in RTL, left in LTR.
+          // Same trick the icon above uses.
+          alignSelf: 'flex-start',
         }}
       >
         {t(`${k}.value`)}

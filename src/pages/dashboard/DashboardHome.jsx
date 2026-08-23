@@ -55,9 +55,10 @@ export default function DashboardHome() {
   const canPostProject = canPostAnyArena(accountType);
   const canBrowseProjects = accountType !== 'individual';
   // Plan usage + subscription banner only for subscription-bearing
-  // account types — free individuals never subscribe. (Suppliers
-  // return early above.)
-  const showPlanUsage = !!accountType && accountType !== 'individual';
+  // account types — free individuals never subscribe, and brokers'
+  // subscribe flow is hidden in V5. (Suppliers return early above.)
+  const showPlanUsage =
+    !!accountType && accountType !== 'individual' && accountType !== 'broker';
 
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1100px]">

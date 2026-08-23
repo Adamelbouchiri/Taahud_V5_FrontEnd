@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Tag,
   Clock,
-  Users,
   CheckCircle2,
   User,
 } from 'lucide-react';
@@ -14,8 +13,8 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import {
   canSeeProjectBudget,
   canSeeProjectOwnerName,
-  usesPartnershipOffers,
 } from '../../config/projectConstants';
+import StatusBadge from './StatusBadge';
 
 /**
  * Card used in the browse feed. Always opens the project details
@@ -27,21 +26,22 @@ import {
  * shown; otherwise a "sealed" placeholder appears. Browse feeds
  * usually display other people's projects, so the budget stays
  * hidden in practice.
+ *
+ * The pending applicants / partner-requests count is deliberately NOT
+ * shown here: the feed lists other people's projects, and how many
+ * competitors already bid is the owner's information (they still see
+ * it on their own dashboard cards and in the project's inbox).
+ *
+ * The status badge IS shown, because the feed no longer contains only
+ * `open_for_bids` work — the BE now returns every project except
+ * pending_review / cancelled / soft-deleted, so an awarded or
+ * in-progress project needs to say so on the card.
  */
 export default function OpenProjectCard({ project, onView, currentUserId }) {
   const { t, lang } = useTranslation();
   const applied = project.has_applied;
   const showBudget = canSeeProjectBudget(project, currentUserId);
   const showOwnerName = canSeeProjectOwnerName(project, currentUserId);
-
-  // Solidarity counts partnership offers (separate table) instead of
-  // bids — the BE doesn't ship that count on the project resource, so
-  // the browse page derives it and passes it in as
-  // pending_partnership_requests_count. For arenas using bids we keep
-  // the BE's pending_applications_count.
-  const offerCount = usesPartnershipOffers(project.arena)
-    ? project.pending_partnership_requests_count
-    : project.pending_applications_count;
 
   const ownerLabel = (() => {
     const at = project.owner?.account_type;
@@ -131,6 +131,14 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
         </span>
       </div>
 
+      {/* Status — mirrors the badge on the details page header so the
+          card and the page agree at a glance. */}
+      {project.status && (
+        <div className="mb-2.5">
+          <StatusBadge status={project.status} size="sm" />
+        </div>
+      )}
+
       <h3
         className="font-display m-0 mb-2"
         style={{
@@ -209,15 +217,17 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
         </p>
       )}
 
-      <div
-        className="flex items-center justify-between gap-3 pt-4 mb-4"
-        style={{ borderTop: '1px solid var(--border-soft)' }}
-      >
-        <div className="min-w-0">
-          {/* Budget is shown only to the owner / accepted partner; hidden
-              entirely from everyone else (no "sealed" placeholder). */}
-          {showBudget ? (
-            project.budget ? (
+      {/* Budget is shown only to the owner / accepted partner; hidden
+          entirely from everyone else (no "sealed" placeholder). It's the
+          only thing left in this row now that the applicants count is
+          gone, so the whole row (and its rule) drops out for browsers. */}
+      {showBudget && (
+        <div
+          className="flex items-center justify-between gap-3 pt-4 mb-4"
+          style={{ borderTop: '1px solid var(--border-soft)' }}
+        >
+          <div className="min-w-0">
+            {project.budget ? (
               <>
                 <div
                   className="font-semibold uppercase mb-0.5"
@@ -244,40 +254,10 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {t('projects.list.budgetUnspecified')}
               </span>
-            )
-          ) : null}
-        </div>
-
-        {/* BE returns pending_applications_count on the project list +
-            show responses (FRONTEND_INTEGRATION.md §10). Pending-only —
-            excludes accepted/rejected so it stays meaningful after a
-            project is awarded. Always present as an integer; the
-            typeof check is a defensive guard for older cached payloads
-            served during a deploy. */}
-        <div className="text-end">
-          <div
-            className="font-semibold uppercase mb-0.5"
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              color: 'var(--text-muted)',
-            }}
-          >
-            {t(
-              usesPartnershipOffers(project.arena)
-                ? 'projects.list.partnerRequests'
-                : 'projects.list.applicants'
             )}
           </div>
-          <div
-            className="font-bold inline-flex items-center gap-1"
-            style={{ fontSize: 13.5, color: 'var(--text-ink-soft)' }}
-          >
-            <Users size={12} strokeWidth={1.8} />
-            {typeof offerCount === 'number' ? offerCount : '—'}
-          </div>
         </div>
-      </div>
+      )}
 
       <button
         type="button"

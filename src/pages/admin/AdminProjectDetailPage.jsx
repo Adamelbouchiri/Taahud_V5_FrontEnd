@@ -12,6 +12,7 @@ import {
   ListChecks,
   Gavel,
   Receipt,
+  Paperclip,
 } from 'lucide-react';
 import { admin } from '../../services';
 import { useUser } from '../../contexts/UserContext';
@@ -26,6 +27,7 @@ import {
   ConfirmDialog,
 } from '../../components/admin/AdminUI';
 import { PaymentSummary, StepsTable } from '../../components/admin/ProjectFinance';
+import FileList from '../../components/project/FileList';
 
 /* ============================================================
  *  AdminProjectDetailPage — /admin/projects/:id
@@ -337,6 +339,26 @@ export default function AdminProjectDetailPage() {
                   </li>
                 ))}
               </ul>
+            </Card>
+          )}
+
+          {/* ---------- Attachments ----------
+              AdminProjectController::show eager-loads `files`, so they
+              arrive on the payload already — same shape as the
+              user-side project resource. Read-only here: there is no
+              admin files endpoint, uploads/deletes stay on the
+              owner-facing project page. */}
+          {Array.isArray(project.files) && project.files.length > 0 && (
+            <Card>
+              <h3 className="font-display m-0 mb-3" style={{ fontSize: 15, fontWeight: 700 }}>
+                <Paperclip size={16} style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />
+                {t('admin.projects.detail.files')}
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
+                  {' '}
+                  ({project.files.length})
+                </span>
+              </h3>
+              <FileList files={project.files} />
             </Card>
           )}
 

@@ -16,6 +16,7 @@
  *    - partners.js      "Become a Partner" program (apply + validate)
  *    - contact.js       landing-page contact form
  *    - features.js      plan feature gating (quotas + access flags)
+ *    - brokers.js       broker referral lookup + opportunities
  * ============================================================ */
 
 export { auth } from './auth';
@@ -25,6 +26,7 @@ export { wallet } from './wallet';
 export { applications } from './applications';
 export { partnerships } from './partnerships';
 export { partners } from './partners';
+export { brokers } from './brokers';
 export { contact } from './contact';
 export { admin } from './admin';
 export { subscriptions } from './subscriptions';

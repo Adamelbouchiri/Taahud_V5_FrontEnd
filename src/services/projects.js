@@ -19,12 +19,16 @@ import http, { resolveFileUrl } from './http';
  *    each project:
  *      - Owner   → sees all statuses
  *      - Partner → sees all statuses
- *      - Third-party browser → ONLY status `open_for_bids`
- *    So a `pending_review`/`awarded`/`in_progress`/`completed` project
- *    is invisible to arena viewers — only the owner and partner see
- *    them. The FE never needs to filter by status client-side for
- *    visibility; the BE returns exactly what the user is allowed to
- *    see. The `mine=1` query flag narrows the response further to
+ *      - Third-party browser → every status EXCEPT `pending_review`,
+ *        `cancelled`, and soft-deleted rows
+ *    So an `awarded`/`in_progress`/`on_hold`/`completed` project now
+ *    shows up in the browse feed too — it just isn't biddable. The FE
+ *    never needs to filter by status client-side for visibility; the
+ *    BE returns exactly what the user is allowed to see. What the FE
+ *    DOES have to do is show the project's status (OpenProjectCard /
+ *    the details header) and gate the apply / partner CTA on
+ *    `status === 'open_for_bids'`, since "visible" no longer implies
+ *    "open". The `mine=1` query flag narrows the response further to
  *    only-owned projects.
  *
  *  Backend wraps single resources in { data: {...} } and lists in
@@ -129,7 +133,9 @@ export const projects = {
    * the marketplace. BE applies visibility per relationship:
    *   - own projects (any status)         ← from list page, mixed in
    *   - partner projects (any status)     ← from list page, mixed in
-   *   - arena-viewable open_for_bids only ← the real "browse" set
+   *   - arena-viewable projects in any    ← the real "browse" set
+   *     status but pending_review /
+   *     cancelled / soft-deleted
    *
    * Callers that want strictly the third-party browse set should
    * filter out p.user_id===me / p.partner_id===me locally.
@@ -157,7 +163,7 @@ export const projects = {
    * (no mine flag) already returns the union of:
    *   - own (any status)
    *   - partner (any status)
-   *   - arena-viewable open_for_bids
+   *   - arena-viewable (any status but pending_review / cancelled)
    * so we filter the third bucket out client-side and keep the first
    * two. Partner relationships are only populated after the owner
    * accepts an application, so this is often empty for fresh

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   Check,
   Sparkles,
@@ -213,6 +213,14 @@ export default function SubscribePage() {
 
   if (userLoading || loading) {
     return <PageSkeleton t={t} />;
+  }
+
+  /* Brokers have no plans in V5 — their commission model is settled
+     out of band, so the whole subscribe flow is hidden for them (the
+     sidebar link is already broker-less). Bounce direct hits on the
+     URL back to the dashboard rather than showing an empty picker. */
+  if (user?.account_type === 'broker') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   const isIndividual = user?.account_type === 'individual';

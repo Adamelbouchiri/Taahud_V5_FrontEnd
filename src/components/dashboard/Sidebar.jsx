@@ -39,7 +39,14 @@ import { useTranslation } from '../../i18n/LanguageContext';
  *  isn't accidentally hidden by an inline transform.
  * ============================================================ */
 
-const ALL_TYPES = ['individual', 'entrepreneur', 'engineering', 'supplier', 'developer'];
+const ALL_TYPES = [
+  'individual',
+  'entrepreneur',
+  'engineering',
+  'supplier',
+  'developer',
+  'broker',
+];
 
 const NAV_ITEMS = [
   {
@@ -48,6 +55,15 @@ const NAV_ITEMS = [
     icon: Home,
     accountTypes: ALL_TYPES,
     end: true,
+  },
+  // The broker workspace. Brokers-only, and RequireBroker still gates
+  // the route itself: a broker whose approval was revoked keeps the
+  // link but lands on /broker/status.
+  {
+    to: '/broker/opportunities',
+    labelKey: 'broker.nav.opportunities',
+    icon: Handshake,
+    accountTypes: ['broker'],
   },
   {
     to: '/dashboard/applications',
@@ -138,19 +154,38 @@ export default function Sidebar({ open, onClose }) {
   // users who own the matching add-on. Ownership is resolved from the
   // user's active subscriptions (see useArenaAddons) and fed into
   // canViewArena via the per-arena addonCode.
-  const { addons } = useArenaAddons();
+  const { addons, loading: addonsLoading } = useArenaAddons();
 
-  // Filter items by role. If we don't know the role yet, show
-  // the full set so the UI doesn't look broken during loading.
-  const items = accountType
+  /* The nav is only safe to draw once BOTH the account type and the
+     add-on entitlements have resolved. On a hard refresh both start
+     empty, and rendering optimistically in the meantime flashed links
+     the account isn't allowed to open (a supplier seeing the projects
+     inbox, a broker seeing the escrow wallet) before they were
+     filtered away a tick later. Nothing renders from a guess now —
+     the nav is replaced by a skeleton of the same shape until the
+     real answer arrives. */
+  const navReady = !loading && !addonsLoading && Boolean(accountType);
+  /* Kept separate from navReady so a FAILED /me (which resolves with
+     user === null) doesn't shimmer forever. While either request is
+     in flight we show the skeleton; once both have settled without an
+     account type we render an empty nav and let RequireAuth deal with
+     the session. Either way no link is drawn from a guess. */
+  const navLoading = loading || addonsLoading;
+
+  // Filter items by role. Empty until navReady so a partially-known
+  // user can never widen the menu.
+  const items = navReady
     ? NAV_ITEMS.filter((it) => it.accountTypes.includes(accountType))
-    : [...NAV_ITEMS];
+    : [];
 
   // Partnership offers live only in the solidarity arena, which is
   // paywalled — surface the "My partnerships" link only to users who
   // own the solidarity_addon. Slotted right after "Applications" so
   // the two marketplace inboxes sit together.
-  if (addons?.solidarity_addon) {
+  // navReady guard matters: without it, an add-on response arriving
+  // before the user response would splice this into the empty list
+  // and render it as the only link in the nav.
+  if (navReady && addons?.solidarity_addon) {
     const at = items.findIndex((it) => it.to === '/dashboard/applications');
     const partnershipsItem = {
       to: '/dashboard/partnerships',
@@ -160,9 +195,9 @@ export default function Sidebar({ open, onClose }) {
     items.splice(at >= 0 ? at + 1 : items.length, 0, partnershipsItem);
   }
 
-  const soonItems = accountType
+  const soonItems = navReady
     ? SOON_ITEMS.filter((it) => it.accountTypes.includes(accountType))
-    : SOON_ITEMS;
+    : [];
 
   // "+ مشروع جديد" CTA — hidden when the account type isn't allowed
   // to post in any arena (engineering offices, suppliers, financiers).
@@ -176,7 +211,7 @@ export default function Sidebar({ open, onClose }) {
   // Gated on !loading so the button doesn't flash for ineligible
   // accounts (canPostAnyArena returns true while accountType is
   // still resolving — we wait for the real answer).
-  const showCreateCta = !loading && canPostAnyArena(accountType);
+  const showCreateCta = navReady && canPostAnyArena(accountType);
 
   // Suppliers don't get the projects flow in V5 — hide the "+
   // مشروع جديد" CTA. They CAN still browse arenas they're allowed
@@ -188,7 +223,7 @@ export default function Sidebar({ open, onClose }) {
   // (screenshot: تظهر لمن). Hidden during user load to avoid
   // a flash of links the user can't access. إسناد further requires
   // the paid upgrade — see canViewArena.
-  const arenaLinks = accountType
+  const arenaLinks = navReady
     ? ARENAS.filter((a) => canViewArena(a.value, accountType, addons))
     : [];
 
@@ -340,6 +375,26 @@ export default function Sidebar({ open, onClose }) {
               </button>
             )}
 
+            {/* Placeholder while the account type / add-ons resolve.
+                Same rhythm as the real list so the sidebar doesn't
+                jump when the links land. */}
+            {navLoading && (
+              <div className="px-3 flex flex-col gap-2" aria-hidden="true">
+                <div
+                  className="shimmer"
+                  style={{ height: 9, width: 72, borderRadius: 5, marginBottom: 6 }}
+                />
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="shimmer"
+                    style={{ height: 34, width: '100%', borderRadius: 10 }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {navReady && (
             <div
               className="px-3 mb-2 font-semibold uppercase"
               style={{
@@ -350,6 +405,7 @@ export default function Sidebar({ open, onClose }) {
             >
               {t('dashboard.sidebar.navigation')}
             </div>
+            )}
             <ul className="m-0 p-0 flex flex-col gap-0.5">
               {items.map((item) => (
                 <li key={item.to} className="list-none">

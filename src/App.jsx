@@ -55,12 +55,19 @@ import PartnershipsPage from './pages/dashboard/PartnershipsPage';
 import WalletPage from './pages/dashboard/WalletPage';
 import ComingSoonPage from './pages/dashboard/ComingSoonPage';
 
+/* Broker workspace */
+import BrokerStatusPage from './pages/broker/BrokerStatusPage';
+import OpportunitiesPage from './pages/broker/OpportunitiesPage';
+import OpportunityCreatePage from './pages/broker/OpportunityCreatePage';
+import OpportunityDetailPage from './pages/broker/OpportunityDetailPage';
+
 // Route guards
 import RequireAuth from './components/RequireAuth';
 import RequireVerified from './components/RequireVerified';
 import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
+import RequireBroker from './components/RequireBroker';
 import { RequireAdmin, RequireSuperAdmin } from './components/RequireAdmin';
 
 // Admin layout + pages — gated by RequireAdmin / RequireSuperAdmin.
@@ -81,6 +88,9 @@ import AdminWithdrawalsPage from './pages/admin/AdminWithdrawalsPage';
 import AdminPlansPage from './pages/admin/AdminPlansPage';
 import AdminRolesPage from './pages/admin/AdminRolesPage';
 import AdminActivityPage from './pages/admin/AdminActivityPage';
+import AdminBrokersPage from './pages/admin/AdminBrokersPage';
+import AdminOpportunitiesPage from './pages/admin/AdminOpportunitiesPage';
+import AdminOpportunityDetailPage from './pages/admin/AdminOpportunityDetailPage';
 
 
 /* ============================================================
@@ -394,6 +404,42 @@ function AppShell() {
           <Route path="notifications" element={<ComingSoonPage variant="notifications" />} />
         </Route>
 
+        {/* ===== Broker workspace =====
+            The status screen sits OUTSIDE the RequireBroker gate on
+            purpose — it's where the gate sends a broker who isn't
+            active yet, so gating it would loop. It carries its own
+            shell (no dashboard sidebar) since a pending broker has
+            nothing to navigate to.
+
+            Everything else runs inside DashboardLayout behind
+            RequireBroker, which bounces non-brokers to /dashboard and
+            non-active brokers to /broker/status. */}
+        <Route
+          path="/broker/status"
+          element={
+            <RequireAuth>
+              <BrokerStatusPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/broker"
+          element={
+            <RequireAuth>
+              <RequireVerified>
+                <RequireBroker>
+                  <DashboardLayout />
+                </RequireBroker>
+              </RequireVerified>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<Navigate to="/broker/opportunities" replace />} />
+          <Route path="opportunities" element={<OpportunitiesPage />} />
+          <Route path="opportunities/new" element={<OpportunityCreatePage />} />
+          <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
+        </Route>
+
         {/* ===== Admin console =====
             Two layered guards: RequireAuth checks the token, and
             RequireAdmin gates on the roles snapshot persisted at
@@ -427,6 +473,12 @@ function AppShell() {
           <Route path="projects/:id/edit" element={<AdminProjectEditPage />} />
           <Route path="applications" element={<AdminApplicationsPage />} />
           <Route path="partnerships" element={<AdminPartnershipsPage />} />
+          {/* Broker approval queue + opportunity review. Approving an
+              opportunity starts its 90-day hold, so that action lives
+              on the detail page rather than the list. */}
+          <Route path="brokers" element={<AdminBrokersPage />} />
+          <Route path="opportunities" element={<AdminOpportunitiesPage />} />
+          <Route path="opportunities/:id" element={<AdminOpportunityDetailPage />} />
           {/* "Become a Partner" program — separate from /partnerships
               (Solidarity offers). force-delete is gated inside the page
               on the super-admin role. */}
