@@ -46,6 +46,7 @@ import { UserProvider, useUser } from '../contexts/UserContext';
 import useArenaAddons from '../hooks/useArenaAddons';
 import StatusBadge from '../components/project/StatusBadge';
 import FileList from '../components/project/FileList';
+import BrokerAttribution from '../components/broker/BrokerAttribution';
 import { useTranslation } from '../i18n/LanguageContext';
 
 /* ============================================================
@@ -315,6 +316,11 @@ function ProjectDetailsPage() {
               />
             )}
             <FactsCard project={project} />
+            {/* Broker attribution — present on any project that came
+                through a broker, including one the owner posted
+                themselves inside the 90-day auto-link window. Renders
+                nothing when project.broker is null. */}
+            <BrokerAttribution project={project} />
             <OwnerCard
               owner={project.owner}
               project={project}

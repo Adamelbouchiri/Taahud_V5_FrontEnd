@@ -29,6 +29,10 @@ import EditProjectPage from './pages/EditProjectPage';
 import ApplyPage from './pages/ApplyPage';
 import PartnershipOfferPage from './pages/PartnershipOfferPage';
 
+// Broker invitation landing (Method D) — fully public: the invitee
+// has no account until they accept it here.
+import InvitationPage from './pages/InvitationPage';
+
 // Subscription pages — plans picker + Stripe return URLs
 import SubscribePage from './pages/subscribe/SubscribePage';
 import SubscribeSuccessPage from './pages/subscribe/SubscribeSuccessPage';
@@ -54,12 +58,20 @@ import ApplicationsPage from './pages/dashboard/ApplicationsPage';
 import PartnershipsPage from './pages/dashboard/PartnershipsPage';
 import WalletPage from './pages/dashboard/WalletPage';
 import ComingSoonPage from './pages/dashboard/ComingSoonPage';
+/* Owner side of the broker flow — drafts a broker handed over, and
+   commission rates awaiting the owner's decision. */
+import PendingDraftsPage from './pages/dashboard/PendingDraftsPage';
+import OwnerDraftEditPage from './pages/dashboard/OwnerDraftEditPage';
+import FeeDecisionsPage from './pages/dashboard/FeeDecisionsPage';
 
 /* Broker workspace */
 import BrokerStatusPage from './pages/broker/BrokerStatusPage';
 import OpportunitiesPage from './pages/broker/OpportunitiesPage';
 import OpportunityCreatePage from './pages/broker/OpportunityCreatePage';
 import OpportunityDetailPage from './pages/broker/OpportunityDetailPage';
+import BrokerDraftsPage from './pages/broker/BrokerDraftsPage';
+import BrokerDraftEditPage from './pages/broker/BrokerDraftEditPage';
+import DraftCreatePage from './pages/broker/DraftCreatePage';
 
 // Route guards
 import RequireAuth from './components/RequireAuth';
@@ -146,6 +158,13 @@ function AppShell() {
         {/* Public "Become a Partner" directory + application form.
             Wired to the public POST /api/partners/apply endpoint. */}
         <Route path="/partners" element={<PartnersPage />} />
+        {/* Broker invitation (Method D). Public on purpose: the broker
+            sends this URL by hand and the invitee creates their account
+            on the page itself. Deliberately NOT behind RequireGuest —
+            someone already signed in must still be able to read the
+            invitation (the page warns that accepting replaces their
+            session) rather than being bounced to /dashboard. */}
+        <Route path="/invitations/:token" element={<InvitationPage />} />
 
         {/* ===== Guest-only (auth pages) =====
             If a logged-in user lands here, bounce them to /dashboard. */}
@@ -392,6 +411,13 @@ function AppShell() {
               carries no extra gate beyond the dashboard's. */}
           <Route path="wallet" element={<WalletPage />} />
 
+          {/* Broker sprint 2, owner side. Both routes are harmless for
+              a user no broker ever invited (they render empty states),
+              so they carry no extra gate beyond the dashboard's. */}
+          <Route path="drafts" element={<PendingDraftsPage />} />
+          <Route path="drafts/:id" element={<OwnerDraftEditPage />} />
+          <Route path="fee-decisions" element={<FeeDecisionsPage />} />
+
           {/* Coming-soon features. Each renders the same component
               with a different variant preset. Add them here so the
               sidebar links resolve to a real page (not a 404). */}
@@ -438,6 +464,15 @@ function AppShell() {
           <Route path="opportunities" element={<OpportunitiesPage />} />
           <Route path="opportunities/new" element={<OpportunityCreatePage />} />
           <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
+          {/* Draft creation hangs off the opportunity it's built from —
+              the BE needs that id, and the prerequisites (accepted
+              invitation, approved fee) live on it. */}
+          <Route
+            path="opportunities/:id/draft/new"
+            element={<DraftCreatePage />}
+          />
+          <Route path="drafts" element={<BrokerDraftsPage />} />
+          <Route path="drafts/:id" element={<BrokerDraftEditPage />} />
         </Route>
 
         {/* ===== Admin console =====

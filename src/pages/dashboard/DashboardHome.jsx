@@ -20,8 +20,10 @@ import {
 import { useUser } from '../../contexts/UserContext';
 import { projects as projectsApi } from '../../services';
 import useArenaAddons from '../../hooks/useArenaAddons';
+import useBrokerInbox from '../../hooks/useBrokerInbox';
 import { isServiceProvider } from '../../config/constants';
 import StatusBadge from '../../components/project/StatusBadge';
+import BrokerAttribution from '../../components/broker/BrokerAttribution';
 import {
   arenaConfig,
   canPostAnyArena,
@@ -63,6 +65,12 @@ export default function DashboardHome() {
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1100px]">
       <Greeting user={user} />
+      {/* Anything a broker has left waiting on this user sits above the
+          quick actions — it's the one thing on this page with a
+          deadline attached (a 7-day invitation, a fee the broker is
+          blocked on). Renders nothing when both queues are empty,
+          which is the normal case. */}
+      <BrokerInboxNotice accountType={accountType} />
       <QuickActions
         canPostProject={canPostProject}
         canBrowseProjects={canBrowseProjects}
@@ -130,6 +138,93 @@ function Greeting({ user }) {
             })
           : t('dashboard.greeting.welcomeNoRole')}
       </p>
+    </div>
+  );
+}
+
+/* ============================================================
+ *  Broker inbox notice
+ *  ----------------------------------------------------------------
+ *  Two owner-side queues from the broker flow: a draft handed over
+ *  for review, and a commission rate awaiting a decision. Both block
+ *  the broker until the owner acts, so they get one prominent strip
+ *  here rather than living only in the sidebar.
+ * ============================================================ */
+function BrokerInboxNotice({ accountType }) {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { counts } = useBrokerInbox({
+    // Brokers are the other end of both flows — they have their own
+    // workspace and never receive a hand-off.
+    enabled: Boolean(accountType) && accountType !== 'broker',
+  });
+
+  if (counts.drafts === 0 && counts.fees === 0) return null;
+
+  return (
+    <div
+      className="mb-9 p-5 rounded-[16px] animate-fade-up flex flex-col sm:flex-row sm:items-center gap-4"
+      style={{
+        background: 'rgba(19,109,74,0.05)',
+        border: '1px solid rgba(19,109,74,0.22)',
+      }}
+    >
+      <div
+        className="flex items-center justify-center flex-shrink-0"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 11,
+          background: 'rgba(19,109,74,0.12)',
+          color: '#0d5538',
+        }}
+      >
+        <Handshake size={20} strokeWidth={1.9} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-display font-bold"
+          style={{ fontSize: 15, color: '#0d5538', lineHeight: 1.35 }}
+        >
+          {t('broker.owner.inbox.title')}
+        </div>
+        <p
+          className="m-0 mt-1"
+          style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-ink-soft)' }}
+        >
+          {[
+            counts.drafts > 0 &&
+              `${counts.drafts} ${t('broker.owner.inbox.drafts')}`,
+            counts.fees > 0 && `${counts.fees} ${t('broker.owner.inbox.fees')}`,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+        {counts.drafts > 0 && (
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ width: 'auto', fontSize: 13 }}
+            onClick={() => navigate('/dashboard/drafts')}
+          >
+            {t('broker.owner.inbox.viewDrafts')}
+          </button>
+        )}
+        {counts.fees > 0 && (
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: 'auto', fontSize: 13, padding: '10px 16px' }}
+            onClick={() => navigate('/dashboard/fee-decisions')}
+          >
+            {t('broker.owner.inbox.viewFees')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -483,6 +578,15 @@ function DashboardProjectCard({ project, onClick, delay = 0 }) {
         >
           {project.description}
         </p>
+      )}
+
+      {/* Renders nothing unless a broker is attributed to the project —
+          whether the owner published the broker's draft or posted it
+          themselves inside the auto-link window. */}
+      {project.broker && (
+        <div className="mb-4">
+          <BrokerAttribution project={project} variant="inline" />
+        </div>
       )}
 
       {showProgress && (

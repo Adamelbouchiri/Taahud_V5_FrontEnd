@@ -183,6 +183,53 @@ export const auth = {
   },
 
   /* ============================================================
+   *  POST /invitations/:token/accept   (PUBLIC — no bearer)
+   *  ----------------------------------------------------------------
+   *  Method D from BROKER_SPRINT2_INTEGRATION.md: a broker sends the
+   *  invitation URL by hand, the invitee opens it and creates their
+   *  account in one step. The BE also stamps
+   *  `referred_by_broker_user_id` + `referred_at`, which starts the
+   *  90-day auto-link window — every project this owner posts inside it
+   *  is attributed to the inviting broker whether or not they ever
+   *  touch the broker's draft.
+   *
+   *  Body: { name, city, phone (+9665XXXXXXXX), email, password }
+   *  Returns 201 { message, user, token }; 410 when the invitation has
+   *  expired, was cancelled, or was already accepted.
+   *
+   *  Lives here rather than in brokers.js because it returns a bearer
+   *  token: installing a session is this module's job, and startSession
+   *  replaces any previous account wholesale — the invitee may well be
+   *  opening the link while signed in as someone else.
+   * ============================================================ */
+  async acceptInvitation(token, payload) {
+    const body = {
+      name: payload.name,
+      city: payload.city,
+      phone: payload.phone,
+      email: payload.email,
+      password: payload.password,
+      password_confirmation: payload.password_confirmation ?? payload.password,
+      device_name: deviceName(),
+    };
+
+    const res = await http.post(
+      `/invitations/${encodeURIComponent(token)}/accept`,
+      body
+    );
+    // Same seeding as register(): a brand-new account's phone is not
+    // verified yet, so the snapshot starts false and the caller's
+    // me({ force: true }) self-heals it if the BE says otherwise.
+    startSession({
+      token: extractToken(res),
+      roles: res?.roles,
+      phoneVerified: false,
+      persistent: true,
+    });
+    return res; // { message, user, token }
+  },
+
+  /* ============================================================
    *  POST /auth/login
    *  ----------------------------------------------------------------
    *  Body:

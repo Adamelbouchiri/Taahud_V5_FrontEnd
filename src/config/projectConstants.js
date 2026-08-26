@@ -383,6 +383,17 @@ export const EXPERIENCE_LEVELS = [
    Mirrors the backend enum exactly (Taahud V5 API).
    ============================================================ */
 export const PROJECT_STATUSES = {
+  /* Broker sprint 2 added `draft` to the BE enum: a project a broker
+     prepares on the owner's behalf. Never appears in a public listing —
+     only in the broker's drafts workspace and the owner's pending-draft
+     inbox — but it needs a badge in both. */
+  draft: {
+    value: 'draft',
+    label: 'مسودة',
+    color: '#7a7a8c',
+    bg: 'var(--bg-cream)',
+    border: 'var(--border-default)',
+  },
   pending_review: {
     value: 'pending_review',
     label: 'قيد المراجعة',

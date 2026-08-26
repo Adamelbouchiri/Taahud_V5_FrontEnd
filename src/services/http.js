@@ -102,10 +102,19 @@ const PUBLIC_AUTH_PATHS = [
   '/auth/reset-password',
 ];
 
+/* Broker invitations (Method D) are opened from a link the broker sent
+   by hand, so the visitor may well be signed in as someone else — the
+   accept call CREATES an account, and sending a stale bearer for a
+   different user on it is the same ambiguity the login path avoids.
+   Matched by prefix because the token is part of the path
+   (/invitations/INV-3JCBXD4A[/accept]). */
+const PUBLIC_PATH_PREFIXES = ['/invitations/'];
+
 function isPublicAuthPath(url = '') {
   // Compare on the path only — callers pass relative paths, but be
   // tolerant of a full URL sneaking in.
-  return PUBLIC_AUTH_PATHS.some((p) => url === p || url.endsWith(p));
+  if (PUBLIC_AUTH_PATHS.some((p) => url === p || url.endsWith(p))) return true;
+  return PUBLIC_PATH_PREFIXES.some((p) => url.startsWith(p) || url.includes(p));
 }
 
 http.interceptors.request.use((config) => {

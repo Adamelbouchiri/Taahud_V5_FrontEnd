@@ -11,12 +11,18 @@ import {
   HardHat,
   ShieldAlert,
   CalendarClock,
+  FileEdit,
+  FilePlus2,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 import { brokers, readHoldConflict } from '../../services/brokers';
 import { useTranslation } from '../../i18n/LanguageContext';
 import Ltr from '../../components/Ltr';
 import Field from '../../components/form/Field';
 import TextareaField from '../../components/form/TextareaField';
+import FeeCard from '../../components/broker/FeeCard';
+import InvitationCard from '../../components/broker/InvitationCard';
 import {
   PageHeader,
   Card,
@@ -25,12 +31,17 @@ import {
   ConfirmDialog,
 } from '../../components/admin/AdminUI';
 import {
+  OPPORTUNITY_STATUS,
   OPPORTUNITY_STATUS_TONE,
   PARTY_ROLE,
+  FEE_STATUS,
+  feeStatus,
   canEditOpportunity,
   canManageParties,
   canSubmitOpportunity,
   canCancelOpportunity,
+  canCreateDraft,
+  draftPrerequisites,
 } from '../../config/brokerConstants';
 import { formatDate } from '../../utils/date';
 
@@ -51,6 +62,18 @@ import { formatDate } from '../../utils/date';
  *  owner's national_id. The BE deliberately does NOT say which
  *  broker — only when the hold lapses — so the modal shows just
  *  that date.
+ *
+ *  Sprint 2 added the three stages that turn an approved opportunity
+ *  into a real project, and they run in a fixed order, so they're
+ *  stacked in that order below the parties:
+ *
+ *    1. invite the owner   → they create an account, linked to you
+ *    2. agree the fee      → propose, they decide, you answer a counter
+ *    3. prepare the draft  → fill it in, hand it to them, they publish
+ *
+ *  Each stage's card states its own prerequisite rather than being
+ *  hidden until it's reachable: a broker who can't act yet needs to
+ *  know WHY, not just find the button missing.
  * ============================================================ */
 export default function OpportunityDetailPage() {
   const { id } = useParams();
@@ -70,6 +93,9 @@ export default function OpportunityDetailPage() {
   const [conflict, setConflict] = useState(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [removeParty, setRemoveParty] = useState(null);
+
+  const [feeError, setFeeError] = useState('');
+  const [inviteError, setInviteError] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -114,6 +140,21 @@ export default function OpportunityDetailPage() {
   const owner = (opp.parties || []).find((p) => p.role === PARTY_ROLE.OWNER);
   const executor = (opp.parties || []).find((p) => p.role === PARTY_ROLE.EXECUTOR);
   const tone = OPPORTUNITY_STATUS_TONE[opp.status] || 'default';
+  /* The sprint-2 pipeline (invite → fee → draft) is offered for every
+     status the BE's own createInvitation() accepts — draft, pending
+     review and held. Anything that already carries pipeline state keeps
+     showing it regardless of status, so a converted or expired
+     opportunity still reads as a complete record. */
+  const PIPELINE_STATUSES = [
+    OPPORTUNITY_STATUS.DRAFT,
+    OPPORTUNITY_STATUS.PENDING,
+    OPPORTUNITY_STATUS.ACTIVE,
+  ];
+  const showPipeline =
+    PIPELINE_STATUSES.includes(opp.status) ||
+    Boolean(opp.invitation) ||
+    feeStatus(opp) !== FEE_STATUS.NOT_SET ||
+    Boolean(opp.draft_project_id);
 
   const runAction = async (fn) => {
     setBusy(true);
@@ -130,6 +171,27 @@ export default function OpportunityDetailPage() {
       } else {
         setActionError(err.message || t('broker.detail.actionError'));
       }
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* The pipeline cards (invite / fee / draft) each keep their own error
+     line instead of the shared one at the top of the page — an error
+     three cards down is unreadable next to the header. Otherwise this
+     is runAction: hold `busy` for the duration so the card's buttons
+     disable, reload on success, and resolve false so the card keeps
+     the user's input on a failure. */
+  const runStage = async (setError, fallbackMessage, fn) => {
+    setBusy(true);
+    setError('');
+    try {
+      await fn();
+      load();
+      return true;
+    } catch (err) {
+      setError(err.message || fallbackMessage);
       return false;
     } finally {
       setBusy(false);
@@ -318,6 +380,60 @@ export default function OpportunityDetailPage() {
         </div>
       </Card>
 
+      {/* ---------- Stages 1–3 ----------
+          Hidden until the opportunity is actually held (admin-approved):
+          inviting an owner or proposing a fee on a draft nobody has
+          reviewed yet puts the cart before the horse, and the page
+          already leads with the status and the submit CTA. An
+          opportunity that has since moved on (converted, expired)
+          keeps showing them, so the history stays readable. */}
+      {showPipeline && (
+        <>
+          {/* ---------- Stage 1: invite the owner ---------- */}
+          <InvitationCard
+            invitation={opp.invitation}
+            busy={busy}
+            error={inviteError}
+            onCreate={(payload) =>
+              runStage(setInviteError, t('broker.detail.actionError'), () =>
+                brokers.invitations.create(opp.id, payload)
+              )
+            }
+            onCancel={() =>
+              runStage(setInviteError, t('broker.detail.actionError'), () =>
+                brokers.invitations.cancel(opp.id)
+              )
+            }
+          />
+
+          {/* ---------- Stage 2: agree the fee ---------- */}
+          <FeeCard
+            opportunity={opp}
+            role="broker"
+            busy={busy}
+            error={feeError}
+            onPropose={(percent) =>
+              runStage(setFeeError, t('broker.fee.errors.generic'), () =>
+                brokers.opportunities.proposeFee(opp.id, percent)
+              )
+            }
+            onRespond={(decision) =>
+              runStage(setFeeError, t('broker.fee.errors.generic'), () =>
+                brokers.opportunities.respondToFee(opp.id, decision)
+              )
+            }
+          />
+
+          {/* ---------- Stage 3: the project draft ---------- */}
+          <DraftStageCard
+            opportunity={opp}
+            t={t}
+            onCreate={() => navigate(`/broker/opportunities/${opp.id}/draft/new`)}
+            onOpen={(draftId) => navigate(`/broker/drafts/${draftId}`)}
+          />
+        </>
+      )}
+
       {/* ---------- Edit title / description ---------- */}
       <EditModal
         open={editOpen}
@@ -459,6 +575,104 @@ export default function OpportunityDetailPage() {
 }
 
 /* ---------- small pieces ---------- */
+
+/* ---------- Stage 3 card ----------
+   Three shapes, in the order a broker meets them: not yet allowed
+   (with the reasons spelled out), ready to create, or created (open
+   the editor). The draft itself lives on its own page — this card is
+   only the entry point. */
+function DraftStageCard({ opportunity, t, onCreate, onOpen }) {
+  const prereq = draftPrerequisites(opportunity);
+  const ready = canCreateDraft(opportunity);
+  const draftId = opportunity.draft_project_id || null;
+
+  return (
+    <Card>
+      <div className="mb-4">
+        <h3
+          className="font-display m-0 inline-flex items-center gap-2"
+          style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)' }}
+        >
+          <FileEdit size={15} strokeWidth={1.9} />
+          {t('broker.drafts.card.title')}
+        </h3>
+        <p
+          className="m-0 mt-1"
+          style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.7 }}
+        >
+          {t('broker.drafts.card.subtitle')}
+        </p>
+      </div>
+
+      {draftId ? (
+        <button
+          type="button"
+          className="btn-primary inline-flex items-center gap-2"
+          style={{ width: 'auto', fontSize: 13.5 }}
+          onClick={() => onOpen(draftId)}
+        >
+          <FileEdit size={15} strokeWidth={1.9} />
+          {t('broker.drafts.card.openDraft')}
+        </button>
+      ) : ready ? (
+        <button
+          type="button"
+          className="btn-primary inline-flex items-center gap-2"
+          style={{ width: 'auto', fontSize: 13.5 }}
+          onClick={onCreate}
+        >
+          <FilePlus2 size={15} strokeWidth={1.9} />
+          {t('broker.drafts.create')}
+        </button>
+      ) : (
+        <div
+          className="p-4 rounded-[12px]"
+          style={{
+            background: 'var(--bg-canvas)',
+            border: '1px solid var(--border-soft)',
+          }}
+        >
+          <div
+            className="font-semibold mb-2"
+            style={{ fontSize: 12.5, color: 'var(--text-ink)' }}
+          >
+            {t('broker.drafts.card.prereqTitle')}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Prereq
+              done={prereq.invitationAccepted}
+              text={t('broker.drafts.card.prereqInvitation')}
+            />
+            <Prereq
+              done={prereq.feeApproved}
+              text={t('broker.drafts.card.prereqFee')}
+            />
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function Prereq({ done, text }) {
+  const Icon = done ? CheckCircle2 : Circle;
+  return (
+    <div
+      className="flex items-center gap-2"
+      style={{
+        fontSize: 13,
+        color: done ? 'var(--text-ink)' : 'var(--text-muted)',
+      }}
+    >
+      <Icon
+        size={14}
+        strokeWidth={1.9}
+        style={{ color: done ? '#136d4a' : 'var(--text-muted)', flexShrink: 0 }}
+      />
+      {text}
+    </div>
+  );
+}
 
 function Meta({ label, value }) {
   if (!value) return null;

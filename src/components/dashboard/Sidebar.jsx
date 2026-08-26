@@ -19,11 +19,14 @@ import {
   ShoppingBag,
   CreditCard,
   Wallet,
+  FileEdit,
+  Percent,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
 import { ARENAS, canViewArena, canPostAnyArena } from '../../config/projectConstants';
 import useArenaAddons from '../../hooks/useArenaAddons';
+import useBrokerInbox from '../../hooks/useBrokerInbox';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -65,11 +68,30 @@ const NAV_ITEMS = [
     icon: Handshake,
     accountTypes: ['broker'],
   },
+  // The drafts a broker prepares for owners. Same gate as the
+  // opportunities link — the workspace is brokers-only.
+  {
+    to: '/broker/drafts',
+    labelKey: 'broker.nav.drafts',
+    icon: FileEdit,
+    accountTypes: ['broker'],
+  },
   {
     to: '/dashboard/applications',
     labelKey: 'dashboard.sidebar.items.applications',
     icon: Briefcase,
     // Suppliers don't have a project flow in V5; hide it for them.
+    accountTypes: ['individual', 'entrepreneur', 'engineering', 'developer'],
+  },
+  // Drafts a broker prepared and handed over. Listed permanently for
+  // every account type that can own a project, even when empty: a link
+  // that appears only once a broker happens to have acted is a door
+  // nobody learns exists, and the page says so plainly when there's
+  // nothing in it. The unread count rides along via NAV_BADGES below.
+  {
+    to: '/dashboard/drafts',
+    labelKey: 'broker.owner.drafts.nav',
+    icon: FileEdit,
     accountTypes: ['individual', 'entrepreneur', 'engineering', 'developer'],
   },
   // Escrow wallet. Only the account types that can be awarded a
@@ -155,6 +177,13 @@ export default function Sidebar({ open, onClose }) {
   // user's active subscriptions (see useArenaAddons) and fed into
   // canViewArena via the per-arena addonCode.
   const { addons, loading: addonsLoading } = useArenaAddons();
+  /* Owner-side broker queues (a handed-over draft, a proposed
+     commission rate). Skipped for brokers, who are the other end of
+     both flows. Drives the count pill on the permanent drafts link and
+     the appearance of the fee-decisions link. */
+  const { counts: brokerInbox } = useBrokerInbox({
+    enabled: Boolean(accountType) && accountType !== 'broker',
+  });
 
   /* The nav is only safe to draw once BOTH the account type and the
      add-on entitlements have resolved. On a hard refresh both start
@@ -172,10 +201,18 @@ export default function Sidebar({ open, onClose }) {
      the session. Either way no link is drawn from a guess. */
   const navLoading = loading || addonsLoading;
 
+  /* Counts painted onto permanent links. Zero means no pill at all —
+     see the `item.badge > 0` guard where the links render. */
+  const NAV_BADGES = {
+    '/dashboard/drafts': brokerInbox.drafts,
+  };
+
   // Filter items by role. Empty until navReady so a partially-known
   // user can never widen the menu.
   const items = navReady
-    ? NAV_ITEMS.filter((it) => it.accountTypes.includes(accountType))
+    ? NAV_ITEMS.filter((it) => it.accountTypes.includes(accountType)).map((it) =>
+        NAV_BADGES[it.to] ? { ...it, badge: NAV_BADGES[it.to] } : it
+      )
     : [];
 
   // Partnership offers live only in the solidarity arena, which is
@@ -193,6 +230,20 @@ export default function Sidebar({ open, onClose }) {
       icon: Handshake,
     };
     items.splice(at >= 0 ? at + 1 : items.length, 0, partnershipsItem);
+  }
+
+  /* Fee decisions stay a pure inbox item — it appears when a broker
+     proposes a rate and disappears once decided. Unlike the drafts
+     link there's nothing to look at between times: an empty
+     fee-decisions page can't be acted on, and every route into it
+     comes from the broker, never from the owner going looking. */
+  if (navReady && brokerInbox.fees > 0) {
+    items.push({
+      to: '/dashboard/fee-decisions',
+      labelKey: 'broker.owner.fees.nav',
+      icon: Percent,
+      badge: brokerInbox.fees,
+    });
   }
 
   const soonItems = navReady
@@ -418,7 +469,10 @@ export default function Sidebar({ open, onClose }) {
                     }
                   >
                     <item.icon size={17} strokeWidth={1.75} />
-                    <span>{t(item.labelKey)}</span>
+                    <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                    {item.badge > 0 && (
+                      <span className="nav-badge">{item.badge}</span>
+                    )}
                   </NavLink>
                 </li>
               ))}
@@ -643,6 +697,24 @@ export default function Sidebar({ open, onClose }) {
           }
           .nav-link-active:hover {
             background: rgba(44,47,124,0.10);
+          }
+
+          /* Unread-style count on an inbox link (broker drafts, fee
+             decisions). Uses the brand accent rather than a danger
+             red — these are things to do, not problems. */
+          .nav-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            background: var(--accent-primary);
+            flex-shrink: 0;
           }
 
           .soon-pill {

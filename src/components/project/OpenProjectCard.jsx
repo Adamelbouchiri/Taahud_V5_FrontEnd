@@ -15,6 +15,7 @@ import {
   canSeeProjectOwnerName,
 } from '../../config/projectConstants';
 import StatusBadge from './StatusBadge';
+import BrokerAttribution from '../broker/BrokerAttribution';
 
 /**
  * Card used in the browse feed. Always opens the project details
@@ -215,6 +216,16 @@ export default function OpenProjectCard({ project, onView, currentUserId }) {
         >
           {project.description}
         </p>
+      )}
+
+      {/* Broker attribution. Unlike the budget this isn't sealed — the
+          broker's name is part of how the project reached the arena,
+          and the fee is a platform-side arrangement, not the owner's
+          private number. Renders nothing when there's no broker. */}
+      {project.broker && (
+        <div className="mb-4">
+          <BrokerAttribution project={project} variant="inline" />
+        </div>
       )}
 
       {/* Budget is shown only to the owner / accepted partner; hidden
