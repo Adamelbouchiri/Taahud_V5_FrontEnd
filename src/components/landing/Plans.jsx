@@ -18,6 +18,8 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions, auth } from '../../services';
 import { hasToken } from '../../services/session';
 import { snapshotPlanName } from '../../utils/subscriptionSnapshot';
+import { addonCopyKey } from '../../config/addonPlans';
+import { isRasdPlan, RASD_CTA_ROUTE } from '../../config/rasdConstants';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -757,6 +759,7 @@ function AuthPlanSection({ title, plans, activeByPlanId, lang, t, navigate }) {
             lang={lang}
             t={t}
             onSubscribe={() => navigate('/subscribe')}
+            navigate={navigate}
             delay={i * 0.04}
           />
         ))}
@@ -765,7 +768,7 @@ function AuthPlanSection({ title, plans, activeByPlanId, lang, t, navigate }) {
   );
 }
 
-function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay }) {
+function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay, navigate }) {
   const isAddon = !!plan.is_addon;
   const isPremium = plan.tier === 'premium';
   const accent = isAddon || isPremium ? '#b8862a' : '#2c2f7c';
@@ -776,6 +779,9 @@ function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay }) {
   const { name, description, features } = localizedPlanContent(plan, { lang, t });
   const price = formatPrice(plan.price, lang);
   const months = plan.billing_interval_months || 1;
+  /* No figure on a رصد card — it's sold by conversation, and its
+     button opens the callback form rather than a checkout. */
+  const isRasd = isRasdPlan(plan.code);
 
   return (
     <article
@@ -834,22 +840,36 @@ function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay }) {
         {t(`subscribe.page.periodLabels.${months}`)}
       </div>
 
-      <div className="flex items-baseline gap-2 mb-3">
-        <span
-          className="font-display"
+      {isRasd ? (
+        <div
+          className="mb-3"
           style={{
-            fontSize: 26,
+            fontSize: 14,
             fontWeight: 700,
             color: 'var(--text-brand-deep)',
-            lineHeight: 1,
+            lineHeight: 1.4,
           }}
         >
-          {price}
-        </span>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-          {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
-        </span>
-      </div>
+          {t('rasd.plan.priceOnRequest')}
+        </div>
+      ) : (
+        <div className="flex items-baseline gap-2 mb-3">
+          <span
+            className="font-display"
+            style={{
+              fontSize: 26,
+              fontWeight: 700,
+              color: 'var(--text-brand-deep)',
+              lineHeight: 1,
+            }}
+          >
+            {price}
+          </span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+            {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
+          </span>
+        </div>
+      )}
 
       {description && (
         <p
@@ -909,7 +929,9 @@ function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay }) {
         ) : (
           <button
             type="button"
-            onClick={onSubscribe}
+            // رصد goes to its own section's callback form; every other
+            // plan continues into the subscribe flow.
+            onClick={isRasd ? () => navigate(RASD_CTA_ROUTE) : onSubscribe}
             className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] text-white font-semibold transition-all"
             style={{
               padding: '11px 14px',
@@ -921,7 +943,7 @@ function AuthPlanCard({ plan, isActive, lang, t, onSubscribe, delay }) {
               fontFamily: 'inherit',
             }}
           >
-            {t('subscribe.page.subscribeCta')}
+            {isRasd ? t('rasd.plan.cta') : t('subscribe.page.subscribeCta')}
           </button>
         )}
       </div>
@@ -1410,12 +1432,13 @@ function localizedPlanContent(plan, { lang, t }) {
     features: backendFeatures,
   };
 
-  // Arena add-ons — universal, not audience-specific. Each add-on
-  // (isnad / solidarity) has its own copy block keyed by plan.code.
+  // Add-ons are universal, not audience-specific. Each one has its own
+  // copy block, resolved by plan.code through config/addonPlans — an
+  // unknown code returns null and falls back to the plan's own backend
+  // copy rather than borrowing another add-on's (see that file).
   if (plan.is_addon) {
-    const addonKey =
-      plan.code === 'solidarity_addon' ? 'solidarityAddon' : 'addon';
-    const addon = dict?.landing?.plans?.[addonKey];
+    const addonKey = addonCopyKey(plan.code);
+    const addon = addonKey ? dict?.landing?.plans?.[addonKey] : null;
     if (!addon) return fallback;
     return {
       name: addon.title || fallback.name,

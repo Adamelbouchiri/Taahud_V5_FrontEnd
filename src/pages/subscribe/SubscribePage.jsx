@@ -20,6 +20,8 @@ import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { subscriptions } from '../../services';
 import { deriveArenaAddons } from '../../services/subscriptions';
+import { addonCopyKey } from '../../config/addonPlans';
+import { isRasdPlan, RASD_CTA_ROUTE } from '../../config/rasdConstants';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
@@ -814,6 +816,7 @@ function PlanCard({
   onSubscribe,
   delay,
 }) {
+  const navigate = useNavigate();
   const isAddon = !!plan.is_addon || forceAddon;
   const isPremium = plan.tier === 'premium';
   const accent = isAddon ? '#b8862a' : isPremium ? '#b8862a' : '#2c2f7c';
@@ -832,6 +835,11 @@ function PlanCard({
   });
   const price = formatPrice(plan.price, plan.currency, lang);
   const months = plan.billing_interval_months || 1;
+  /* رصد is sold by conversation, not by checkout — so its cards show
+     no figure and no "subscribe" button. Printing a price beside a
+     button that doesn't charge it would be quoting a number nobody
+     has agreed to. See RASD_CTA_ROUTE. */
+  const isRasd = isRasdPlan(plan.code);
 
   return (
     <article
@@ -894,22 +902,36 @@ function PlanCard({
           `${months} ${t('common.months')}`}
       </div>
 
-      <div className="flex items-baseline gap-2 mb-3">
-        <span
-          className="font-display"
+      {isRasd ? (
+        <div
+          className="mb-3"
           style={{
-            fontSize: 26,
+            fontSize: 14,
             fontWeight: 700,
             color: 'var(--text-brand-deep)',
-            lineHeight: 1,
+            lineHeight: 1.4,
           }}
         >
-          {price}
-        </span>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-          {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
-        </span>
-      </div>
+          {t('rasd.plan.priceOnRequest')}
+        </div>
+      ) : (
+        <div className="flex items-baseline gap-2 mb-3">
+          <span
+            className="font-display"
+            style={{
+              fontSize: 26,
+              fontWeight: 700,
+              color: 'var(--text-brand-deep)',
+              lineHeight: 1,
+            }}
+          >
+            {price}
+          </span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+            {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
+          </span>
+        </div>
+      )}
 
       {description && (
         <p
@@ -953,7 +975,25 @@ function PlanCard({
 
       <div className="mt-auto flex flex-col gap-2">
         {error && <InlineError compact message={error} />}
-        {isActive ? (
+        {isRasd && !isActive ? (
+          /* Not a checkout — the رصد section's callback form. */
+          <button
+            type="button"
+            onClick={() => navigate(RASD_CTA_ROUTE)}
+            className="inline-flex items-center justify-center gap-2 rounded-[10px] text-white font-semibold transition-all"
+            style={{
+              padding: '11px 14px',
+              fontSize: 13.5,
+              background: accent,
+              border: `1px solid ${accent}`,
+              cursor: 'pointer',
+              boxShadow: `0 6px 14px ${accent}40`,
+              fontFamily: 'inherit',
+            }}
+          >
+            {t('rasd.plan.cta')}
+          </button>
+        ) : isActive ? (
           <div
             className="inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold"
             style={{
@@ -1148,12 +1188,13 @@ function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
     features: backendFeatures,
   };
 
-  // Arena add-ons — universal, not audience-specific. Each add-on
-  // (isnad / solidarity) has its own copy block keyed by plan.code.
+  // Add-ons are universal, not audience-specific. Each one has its own
+  // copy block, resolved by plan.code through config/addonPlans — an
+  // unknown code returns null and falls back to the plan's own backend
+  // copy rather than borrowing another add-on's (see that file).
   if (isAddon || plan.is_addon) {
-    const addonKey =
-      plan.code === 'solidarity_addon' ? 'solidarityAddon' : 'addon';
-    const addon = dict?.landing?.plans?.[addonKey];
+    const addonKey = addonCopyKey(plan.code);
+    const addon = addonKey ? dict?.landing?.plans?.[addonKey] : null;
     if (!addon) return fallback;
     return {
       name: addon.title || fallback.name,

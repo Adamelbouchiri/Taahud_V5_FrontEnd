@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Handshake, ChevronLeft } from 'lucide-react';
 import { brokers } from '../../services';
+import RasdPromo from '../../components/dashboard/RasdPromo';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { formatDate } from '../../utils/date';
 import {
@@ -88,6 +89,13 @@ export default function OpportunitiesPage() {
           </button>
         }
       />
+
+      {/* رصد on the broker workspace. A broker's whole job is knowing
+          which project is coming before anyone else does, so this is
+          the one add-on that belongs on their landing screen.
+          accountType is hardcoded: RequireBroker gates this route, so
+          everyone who reaches it is a broker. */}
+      <RasdPromo accountType="broker" spaced={false} />
 
       <FilterBar>
         <FilterSelect

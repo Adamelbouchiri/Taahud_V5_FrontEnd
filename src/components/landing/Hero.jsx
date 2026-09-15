@@ -107,9 +107,12 @@ export default function Hero() {
             <span style={{ color: '#c9a35a' }}>{t('landing.hero.titleLine2')}</span>
           </h1>
 
-          {/* Subtitle */}
+          {/* Subtitle — the platform's formal definition. Wider than a
+              tagline would need (720 vs the old 640) because it now
+              names all three pillars: project assignment/management,
+              brokerage, and market data. */}
           <p
-            className="m-0 mb-9 animate-fade-up max-w-[640px] mx-auto"
+            className="m-0 mb-9 animate-fade-up max-w-[720px] mx-auto"
             style={{
               fontSize: 'clamp(15px, 1.4vw, 17.5px)',
               lineHeight: 1.75,

@@ -64,6 +64,19 @@ import PendingDraftsPage from './pages/dashboard/PendingDraftsPage';
 import OwnerDraftEditPage from './pages/dashboard/OwnerDraftEditPage';
 import FeeDecisionsPage from './pages/dashboard/FeeDecisionsPage';
 
+/* RASD (رصد) — the market-intelligence add-on. Read-only in Sprint 1.
+   No route guard of its own: entitlement is resolved backend-side on
+   the ACCOUNT OWNER's subscription (not the caller's), so the pages
+   ask and render the middleware's own Arabic refusal verbatim when
+   it says no. A FE guard here could only guess, and would guess
+   wrong for a seat on someone else's account. */
+import RequireRasdAccount from './components/rasd/RequireRasdAccount';
+import RasdOverviewPage from './pages/rasd/RasdOverviewPage';
+import RasdProjectsPage from './pages/rasd/RasdProjectsPage';
+import RasdProjectDetailPage from './pages/rasd/RasdProjectDetailPage';
+import RasdCompaniesPage from './pages/rasd/RasdCompaniesPage';
+import RasdCompanyDetailPage from './pages/rasd/RasdCompanyDetailPage';
+
 /* Broker workspace */
 import BrokerStatusPage from './pages/broker/BrokerStatusPage';
 import OpportunitiesPage from './pages/broker/OpportunitiesPage';
@@ -428,6 +441,35 @@ function AppShell() {
           <Route path="reports" element={<Navigate to="/dashboard/analytics" replace />} />
           <Route path="messages" element={<ComingSoonPage variant="messages" />} />
           <Route path="notifications" element={<ComingSoonPage variant="notifications" />} />
+        </Route>
+
+        {/* ===== RASD (رصد) =====
+            Market data — projects, the companies on them, and the
+            roles nobody holds yet. Runs inside DashboardLayout so it
+            keeps the sidebar; RequireVerified matches the BE's own
+            phone.verified middleware, which sits in front of every
+            RASD route. The rasd.access gate is enforced backend-side
+            and surfaces as a 403 the pages render verbatim. */}
+        <Route
+          path="/rasd"
+          element={
+            <RequireAuth>
+              <RequireVerified>
+                <DashboardLayout />
+              </RequireVerified>
+            </RequireAuth>
+          }
+        >
+          {/* Individuals never see the module — the pathless guard
+              sits inside the layout so it can read the user from
+              UserProvider instead of fetching /auth/me again. */}
+          <Route element={<RequireRasdAccount />}>
+            <Route index element={<RasdOverviewPage />} />
+            <Route path="projects" element={<RasdProjectsPage />} />
+            <Route path="projects/:id" element={<RasdProjectDetailPage />} />
+            <Route path="companies" element={<RasdCompaniesPage />} />
+            <Route path="companies/:id" element={<RasdCompanyDetailPage />} />
+          </Route>
         </Route>
 
         {/* ===== Broker workspace =====

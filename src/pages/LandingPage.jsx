@@ -9,6 +9,7 @@ import Arenas from '../components/landing/Arenas';
 import Testimonials from '../components/landing/Testimonials';
 import PlatformFeatures from '../components/landing/PlatformFeatures';
 import Plans from '../components/landing/Plans';
+import RasdSection from '../components/landing/RasdSection';
 import SolidarityAddon from '../components/landing/SolidarityAddon';
 import GuaranteeStrip from '../components/landing/GuaranteeStrip';
 import CtaBanner from '../components/landing/CtaBanner';
@@ -21,7 +22,8 @@ import Footer from '../components/landing/Footer';
  *  Order:
  *    Hero → Partners → IntegratedPlatform → FeaturedProjects
  *      → Arenas → Testimonials → PlatformFeatures → Plans
- *      → GuaranteeStrip → CtaBanner → GetStarted → Footer
+ *      → RasdSection → SolidarityAddon → GuaranteeStrip
+ *      → CtaBanner → GetStarted → Footer
  *
  *  Services and Contact were extracted out to dedicated routes
  *  (/services and /contact) — reached via the navbar mega menu
@@ -55,6 +57,11 @@ export default function LandingPage() {
         <Testimonials />
         <PlatformFeatures />
         <Plans />
+        {/* The two add-ons sit together after the plans grid: someone
+            who has just read the pricing is the right audience for
+            "and here's what else you can bolt on". رصد leads because
+            it asks for a callback rather than a purchase. */}
+        <RasdSection />
         <SolidarityAddon />
         <GuaranteeStrip />
         <CtaBanner />

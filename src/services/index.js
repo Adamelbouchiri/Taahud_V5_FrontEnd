@@ -17,6 +17,7 @@
  *    - contact.js       landing-page contact form
  *    - features.js      plan feature gating (quotas + access flags)
  *    - brokers.js       broker referral lookup + opportunities
+ *    - rasd.js          رصد market data — projects, companies, summary
  * ============================================================ */
 
 export { auth } from './auth';
@@ -31,4 +32,5 @@ export { contact } from './contact';
 export { admin } from './admin';
 export { subscriptions } from './subscriptions';
 export { features } from './features';
+export { rasd } from './rasd';
 export { default as http } from './http';

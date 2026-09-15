@@ -21,10 +21,13 @@ import {
   Wallet,
   FileEdit,
   Percent,
+  Radar,
+  Layers,
 } from 'lucide-react';
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
 import { ARENAS, canViewArena, canPostAnyArena } from '../../config/projectConstants';
+import { canUseRasd } from '../../config/rasdConstants';
 import useArenaAddons from '../../hooks/useArenaAddons';
 import useBrokerInbox from '../../hooks/useBrokerInbox';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -117,6 +120,23 @@ const NAV_ITEMS = [
     icon: CreditCard,
     accountTypes: ['entrepreneur', 'engineering', 'supplier', 'developer'],
   },
+];
+
+/* رصد — the market-intelligence add-on. Its own group rather than
+   three more entries in the main nav: it's a separate product with a
+   separate subscription, and grouping it says so.
+
+   Visible to every account type the module is SOLD to (canUseRasd —
+   individuals are excluded and the /rasd routes bounce them too),
+   including those who haven't bought it yet: entitlement is resolved
+   backend-side against the ACCOUNT OWNER's subscription, so no check
+   here would be right for a seat on someone else's account, and
+   hiding the link until purchase hides the add-on from the people
+   it's for. The pages render the gate's own message. */
+const RASD_ITEMS = [
+  { to: '/rasd', labelKey: 'rasd.nav.overview', icon: Radar, end: true },
+  { to: '/rasd/projects', labelKey: 'rasd.nav.projects', icon: Layers },
+  { to: '/rasd/companies', labelKey: 'rasd.nav.companies', icon: Building2 },
 ];
 
 const SOON_ITEMS = [
@@ -249,6 +269,13 @@ export default function Sidebar({ open, onClose }) {
   const soonItems = navReady
     ? SOON_ITEMS.filter((it) => it.accountTypes.includes(accountType))
     : [];
+
+  /* رصد is for businesses looking for work. Individuals post a
+     project and leave — they're on the free tier and can't subscribe
+     to the add-on, so the whole group is hidden from them rather
+     than shown as an upsell they can't act on. canUseRasd is the
+     same check RequireRasdAccount runs on the routes. */
+  const showRasd = navReady && canUseRasd(accountType);
 
   // "+ مشروع جديد" CTA — hidden when the account type isn't allowed
   // to post in any arena (engineering offices, suppliers, financiers).
@@ -531,6 +558,40 @@ export default function Sidebar({ open, onClose }) {
                       </li>
                     );
                   })}
+                </ul>
+              </>
+            )}
+
+            {/* رصد — market data. Same navReady gate as everything
+                else so no link is drawn before the account resolves. */}
+            {showRasd && (
+              <>
+                <div
+                  className="px-3 mt-6 mb-2 font-semibold uppercase"
+                  style={{
+                    fontSize: 10.5,
+                    letterSpacing: '0.12em',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  {t('rasd.brand')}
+                </div>
+                <ul className="m-0 p-0 flex flex-col gap-0.5">
+                  {RASD_ITEMS.map((item) => (
+                    <li key={item.to} className="list-none">
+                      <NavLink
+                        to={item.to}
+                        end={item.end}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `nav-link${isActive ? ' nav-link-active' : ''}`
+                        }
+                      >
+                        <item.icon size={17} strokeWidth={1.75} />
+                        <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                      </NavLink>
+                    </li>
+                  ))}
                 </ul>
               </>
             )}

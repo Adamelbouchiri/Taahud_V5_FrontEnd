@@ -25,6 +25,14 @@ export const LEADS_SHEET_URLS = {
   // متجر تعهد — قريباً (waitlist on the /store coming-soon page)
   store:
     'https://script.google.com/macros/s/AKfycbyr97WV4zPfoD8FzTBVMoX1-iWeUZaDCVpikVLKM8ICVqlLyBFDG9Qvhwc9zpW-0Vrv/exec',
+  /* رصد — the callback-request form in the landing section. Unlike the
+     three above this script is NOT email-only: it takes the whole lead
+     (name, phone, email, sector, company) and answers with real JSON —
+     { ok, duplicate } — over `Access-Control-Allow-Origin: *`. That's
+     why submitRasdLead() reads the response instead of firing blind
+     like submitLead(); see utils/leads.js. */
+  rasd:
+    'https://script.google.com/macros/s/AKfycbyIzsP2rwQNCK02lNUdF3ohQdrrlQXUjD58ZqlcHlAA70EVb4nSICkIbVbFXkuQieXBoA/exec',
 };
 
 /* Customer-facing contact channels. Imported by ContactUs, Footer,

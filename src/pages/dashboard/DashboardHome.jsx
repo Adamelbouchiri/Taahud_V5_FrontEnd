@@ -33,6 +33,7 @@ import {
 } from '../../config/projectConstants';
 import SupplierComingSoon from '../../components/SupplierComingSoon';
 import PlanUsage from '../../components/dashboard/PlanUsage';
+import RasdPromo from '../../components/dashboard/RasdPromo';
 import { useTranslation } from '../../i18n/LanguageContext';
 
 /* ============================================================
@@ -75,6 +76,10 @@ export default function DashboardHome() {
         canPostProject={canPostProject}
         canBrowseProjects={canBrowseProjects}
       />
+      {/* رصد — sits below the quick actions because it's an offer,
+          not a task. Hides itself for individuals and swaps its CTA
+          for an entrance once the account is enrolled. */}
+      <RasdPromo accountType={accountType} />
       {showPlanUsage && <PlanUsage />}
       {isOwner && <RecentProjects canBrowseProjects={canBrowseProjects} />}
       {isProvider && (
