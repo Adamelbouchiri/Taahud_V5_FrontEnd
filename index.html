@@ -13,6 +13,19 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-KZRDJR8R');</script>
     <!-- End Google Tag Manager -->
+    <!-- Apollo website tracker -->
+    <script>(function(){
+    // Apollo receives the full URL of every page it fires on. Skip the routes
+    // whose path carries a live credential (invitation token, checkout session)
+    // or a signed-in user's private area — nothing there is a sales lead.
+    if(/^\/(invitations|pay|dashboard)(\/|$)/.test(location.pathname))return;
+    var n=Math.random().toString(36).substring(7),o=document.createElement('script');
+    o.src='https://assets.apollo.io/micro/website-tracker/tracker.iife.js?nocache='+n;
+    o.async=!0;o.defer=!0;
+    o.onload=function(){window.trackingFunctions.onLoad({appId:'6aa694678a10a000101f0619'})};
+    document.head.appendChild(o);
+    })();</script>
+    <!-- End Apollo website tracker -->
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
