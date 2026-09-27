@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, MapPin, Phone, Layers, ChevronLeft } from 'lucide-react';
+import {
+  ArrowRight,
+  MapPin,
+  Map as MapIcon,
+  Phone,
+  Layers,
+  ChevronLeft,
+} from 'lucide-react';
 import Ltr from '../../components/Ltr';
 import { Card, PageHeader, Badge, EmptyState } from '../../components/admin/AdminUI';
 import RasdAccessNotice from '../../components/rasd/RasdAccessNotice';
@@ -8,7 +15,7 @@ import ContactsSection from '../../components/rasd/ContactsSection';
 import { rasd, readAccessDenial } from '../../services/rasd';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { rasdLabels } from '../../i18n/rasdLabel';
-import { cityLabel } from '../../config/cityTranslations';
+import { cityLabel, regionLabel } from '../../config/cityTranslations';
 import {
   RASD_STAGE_TONE,
   RASD_CONFIDENCE_TONE,
@@ -25,9 +32,9 @@ import {
  *  That is valid data, not a duplicate: the list is keyed on the
  *  (project, role) pair and nothing de-duplicates it.
  *
- *  The contact section renders here too, in the same locked Sprint 1
- *  state as on a project. Companies have no `is_internal` flag —
- *  every row in this directory was collected from the market.
+ *  This is where contacts live (v1.2) — a project's `contacts` is
+ *  always empty and points here. Companies have no `is_internal`
+ *  flag — every row in this directory was collected from the market.
  * ============================================================ */
 export default function RasdCompanyDetailPage() {
   const { id } = useParams();
@@ -139,6 +146,11 @@ export default function RasdCompanyDetailPage() {
 
           <Card>
             <div className="flex items-center gap-2 flex-wrap mb-4">
+              {company.category && (
+                <Badge tone={company.category === 'unclassified' ? 'muted' : 'primary'}>
+                  {labels.category(company.category, company.category_label)}
+                </Badge>
+              )}
               {company.confidence && (
                 <Badge tone={RASD_CONFIDENCE_TONE[company.confidence] || 'default'}>
                   {labels.confidence(company.confidence, company.confidence_label)}
@@ -153,6 +165,13 @@ export default function RasdCompanyDetailPage() {
                   company.city ? cityLabel(company.city, lang) : t('rasd.companies.noCity')
                 }
               />
+              {company.region && (
+                <Fact
+                  icon={MapIcon}
+                  label={t('rasd.project.facts.region')}
+                  value={regionLabel(company.region, lang)}
+                />
+              )}
               <Fact
                 icon={Phone}
                 label={t('rasd.company.facts.phone')}
@@ -254,9 +273,10 @@ export default function RasdCompanyDetailPage() {
           <Card>
             <ContactsSection
               contacts={company.contacts}
-              locked={company.contacts_locked !== false}
+              subtitle={t('rasd.company.contacts.subtitle')}
+              emptyBody={t('rasd.company.contacts.empty')}
               t={t}
-              contactRoleLabel={labels.contactRole}
+              labels={labels}
             />
           </Card>
         </>

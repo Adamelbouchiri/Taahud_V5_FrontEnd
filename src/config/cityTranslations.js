@@ -178,6 +178,32 @@ export function cityLabel(city, lang) {
   return CITY_EN[city] ?? city;
 }
 
+/* Administrative regions as RASD sends them (`region`, v1.2). Free
+   text on the backend, not an enum — so this only covers the display,
+   and an unknown region falls through to the city map, then to the
+   Arabic as sent. */
+const REGION_EN = {
+  'الرياض': 'Riyadh Region',
+  'مكة المكرمة': 'Makkah Region',
+  'الشرقية': 'Eastern Province',
+  'المدينة المنورة': 'Madinah Region',
+  'جيزان': 'Jazan Region',
+  'جازان': 'Jazan Region',
+  'تبوك': 'Tabuk Region',
+  'القصيم': 'Al-Qassim Region',
+  'عسير': 'Asir Region',
+  'الباحة': 'Al-Bahah Region',
+  'الجوف': 'Al-Jouf Region',
+  'حائل': "Ha'il Region",
+  'نجران': 'Najran Region',
+  'الحدود الشمالية': 'Northern Borders Region',
+};
+
+export function regionLabel(region, lang) {
+  if (lang === 'ar') return region;
+  return REGION_EN[region] ?? CITY_EN[region] ?? region;
+}
+
 /**
  * City options for <SelectField>. `value` stays Arabic (backend
  * contract); `label` is Arabic for `ar`, English otherwise.

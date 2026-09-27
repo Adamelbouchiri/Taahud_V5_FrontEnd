@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, DoorOpen, Info } from 'lucide-react';
 import { Badge, EmptyState } from '../admin/AdminUI';
 import { cityLabel } from '../../config/cityTranslations';
-import { RASD_CONFIDENCE_TONE, showRoleNote } from '../../config/rasdConstants';
+import {
+  RASD_CONFIDENCE_TONE,
+  RASD_COLLAPSED_ROLES,
+  showRoleNote,
+} from '../../config/rasdConstants';
 
 /* ============================================================
  *  RoleSections — the two halves of a RASD project profile.
@@ -20,9 +24,16 @@ import { RASD_CONFIDENCE_TONE, showRoleNote } from '../../config/rasdConstants';
  *  two live in one file so that contrast stays one edit, not two.
  * ============================================================ */
 
-/* ---------- Who is already on the project ---------- */
+/* ---------- Who is already on the project ----------
+ *
+ *  Auditors (v1.2) sit on 680 of 857 projects and are never anyone's
+ *  customer, so they're folded away by default — counted on the
+ *  toggle so nobody thinks the roster is incomplete. */
 export function PartiesSection({ parties, t, lang, roleLabel }) {
-  const list = Array.isArray(parties) ? parties : [];
+  const all = Array.isArray(parties) ? parties : [];
+  const [showAll, setShowAll] = useState(false);
+  const collapsed = all.filter((p) => RASD_COLLAPSED_ROLES.includes(p.role));
+  const list = showAll ? all : all.filter((p) => !RASD_COLLAPSED_ROLES.includes(p.role));
 
   return (
     <div className="flex flex-col gap-3">
@@ -32,9 +43,9 @@ export function PartiesSection({ parties, t, lang, roleLabel }) {
         subtitle={t('rasd.project.parties.subtitle')}
       />
 
-      {list.length === 0 ? (
+      {all.length === 0 ? (
         <EmptyState title={t('rasd.project.parties.empty')} />
-      ) : (
+      ) : list.length === 0 ? null : (
         <ul className="m-0 p-0 flex flex-col gap-2">
           {list.map((party, i) => (
             <li
@@ -98,6 +109,28 @@ export function PartiesSection({ parties, t, lang, roleLabel }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {collapsed.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="self-start"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            fontSize: 12.5,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            color: 'var(--accent-primary)',
+            cursor: 'pointer',
+          }}
+        >
+          {showAll
+            ? t('rasd.project.parties.hideCollapsed')
+            : t('rasd.project.parties.showAll', { count: collapsed.length })}
+        </button>
       )}
     </div>
   );

@@ -4349,6 +4349,14 @@ export default {
         value: 'تخمینی مالیت',
         announcedAt: 'اعلان کی تاریخ',
         collectedAt: 'ریکارڈ کی تاریخ',
+        region: 'علاقہ',
+      },
+      timing: {
+        endAt: 'متوقع تکمیل',
+        startAt: 'متوقع آغاز',
+        monthsLeft: '{months} ماہ باقی',
+        underMonth: 'ایک ماہ کے اندر ختم',
+        passed: 'متوقع تکمیل کی تاریخ گزر چکی',
       },
       notFound: {
         title: 'منصوبہ نہیں ملا',
@@ -4359,6 +4367,8 @@ export default {
         title: 'منصوبے کے فریق',
         subtitle: 'وہ کمپنیاں جو پہلے سے شامل ہیں۔',
         empty: 'اس منصوبے پر ابھی کوئی فریق ریکارڈ نہیں ہوا۔',
+        showAll: 'تمام فریق دکھائیں (+{count} آڈیٹر)',
+        hideCollapsed: 'آڈیٹر چھپائیں',
       },
       openRoles: {
         title: 'خالی کردار',
@@ -4370,11 +4380,9 @@ export default {
         },
       },
       contacts: {
-        title: 'رابطے',
         subtitle: 'منصوبے سے منسلک اداروں کے فیصلہ ساز۔',
-        soon: 'جلد',
-        lockedBody:
-          'رابطے جمع کیے جا رہے ہیں اور ابھی دستیاب نہیں۔ ذاتی ڈیٹا کے تحفظ کے تقاضے مکمل ہونے پر کھولے جائیں گے۔',
+        onCompanies:
+          'رابطے کمپنیوں سے منسلک ہیں، منصوبوں سے نہیں۔ فیصلہ سازوں کو دیکھنے کے لیے اوپر کسی بھی فریق کی کمپنی کا پروفائل کھولیں۔',
       },
     },
     companies: {
@@ -4387,8 +4395,10 @@ export default {
         searchPlaceholder: 'کمپنی کے نام سے تلاش کریں…',
         role: 'کردار',
         city: 'شہر',
+        category: 'زمرہ',
         allRoles: 'تمام کردار',
         allCities: 'تمام شہر',
+        allCategories: 'تمام زمرے',
       },
       empty: {
         title: 'کوئی مماثل کمپنی نہیں',
@@ -4408,6 +4418,29 @@ export default {
         subtitle: 'ایک کمپنی ایک ہی منصوبے پر مختلف کرداروں میں دو بار آ سکتی ہے۔',
         empty: 'اس کمپنی کے لیے ابھی کوئی منصوبہ ریکارڈ نہیں ہوا۔',
       },
+      contacts: {
+        subtitle: 'اس کمپنی کے ریکارڈ شدہ فیصلہ ساز اور عملہ۔',
+        empty: 'اس کمپنی کے لیے ابھی کوئی رابطہ ریکارڈ نہیں ہوا۔',
+      },
+    },
+    contacts: {
+      title: 'رابطے',
+      count: '{count} رابطے',
+      noPhone: 'کوئی براہِ راست نمبر نہیں',
+      noEmail: 'کوئی براہِ راست ای میل نہیں',
+      reveal: 'ظاہر کریں',
+      revealSoon: 'کریڈٹ سے ظاہر کرنا — جلد',
+      unclassified: 'غیر درجہ بند',
+      linkedin: 'لنکڈ اِن پروفائل',
+    },
+    category: {
+      owner_client: 'مالک / کلائنٹ',
+      developer: 'رئیل اسٹیٹ ڈویلپر',
+      general_contractor: 'جنرل ٹھیکیدار',
+      specialist_contractor: 'خصوصی / بنیادی ڈھانچے کا ٹھیکیدار',
+      consultant: 'انجینئرنگ و ڈیزائن مشیر',
+      materials_supplier: 'تعمیراتی مواد و فیکٹریاں',
+      unclassified: 'غیر درجہ بند',
     },
     stage: {
       detected: 'دریافت شدہ',
@@ -4440,6 +4473,7 @@ export default {
       consultant: 'مشیر',
       engineering_office: 'انجینئرنگ آفس',
       supplier: 'سپلائر',
+      auditor: 'آڈیٹر',
       other: 'دیگر',
     },
     confidence: {

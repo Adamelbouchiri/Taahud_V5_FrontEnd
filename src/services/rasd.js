@@ -119,8 +119,8 @@ export const rasd = {
     /**
      * GET /api/rasd/projects/:id
      *
-     * Adds description / notes / collected_at plus the two role
-     * arrays to the list row. `parties` and `open_roles` are separate
+     * Adds description / notes / collected_at / expected_start_at /
+     * expected_end_at plus the two role arrays to the list row. `parties` and `open_roles` are separate
      * on purpose — who is already in vs. where you can get in.
      *
      * A 404 carries Laravel's default English message; the caller
@@ -136,15 +136,17 @@ export const rasd = {
      * GET /api/rasd/companies — sorted by name ascending.
      *
      * `role` returns companies holding that party role on at least
-     * one project.
+     * one project (accepts `auditor` since v1.2). `category` is one
+     * of RASD_COMPANY_CATEGORIES — all seven are populated since v1.2.
      *
-     * @param {{ q?, city?, role?, page?, per_page? }} filters
+     * @param {{ q?, city?, role?, category?, page?, per_page? }} filters
      */
     async list(filters = {}) {
       const params = strip({
         q: filters.q,
         city: filters.city,
         role: filters.role,
+        category: filters.category,
         page: filters.page,
         per_page: filters.per_page,
       });
@@ -156,6 +158,10 @@ export const rasd = {
      *
      * `projects` may list the same project twice under different
      * roles — that's valid data, not a duplicate row.
+     *
+     * `contacts` carries people since v1.2 (RasdContactResource). Draw
+     * phone/email from `has_phone` / `has_email`, never from whether
+     * `phone` is set — see contactChannel() in config/rasdConstants.
      */
     async get(id) {
       return unwrap(await http.get(`/rasd/companies/${id}`));

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, CalendarDays, DoorOpen, ChevronLeft, Layers } from 'lucide-react';
 import Ltr from '../Ltr';
 import { Card, Badge } from '../admin/AdminUI';
-import { cityLabel } from '../../config/cityTranslations';
+import { cityLabel, regionLabel } from '../../config/cityTranslations';
 import { formatDate } from '../../utils/date';
 import { formatNumber } from '../../utils/money';
 import {
@@ -90,10 +90,17 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
             className="flex items-center gap-x-4 gap-y-1 flex-wrap"
             style={{ fontSize: 12.5, color: 'var(--text-muted)' }}
           >
-            {project.city && (
+            {/* `region` (v1.2) is free text, shown only — never a
+                filter. Skipped when it just repeats the city name
+                (المدينة المنورة in المدينة المنورة). */}
+            {(project.city || project.region) && (
               <span className="inline-flex items-center gap-1.5">
                 <MapPin size={13} strokeWidth={1.8} />
-                {cityLabel(project.city, lang)}
+                {project.city && cityLabel(project.city, lang)}
+                {project.city && project.region && project.region !== project.city && ' · '}
+                {project.region &&
+                  project.region !== project.city &&
+                  regionLabel(project.region, lang)}
               </span>
             )}
             <span>{labels.sector(project.sector, project.sector_label)}</span>

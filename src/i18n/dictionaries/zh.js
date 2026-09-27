@@ -4270,6 +4270,14 @@ export default {
         value: '预估价值',
         announcedAt: '公布日期',
         collectedAt: '采集日期',
+        region: '地区',
+      },
+      timing: {
+        endAt: '预计竣工',
+        startAt: '预计开工',
+        monthsLeft: '剩余 {months} 个月',
+        underMonth: '一个月内结束',
+        passed: '已过预计竣工日期',
       },
       notFound: {
         title: '未找到该项目',
@@ -4280,6 +4288,8 @@ export default {
         title: '项目参与方',
         subtitle: '已经参与该项目的企业。',
         empty: '该项目暂未记录任何参与方。',
+        showAll: '显示全部参与方（另有 {count} 家审计机构）',
+        hideCollapsed: '隐藏审计机构',
       },
       openRoles: {
         title: '空缺角色',
@@ -4290,11 +4300,8 @@ export default {
         },
       },
       contacts: {
-        title: '联系人',
         subtitle: '相关单位的决策者。',
-        soon: '即将推出',
-        lockedBody:
-          '联系人信息正在采集中，尚未开放。待个人数据保护要求完成后开放。',
+        onCompanies: '联系人归属于企业而非项目。打开上方任一参与方的企业档案即可查看其决策者。',
       },
     },
     companies: {
@@ -4307,8 +4314,10 @@ export default {
         searchPlaceholder: '按企业名称搜索…',
         role: '角色',
         city: '城市',
+        category: '类别',
         allRoles: '全部角色',
         allCities: '全部城市',
+        allCategories: '全部类别',
       },
       empty: {
         title: '没有匹配的企业',
@@ -4328,6 +4337,29 @@ export default {
         subtitle: '同一企业可能以不同角色在同一项目中出现两次。',
         empty: '该企业暂无已记录的项目。',
       },
+      contacts: {
+        subtitle: '该企业已记录的决策者及相关人员。',
+        empty: '该企业暂无已记录的联系人。',
+      },
+    },
+    contacts: {
+      title: '联系人',
+      count: '{count} 位联系人',
+      noPhone: '无直拨号码',
+      noEmail: '无直接邮箱',
+      reveal: '查看',
+      revealSoon: '使用点数查看——即将推出',
+      unclassified: '未分类',
+      linkedin: '领英主页',
+    },
+    category: {
+      owner_client: '业主 / 委托方',
+      developer: '房地产开发商',
+      general_contractor: '总承包商',
+      specialist_contractor: '专业 / 基础设施承包商',
+      consultant: '工程与设计咨询',
+      materials_supplier: '建材与工厂',
+      unclassified: '未分类',
     },
     stage: {
       detected: '已发现',
@@ -4360,6 +4392,7 @@ export default {
       consultant: '顾问',
       engineering_office: '工程事务所',
       supplier: '供应商',
+      auditor: '审计机构',
       other: '其他',
     },
     confidence: {

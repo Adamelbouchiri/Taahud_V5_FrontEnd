@@ -62,7 +62,13 @@ export const RASD_SECTORS = [
 /* ---------- Party role ----------
    Used three ways: the `parties` on a project (who is already in),
    its `open_roles` (where you can get in), and the `role` filter on
-   the company directory. */
+   the company directory.
+
+   `auditor` (v1.2) is the statutory auditor — 680 party rows, second
+   only to owner and consultant, and never a buyer for a contractor or
+   a supplier. It stays in the directory filter for whoever looks for
+   one specifically, but a project's roster folds it away behind
+   «show all parties» (RASD_COLLAPSED_ROLES). */
 export const RASD_PARTY_ROLES = [
   'owner',
   'developer',
@@ -71,7 +77,24 @@ export const RASD_PARTY_ROLES = [
   'consultant',
   'engineering_office',
   'supplier',
+  'auditor',
   'other',
+];
+
+export const RASD_COLLAPSED_ROLES = ['auditor'];
+
+/* ---------- Company category ----------
+   Only three of these were populated before v1.2; all seven are now.
+   `unclassified` is mostly audit firms awaiting a later pass — it's
+   rendered as «unclassified», never hidden. */
+export const RASD_COMPANY_CATEGORIES = [
+  'owner_client',
+  'developer',
+  'general_contractor',
+  'specialist_contractor',
+  'consultant',
+  'materials_supplier',
+  'unclassified',
 ];
 
 /* ---------- Confidence ----------
@@ -90,10 +113,10 @@ export const RASD_CONFIDENCE_TONE = {
   needs_verification: 'default',
 };
 
-/* ---------- Contact role ----------
-   Not returned by any Sprint 1 endpoint — contacts are always `[]`.
-   Listed so the contact UI is built against the final shape and
-   Sprint 2 changes values, never markup. */
+/* ---------- Contact role category ----------
+   `role_category` on a company's contacts (v1.2). May be null — the
+   source doesn't classify everyone — and a null row is shown as
+   «unclassified», never dropped. */
 export const RASD_CONTACT_ROLES = [
   'decision_maker',
   'procurement',
@@ -190,14 +213,55 @@ export function isInternalProject(project) {
 }
 
 /**
- * The contact block renders for collected projects only, and only in
- * its locked state during Sprint 1 (`contacts: []`,
- * `contacts_locked: true`). The section exists now on purpose: the
- * contract is frozen, so Sprint 2 fills in values without a rebuild.
+ * The contact block renders for collected projects only. On a project
+ * it is always empty (`contacts: []`, `contacts_locked: true`) — the
+ * people belong to companies, and the section points there.
  */
 export function showContactSection(record) {
   return !isInternalProject(record);
 }
+
+/**
+ * Which of three states one contact channel is in — RASD v1.2 §3–5.
+ *
+ *   'none'      no number / address exists  → «no direct number», no reveal
+ *   'masked'    exists, reveal is locked     → phone_masked + reveal button
+ *   'revealed'  exists, reveal is open       → the full value
+ *
+ * Keyed on `has_phone` / `has_email`, NEVER on whether `phone` is
+ * present. `contacts_locked: false` is a temporary demo mode; when it
+ * closes, `phone` and `email` go back to null on every row and the
+ * reveal-credit flow takes over. Built on `has_*`, that day changes
+ * nothing here.
+ *
+ * @param {object} contact
+ * @param {'phone'|'email'} kind
+ */
+export function contactChannel(contact, kind) {
+  if (!contact?.[`has_${kind}`]) return 'none';
+  return contact[kind] ? 'revealed' : 'masked';
+}
+
+/**
+ * Whole months from today until a `YYYY-MM-DD` date — negative once
+ * it has passed, null when there's no date. `expected_end_at` is the
+ * strongest timing signal in the data: eighteen months out a project
+ * is still buying, two months out it isn't.
+ */
+export function monthsUntil(date) {
+  if (!date) return null;
+  const end = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(end.getTime())) return null;
+  const now = new Date();
+  let months = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
+  if (end.getDate() < now.getDate()) months -= 1;
+  return months;
+}
+
+/* A project with fewer months than this left on its schedule is past
+   most of its procurement — the badge drops from «still buying» green
+   to a caution tone. */
+export const RASD_LATE_STAGE_MONTHS = 6;
 
 /**
  * Open roles are the reason someone pays for RASD. Everything that

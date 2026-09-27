@@ -41,5 +41,6 @@ export function rasdLabels(t) {
     role: resolver(t, 'role'),
     confidence: resolver(t, 'confidence'),
     contactRole: resolver(t, 'contactRole'),
+    category: resolver(t, 'category'),
   };
 }

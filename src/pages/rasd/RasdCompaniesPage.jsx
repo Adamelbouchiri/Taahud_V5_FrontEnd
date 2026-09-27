@@ -19,6 +19,7 @@ import {
 } from '../../components/admin/AdminUI';
 import {
   RASD_PARTY_ROLES,
+  RASD_COMPANY_CATEGORIES,
   RASD_CONFIDENCE_TONE,
   RASD_PER_PAGE,
 } from '../../config/rasdConstants';
@@ -60,6 +61,7 @@ export default function RasdCompaniesPage() {
   const q = params.get('q') || '';
   const city = params.get('city') || '';
   const role = params.get('role') || '';
+  const category = params.get('category') || '';
   const page = Number(params.get('page') || 1);
 
   const setFilter = useCallback(
@@ -89,7 +91,7 @@ export default function RasdCompaniesPage() {
     let cancelled = false;
     setLoading(true);
     rasd.companies
-      .list({ q, city, role, page, per_page: RASD_PER_PAGE })
+      .list({ q, city, role, category, page, per_page: RASD_PER_PAGE })
       .then((res) => {
         if (cancelled) return;
         setRows(res.data);
@@ -125,6 +127,10 @@ export default function RasdCompaniesPage() {
     { value: '', label: t('rasd.companies.filters.allRoles') },
     ...RASD_PARTY_ROLES.map((r) => ({ value: r, label: labels.role(r) })),
   ];
+  const categoryOptions = [
+    { value: '', label: t('rasd.companies.filters.allCategories') },
+    ...RASD_COMPANY_CATEGORIES.map((c) => ({ value: c, label: labels.category(c) })),
+  ];
   const cityOptions = [
     { value: '', label: t('rasd.companies.filters.allCities') },
     ...(summary.by_city || []).map((c) => ({
@@ -133,7 +139,7 @@ export default function RasdCompaniesPage() {
     })),
   ];
 
-  const activeCount = [q, city, role].filter(Boolean).length;
+  const activeCount = [q, city, role, category].filter(Boolean).length;
 
   return (
     <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1100px] flex flex-col gap-5">
@@ -158,6 +164,13 @@ export default function RasdCompaniesPage() {
           onChange={(v) => setFilter('role', v)}
           options={roleOptions}
           minWidth={180}
+        />
+        <FilterSelect
+          label={t('rasd.companies.filters.category')}
+          value={category}
+          onChange={(v) => setFilter('category', v)}
+          options={categoryOptions}
+          minWidth={200}
         />
         <FilterSelect
           label={t('rasd.companies.filters.city')}
@@ -289,6 +302,13 @@ function CompanyRow({ company, t, lang, labels, onOpen }) {
             >
               {company.name}
             </span>
+            {/* `unclassified` is mostly audit firms awaiting a later
+                pass — shown muted, the row stays. */}
+            {company.category && (
+              <Badge tone={company.category === 'unclassified' ? 'muted' : 'primary'}>
+                {labels.category(company.category, company.category_label)}
+              </Badge>
+            )}
             {company.confidence && (
               <Badge tone={RASD_CONFIDENCE_TONE[company.confidence] || 'default'}>
                 {labels.confidence(company.confidence, company.confidence_label)}

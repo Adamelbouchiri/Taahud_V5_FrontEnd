@@ -4361,6 +4361,14 @@ export default {
         value: 'Estimated value',
         announcedAt: 'Announced',
         collectedAt: 'Collected',
+        region: 'Region',
+      },
+      timing: {
+        endAt: 'Expected completion',
+        startAt: 'Expected start',
+        monthsLeft: '{months} months left',
+        underMonth: 'Ends within a month',
+        passed: 'Past expected completion',
       },
       notFound: {
         title: 'Project not found',
@@ -4371,6 +4379,8 @@ export default {
         title: 'Parties on the project',
         subtitle: 'Companies already on it.',
         empty: 'No parties recorded on this project yet.',
+        showAll: 'Show all parties (+{count} auditors)',
+        hideCollapsed: 'Hide auditors',
       },
       openRoles: {
         title: 'Open roles',
@@ -4382,11 +4392,9 @@ export default {
         },
       },
       contacts: {
-        title: 'Contacts',
         subtitle: 'Decision-makers at the parties on this project.',
-        soon: 'Soon',
-        lockedBody:
-          'Contacts are being collected and are not open yet. They will be released once the personal-data protection requirements are complete.',
+        onCompanies:
+          "Contacts belong to companies, not projects. Open any party's company profile above to see its decision-makers.",
       },
     },
     companies: {
@@ -4399,8 +4407,10 @@ export default {
         searchPlaceholder: 'Search by company name…',
         role: 'Role',
         city: 'City',
+        category: 'Category',
         allRoles: 'All roles',
         allCities: 'All cities',
+        allCategories: 'All categories',
       },
       empty: {
         title: 'No matching companies',
@@ -4420,6 +4430,29 @@ export default {
         subtitle: 'A company can appear twice on the same project under different roles.',
         empty: 'No projects recorded for this company yet.',
       },
+      contacts: {
+        subtitle: 'Decision-makers and staff recorded at this company.',
+        empty: 'No contacts recorded for this company yet.',
+      },
+    },
+    contacts: {
+      title: 'Contacts',
+      count: '{count} contacts',
+      noPhone: 'No direct number',
+      noEmail: 'No direct email',
+      reveal: 'Reveal',
+      revealSoon: 'Reveal with credits — coming soon',
+      unclassified: 'Unclassified',
+      linkedin: 'LinkedIn profile',
+    },
+    category: {
+      owner_client: 'Owner / client',
+      developer: 'Real-estate developer',
+      general_contractor: 'General contractor',
+      specialist_contractor: 'Specialist / infrastructure contractor',
+      consultant: 'Engineering & design consultant',
+      materials_supplier: 'Building materials & factories',
+      unclassified: 'Unclassified',
     },
     stage: {
       detected: 'Detected',
@@ -4452,6 +4485,7 @@ export default {
       consultant: 'Consultant',
       engineering_office: 'Engineering office',
       supplier: 'Supplier',
+      auditor: 'Auditor',
       other: 'Other',
     },
     confidence: {

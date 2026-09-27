@@ -4354,6 +4354,14 @@ export default {
         value: 'القيمة التقديرية',
         announcedAt: 'تاريخ الإعلان',
         collectedAt: 'تاريخ الرصد',
+        region: 'المنطقة',
+      },
+      timing: {
+        endAt: 'الانتهاء المتوقع',
+        startAt: 'البداية المتوقعة',
+        monthsLeft: 'متبقٍ {months} شهر',
+        underMonth: 'ينتهي خلال أقل من شهر',
+        passed: 'تجاوز موعد الانتهاء المتوقع',
       },
       notFound: {
         title: 'المشروع غير موجود',
@@ -4364,6 +4372,8 @@ export default {
         title: 'الأطراف على المشروع',
         subtitle: 'الشركات التي دخلت المشروع فعلياً.',
         empty: 'لم تُرصد أي أطراف على هذا المشروع بعد.',
+        showAll: 'عرض كل الأطراف (+{count} محاسب قانوني)',
+        hideCollapsed: 'إخفاء المحاسبين القانونيين',
       },
       openRoles: {
         title: 'الأدوار المتاحة',
@@ -4375,11 +4385,9 @@ export default {
         },
       },
       contacts: {
-        title: 'جهات الاتصال',
         subtitle: 'أصحاب القرار في الجهات المرتبطة بالمشروع.',
-        soon: 'قريباً',
-        lockedBody:
-          'جهات الاتصال قيد التجهيز ولم تُفتح بعد. سيتم إتاحتها بعد اكتمال متطلبات حماية البيانات الشخصية.',
+        onCompanies:
+          'جهات الاتصال مرتبطة بالشركات لا بالمشاريع. افتح ملف أي شركة من الأطراف أعلاه لرؤية أصحاب القرار فيها.',
       },
     },
     companies: {
@@ -4392,8 +4400,10 @@ export default {
         searchPlaceholder: 'ابحث باسم الشركة…',
         role: 'الدور',
         city: 'المدينة',
+        category: 'التصنيف',
         allRoles: 'كل الأدوار',
         allCities: 'كل المدن',
+        allCategories: 'كل التصنيفات',
       },
       empty: {
         title: 'لا توجد شركات مطابقة',
@@ -4413,6 +4423,29 @@ export default {
         subtitle: 'قد تظهر الشركة أكثر من مرة على المشروع نفسه بأدوار مختلفة.',
         empty: 'لم تُرصد مشاريع لهذه الشركة بعد.',
       },
+      contacts: {
+        subtitle: 'أصحاب القرار والمسؤولون المرصودون في هذه الشركة.',
+        empty: 'لم تُرصد جهات اتصال لهذه الشركة بعد.',
+      },
+    },
+    contacts: {
+      title: 'جهات الاتصال',
+      count: '{count} جهة اتصال',
+      noPhone: 'لا يوجد رقم مباشر',
+      noEmail: 'لا يوجد بريد مباشر',
+      reveal: 'كشف',
+      revealSoon: 'الكشف عبر رصيد الكشف — قريباً',
+      unclassified: 'غير مصنّف',
+      linkedin: 'الملف على لينكدإن',
+    },
+    category: {
+      owner_client: 'مالك / جهة طالبة',
+      developer: 'مطور عقاري / جهة تطوير',
+      general_contractor: 'مقاول عام',
+      specialist_contractor: 'مقاول تخصصي / بنية تحتية',
+      consultant: 'استشاري هندسي وتصميم',
+      materials_supplier: 'مواد بناء ومصانع',
+      unclassified: 'غير مصنَّف',
     },
     stage: {
       detected: 'مكتشف',
@@ -4445,6 +4478,7 @@ export default {
       consultant: 'استشاري',
       engineering_office: 'مكتب هندسي',
       supplier: 'مورد',
+      auditor: 'محاسب قانوني',
       other: 'أخرى',
     },
     confidence: {

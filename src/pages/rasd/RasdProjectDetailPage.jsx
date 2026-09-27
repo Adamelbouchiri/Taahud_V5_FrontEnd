@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowRight,
   MapPin,
+  Map as MapIcon,
   CalendarDays,
+  CalendarClock,
   Layers,
   ClipboardList,
 } from 'lucide-react';
@@ -15,12 +17,14 @@ import { PartiesSection, OpenRolesSection } from '../../components/rasd/RoleSect
 import { rasd, readAccessDenial } from '../../services/rasd';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { rasdLabels } from '../../i18n/rasdLabel';
-import { cityLabel } from '../../config/cityTranslations';
+import { cityLabel, regionLabel } from '../../config/cityTranslations';
 import { formatDate } from '../../utils/date';
 import { formatNumber } from '../../utils/money';
 import {
   RASD_STAGE_TONE,
   RASD_CONFIDENCE_TONE,
+  RASD_LATE_STAGE_MONTHS,
+  monthsUntil,
   showContactSection,
 } from '../../config/rasdConstants';
 
@@ -28,7 +32,8 @@ import {
  *  RasdProjectDetailPage — /rasd/projects/:id
  *  ----------------------------------------------------------------
  *  The profile: everything on the list row, plus the description,
- *  the collection date, and the two role arrays.
+ *  the collection date, the expected schedule (v1.2), and the two
+ *  role arrays.
  *
  *  Layout puts OPEN ROLES first and PARTIES second. That's not the
  *  order the payload uses — it's the order the user came for. The
@@ -164,12 +169,26 @@ export default function RasdProjectDetailPage() {
               )}
             </div>
 
+            <TimingStrip
+              startAt={project.expected_start_at}
+              endAt={project.expected_end_at}
+              t={t}
+              lang={lang}
+            />
+
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
               <Fact
                 icon={MapPin}
                 label={t('rasd.project.facts.city')}
                 value={project.city ? cityLabel(project.city, lang) : t('common.notSpecified')}
               />
+              {project.region && (
+                <Fact
+                  icon={MapIcon}
+                  label={t('rasd.project.facts.region')}
+                  value={regionLabel(project.region, lang)}
+                />
+              )}
               <Fact
                 icon={Layers}
                 label={t('rasd.project.facts.value')}
@@ -232,17 +251,18 @@ export default function RasdProjectDetailPage() {
           </Card>
 
           {/* ---------- Contacts ----------
-              Absent entirely for internal projects — a project
-              mirrored in from our own arena has no market contacts to
-              reveal, and showing a locked teaser there would promise
-              something Sprint 2 will never fill in. */}
+              Always empty on a project — people belong to companies,
+              so the empty state sends the user to the parties above.
+              Absent entirely for internal projects: a project
+              mirrored in from our own arena has no market contacts. */}
           {showContactSection(project) && (
             <Card>
               <ContactsSection
                 contacts={project.contacts}
-                locked={project.contacts_locked !== false}
+                subtitle={t('rasd.project.contacts.subtitle')}
+                emptyBody={t('rasd.project.contacts.onCompanies')}
                 t={t}
-                contactRoleLabel={labels.contactRole}
+                labels={labels}
               />
             </Card>
           )}
@@ -256,6 +276,72 @@ export default function RasdProjectDetailPage() {
           )}
         </>
       ) : null}
+    </div>
+  );
+}
+
+/* ---------- Expected schedule ----------
+ *  `expected_end_at` (v1.2) is the strongest timing signal in the
+ *  data — a project eighteen months from done is still buying, one
+ *  two months out isn't — so it gets a strip of its own above the
+ *  facts rather than a cell among them. Present on every project;
+ *  `expected_start_at` is missing on about twenty. */
+function TimingStrip({ startAt, endAt, t, lang }) {
+  if (!endAt && !startAt) return null;
+  const months = monthsUntil(endAt);
+
+  let tone = 'default';
+  let remaining = null;
+  if (months != null) {
+    if (months < 0) {
+      tone = 'muted';
+      remaining = t('rasd.project.timing.passed');
+    } else if (months === 0) {
+      tone = 'warning';
+      remaining = t('rasd.project.timing.underMonth');
+    } else {
+      tone = months >= RASD_LATE_STAGE_MONTHS ? 'success' : 'warning';
+      remaining = t('rasd.project.timing.monthsLeft', {
+        months: formatNumber(months, lang, 0),
+      });
+    }
+  }
+
+  return (
+    <div
+      className="flex items-center gap-3 flex-wrap mb-4"
+      style={{
+        background: 'var(--bg-canvas)',
+        border: '1px solid var(--border-soft)',
+        borderRadius: 12,
+        padding: '12px 14px',
+      }}
+    >
+      <CalendarClock
+        size={18}
+        strokeWidth={1.8}
+        style={{ color: 'var(--accent-primary)', flexShrink: 0 }}
+      />
+      <div className="min-w-0 flex-1">
+        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+          {t('rasd.project.timing.endAt')}
+        </div>
+        <div
+          className="flex items-center gap-2 flex-wrap"
+          style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)', marginTop: 2 }}
+        >
+          {endAt ? formatDate(endAt, lang) : t('common.notSpecified')}
+          {remaining && <Badge tone={tone}>{remaining}</Badge>}
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+          {t('rasd.project.timing.startAt')}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-ink)', marginTop: 2 }}>
+          {startAt ? formatDate(startAt, lang) : t('common.notSpecified')}
+        </div>
+      </div>
     </div>
   );
 }
