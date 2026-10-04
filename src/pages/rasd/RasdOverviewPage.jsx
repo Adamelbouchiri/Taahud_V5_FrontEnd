@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DoorOpen,
@@ -7,24 +7,39 @@ import {
   Target,
   RefreshCw,
   Wallet,
+  List,
+  Map as MapIcon,
 } from 'lucide-react';
 import Ltr from '../../components/Ltr';
 import { Card, PageHeader } from '../../components/admin/AdminUI';
 import RasdAccessNotice from '../../components/rasd/RasdAccessNotice';
 import RasdBreakdown from '../../components/rasd/RasdBreakdown';
+import RasdCityMap from '../../components/rasd/RasdCityMap';
 import useRasdSummary from '../../hooks/useRasdSummary';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { rasdLabels } from '../../i18n/rasdLabel';
 import { cityLabel } from '../../config/cityTranslations';
-import { formatNumber, localeFor } from '../../utils/money';
+import { formatNumber, latinDigits, localeFor } from '../../utils/money';
 import { hasValueData } from '../../config/rasdConstants';
+
+/* The city breakdown's list / map choice is a per-viewer convenience,
+   remembered in localStorage. */
+const CITY_VIEW_KEY = 'rasd.overview.cityView';
+
+function readCityView() {
+  try {
+    return localStorage.getItem(CITY_VIEW_KEY) === 'map' ? 'map' : 'list';
+  } catch {
+    return 'list';
+  }
+}
 
 /* `last_updated_at` is a full ISO timestamp with offset, not a date —
    the time of day is part of the freshness signal, so it's kept. */
 function formatTimestamp(iso, lang) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleString(localeFor(lang), {
+    return new Date(iso).toLocaleString(latinDigits(localeFor(lang)), {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
@@ -58,6 +73,16 @@ export default function RasdOverviewPage() {
   const { t, lang } = useTranslation();
   const { summary, loading, error, denial, refresh } = useRasdSummary();
   const labels = useMemo(() => rasdLabels(t), [t]);
+  const [cityView, setCityView] = useState(readCityView);
+
+  const changeCityView = (v) => {
+    setCityView(v);
+    try {
+      localStorage.setItem(CITY_VIEW_KEY, v);
+    } catch {
+      /* private mode — the choice just won't stick */
+    }
+  };
 
   if (denial) {
     return (
@@ -129,13 +154,13 @@ export default function RasdOverviewPage() {
             <StatTile
               icon={Layers}
               label={t('rasd.overview.totals.projects')}
-              value={formatNumber(totals.projects ?? 0, lang, 0)}
+              value={formatNumber(totals.projects ?? 0, lang, 0, { latin: true })}
               onClick={() => navigate('/rasd/projects')}
             />
             <StatTile
               icon={Building2}
               label={t('rasd.overview.totals.companies')}
-              value={formatNumber(totals.companies ?? 0, lang, 0)}
+              value={formatNumber(totals.companies ?? 0, lang, 0, { latin: true })}
               onClick={() => navigate('/rasd/companies')}
             />
             {/* Only once there is value data to show — see the note
@@ -146,7 +171,7 @@ export default function RasdOverviewPage() {
                 label={t('rasd.overview.totals.value')}
                 value={
                   <>
-                    <Ltr>{formatNumber(totals.estimated_value_total, lang, 0)}</Ltr>{' '}
+                    <Ltr>{formatNumber(totals.estimated_value_total, lang, 0, { latin: true })}</Ltr>{' '}
                     {t('common.currency')}
                   </>
                 }
@@ -187,18 +212,42 @@ export default function RasdOverviewPage() {
             <Card style={{ gridColumn: '1 / -1' }}>
               <BreakdownHeading
                 title={t('rasd.overview.breakdown.city')}
-                hint={t('rasd.overview.breakdown.hint')}
+                hint={
+                  cityView === 'map'
+                    ? t('rasd.overview.breakdown.mapHint')
+                    : t('rasd.overview.breakdown.hint')
+                }
+                actions={
+                  <ViewToggle
+                    value={cityView}
+                    onChange={changeCityView}
+                    options={[
+                      { value: 'list', label: t('rasd.overview.breakdown.viewList'), icon: List },
+                      { value: 'map', label: t('rasd.overview.breakdown.viewMap'), icon: MapIcon },
+                    ]}
+                  />
+                }
               />
-              <RasdBreakdown
-                rows={summary.by_city}
-                // City values ARE Arabic strings — the filter sends the
-                // Arabic name. cityLabel only swaps the DISPLAY to a
-                // transliteration outside Arabic; the value is untouched.
-                labelFor={(value, apiLabel) => cityLabel(value || apiLabel, lang)}
-                lang={lang}
-                onSelect={(v) => goToProjects('city', v)}
-                emptyLabel={t('rasd.overview.breakdown.empty')}
-              />
+              {cityView === 'map' ? (
+                <RasdCityMap
+                  rows={summary.by_city}
+                  lang={lang}
+                  t={t}
+                  onSelect={(v) => goToProjects('city', v)}
+                  emptyLabel={t('rasd.overview.breakdown.empty')}
+                />
+              ) : (
+                <RasdBreakdown
+                  rows={summary.by_city}
+                  // City values ARE Arabic strings — the filter sends the
+                  // Arabic name. cityLabel only swaps the DISPLAY to a
+                  // transliteration outside Arabic; the value is untouched.
+                  labelFor={(value, apiLabel) => cityLabel(value || apiLabel, lang)}
+                  lang={lang}
+                  onSelect={(v) => goToProjects('city', v)}
+                  emptyLabel={t('rasd.overview.breakdown.empty')}
+                />
+              )}
             </Card>
           </div>
 
@@ -270,8 +319,8 @@ function HeroOpportunities({ openRoles, projects, t, lang, onClick }) {
             }}
           >
             {t('rasd.overview.hero', {
-              roles: formatNumber(openRoles, lang, 0),
-              projects: formatNumber(projects, lang, 0),
+              roles: formatNumber(openRoles, lang, 0, { latin: true }),
+              projects: formatNumber(projects, lang, 0, { latin: true }),
             })}
           </div>
           <div
@@ -324,15 +373,62 @@ function StatTile({ icon: Icon, label, value, onClick }) {
   );
 }
 
-function BreakdownHeading({ title, hint }) {
+function BreakdownHeading({ title, hint, actions }) {
   return (
-    <div className="mb-3">
-      <div className="font-semibold" style={{ fontSize: 14, color: 'var(--text-ink)' }}>
-        {title}
+    <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <div className="font-semibold" style={{ fontSize: 14, color: 'var(--text-ink)' }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+          {hint}
+        </div>
       </div>
-      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-        {hint}
-      </div>
+      {actions}
+    </div>
+  );
+}
+
+/* ---------- Segmented list / map switch ---------- */
+function ViewToggle({ value, onChange, options }) {
+  return (
+    <div
+      role="group"
+      className="inline-flex flex-shrink-0"
+      style={{
+        padding: 3,
+        borderRadius: 10,
+        background: 'var(--bg-canvas)',
+        border: '1px solid var(--border-soft)',
+      }}
+    >
+      {options.map(({ value: v, label, icon: Icon }) => {
+        const active = v === value;
+        return (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(v)}
+            className="inline-flex items-center gap-1.5"
+            style={{
+              padding: '5px 10px',
+              borderRadius: 7,
+              border: 'none',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: active ? 'var(--bg-surface)' : 'transparent',
+              color: active ? 'var(--accent-primary)' : 'var(--text-muted)',
+              boxShadow: active ? '0 1px 3px rgba(15,17,41,0.08)' : 'none',
+            }}
+          >
+            <Icon size={13} strokeWidth={2} />
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

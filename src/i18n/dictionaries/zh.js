@@ -4107,6 +4107,7 @@ export default {
 
   rasd: {
     brand: 'RASD',
+    sidebarGroup: 'RASD 项目',
     landing: {
       eyebrow: '市场数据',
       title: 'RASD —— 在项目招标之前就掌握它',
@@ -4221,6 +4222,11 @@ export default {
         city: '按城市',
         hint: '点击任意一行即可按其筛选项目。',
         empty: '暂无数据。',
+        viewList: '列表',
+        viewMap: '地图',
+        mapHint: '点击地图上的任意城市即可按其筛选项目。',
+        mapUnplaced: '未在地图上标注：',
+        mapProjects: '{count} 个项目',
       },
     },
     projects: {
@@ -4229,6 +4235,7 @@ export default {
       internal: '内部项目',
       notAnnounced: '未公布日期',
       valueUndisclosed: '未公布价值',
+      progressDone: '已完成 {percent}',
       openRolesLabel: '空缺角色：',
       inferredCaution: '这些角色为推断出的潜在机会，联系前请先核实。',
       filters: {
@@ -4279,6 +4286,13 @@ export default {
         monthsLeft: '剩余 {months} 个月',
         underMonth: '一个月内结束',
         passed: '已过预计竣工日期',
+        progress: '完成进度',
+        phase: {
+          structure: '结构与混凝土阶段',
+          mep: '机电安装阶段',
+          finishing: '装修与幕墙阶段',
+          closing: '即将竣工',
+        },
       },
       notFound: {
         title: '未找到该项目',

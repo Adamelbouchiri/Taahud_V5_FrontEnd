@@ -33,12 +33,18 @@ export function localeFor(lang) {
   return 'ar-SA';
 }
 
-/** Group-separated number in the active locale. */
-export function formatNumber(n, lang, maximumFractionDigits = 2) {
+/** Pin a locale to Western digits (0-9) — ar-SA defaults to Arabic-Indic. */
+export function latinDigits(locale) {
+  return `${locale}-u-nu-latn`;
+}
+
+/** Group-separated number in the active locale. `latin` forces 0-9 digits. */
+export function formatNumber(n, lang, maximumFractionDigits = 2, { latin = false } = {}) {
   const num = typeof n === 'string' ? Number(n) : n;
   if (num == null || Number.isNaN(num)) return String(n ?? '');
+  const locale = latin ? latinDigits(localeFor(lang)) : localeFor(lang);
   try {
-    return new Intl.NumberFormat(localeFor(lang), { maximumFractionDigits }).format(num);
+    return new Intl.NumberFormat(locale, { maximumFractionDigits }).format(num);
   } catch {
     return String(num);
   }

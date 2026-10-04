@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 // English dictionary — mirrors ar.js key-for-key.
 
 export default {
@@ -4196,6 +4196,7 @@ export default {
      English with an Arabic label; we translate from the value. */
   rasd: {
     brand: 'RASD',
+    sidebarGroup: 'RASD projects',
     landing: {
       eyebrow: 'Market data',
       title: 'RASD — know the project before it goes to tender',
@@ -4312,6 +4313,11 @@ export default {
         city: 'By city',
         hint: 'Click any row to filter the project feed by it.',
         empty: 'No data.',
+        viewList: 'List',
+        viewMap: 'Map',
+        mapHint: 'Click any city on the map to filter the project feed by it.',
+        mapUnplaced: 'Not placed on the map:',
+        mapProjects: '{count} projects',
       },
     },
     projects: {
@@ -4320,6 +4326,7 @@ export default {
       internal: 'Internal project',
       notAnnounced: 'Date not announced',
       valueUndisclosed: 'Value not announced',
+      progressDone: '{percent} complete',
       openRolesLabel: 'Open roles:',
       inferredCaution: 'These roles are inferred opportunities — verify them before making contact.',
       filters: {
@@ -4370,6 +4377,13 @@ export default {
         monthsLeft: '{months} months left',
         underMonth: 'Ends within a month',
         passed: 'Past expected completion',
+        progress: 'Progress',
+        phase: {
+          structure: 'Structure & concrete phase',
+          mep: 'MEP phase',
+          finishing: 'Finishing & facades phase',
+          closing: 'Nearing completion',
+        },
       },
       notFound: {
         title: 'Project not found',

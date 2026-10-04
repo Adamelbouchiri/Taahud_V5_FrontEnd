@@ -4184,6 +4184,7 @@ export default {
 
   rasd: {
     brand: 'رصد',
+    sidebarGroup: 'رصد منصوبے',
     landing: {
       eyebrow: 'مارکیٹ ڈیٹا',
       title: 'رصد — ٹینڈر سے پہلے منصوبہ جانیں',
@@ -4300,6 +4301,11 @@ export default {
         city: 'شہر کے لحاظ سے',
         hint: 'کسی بھی سطر پر کلک کر کے منصوبوں کو اس کے مطابق فلٹر کریں۔',
         empty: 'کوئی ڈیٹا نہیں۔',
+        viewList: 'فہرست',
+        viewMap: 'نقشہ',
+        mapHint: 'نقشے پر کسی بھی شہر پر کلک کر کے منصوبوں کو اس کے مطابق فلٹر کریں۔',
+        mapUnplaced: 'نقشے پر موجود نہیں:',
+        mapProjects: '{count} منصوبے',
       },
     },
     projects: {
@@ -4308,6 +4314,7 @@ export default {
       internal: 'داخلی منصوبہ',
       notAnnounced: 'تاریخ کا اعلان نہیں',
       valueUndisclosed: 'مالیت کا اعلان نہیں',
+      progressDone: '{percent} مکمل',
       openRolesLabel: 'خالی کردار:',
       inferredCaution: 'یہ کردار اندازے پر مبنی مواقع ہیں — رابطے سے پہلے تصدیق ضروری ہے۔',
       filters: {
@@ -4358,6 +4365,13 @@ export default {
         monthsLeft: '{months} ماہ باقی',
         underMonth: 'ایک ماہ کے اندر ختم',
         passed: 'متوقع تکمیل کی تاریخ گزر چکی',
+        progress: 'پیش رفت',
+        phase: {
+          structure: 'ڈھانچہ اور کنکریٹ کا مرحلہ',
+          mep: 'ایم ای پی کا مرحلہ',
+          finishing: 'فنشنگ اور بیرونی حصے کا مرحلہ',
+          closing: 'تکمیل کے قریب',
+        },
       },
       notFound: {
         title: 'منصوبہ نہیں ملا',

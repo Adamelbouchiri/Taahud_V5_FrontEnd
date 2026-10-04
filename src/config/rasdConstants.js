@@ -264,6 +264,39 @@ export function monthsUntil(date) {
 export const RASD_LATE_STAGE_MONTHS = 6;
 
 /**
+ * Whether to draw a progress bar — RASD v1.3. `progress_percent` is an
+ * integer 0–100 or null, but 303 «not started» projects carry one
+ * (mostly 0), and an empty bar beside «لم يبدأ» is noise. So: only
+ * under construction, and only when the number is known. null means
+ * UNKNOWN, never zero — no bar rather than a fake empty one.
+ */
+export function showProgress(project) {
+  return (
+    project?.stage === 'under_construction' &&
+    Number.isFinite(project?.progress_percent)
+  );
+}
+
+/** progress_percent clamped to 0–100 for drawing. */
+export function progressValue(project) {
+  return Math.min(100, Math.max(0, Math.round(project?.progress_percent ?? 0)));
+}
+
+/**
+ * The build phase a percentage roughly corresponds to (RASD v1.3, "why
+ * it deserves a prominent place"): 10–30 structure, 40–60 MEP, 70–90
+ * finishing, 95+ too late for most supply. The doc's bands have gaps,
+ * so each cut sits midway between them. This is what tells a finishing
+ * supplier "call now" from "too early".
+ */
+export function progressPhase(percent) {
+  if (percent >= 95) return 'closing';
+  if (percent >= 65) return 'finishing';
+  if (percent >= 35) return 'mep';
+  return 'structure';
+}
+
+/**
  * Open roles are the reason someone pays for RASD. Everything that
  * treats a project as an "opportunity" keys off this.
  */

@@ -574,7 +574,7 @@ export default function Sidebar({ open, onClose }) {
                     color: 'var(--text-muted)',
                   }}
                 >
-                  {t('rasd.brand')}
+                  {t('rasd.sidebarGroup')}
                 </div>
                 <ul className="m-0 p-0 flex flex-col gap-0.5">
                   {RASD_ITEMS.map((item) => (

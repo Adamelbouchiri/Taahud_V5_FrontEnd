@@ -20,13 +20,15 @@ const LOCALES = {
  *
  * @param {string|null|undefined} iso
  * @param {string} lang  active UI language ('ar' | 'en' | 'zh' | 'ur')
+ * @param {{ latin?: boolean }} [opts]  latin: force 0-9 digits
  */
-export function formatDate(iso, lang) {
+export function formatDate(iso, lang, { latin = false } = {}) {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
+  const locale = LOCALES[lang] || LOCALES.en;
   try {
-    return d.toLocaleDateString(LOCALES[lang] || LOCALES.en, {
+    return d.toLocaleDateString(latin ? `${locale}-u-nu-latn` : locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

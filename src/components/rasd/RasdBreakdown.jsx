@@ -126,7 +126,7 @@ export default function RasdBreakdown({
                 textAlign: 'end',
               }}
             >
-              <Ltr>{formatNumber(row.count || 0, lang, 0)}</Ltr>
+              <Ltr>{formatNumber(row.count || 0, lang, 0, { latin: true })}</Ltr>
             </span>
           </button>
         );

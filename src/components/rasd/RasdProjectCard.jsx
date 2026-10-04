@@ -10,7 +10,10 @@ import {
   RASD_STAGE_TONE,
   RASD_CONFIDENCE_TONE,
   hasOpenRoles,
+  showProgress,
+  progressValue,
 } from '../../config/rasdConstants';
+import RasdProgressBar from './RasdProgressBar';
 
 /* ============================================================
  *  RasdProjectCard — one row of GET /rasd/projects.
@@ -107,7 +110,7 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays size={13} strokeWidth={1.8} />
               {project.announced_at
-                ? formatDate(project.announced_at, lang)
+                ? formatDate(project.announced_at, lang, { latin: true })
                 : t('rasd.projects.notAnnounced')}
             </span>
             <span>
@@ -116,7 +119,7 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
                   {/* One isolate around the WHOLE numeric expression —
                       wrapping the number alone would leave the currency
                       word inside the RTL flow and split the pair. */}
-                  <Ltr>{formatNumber(project.estimated_value, lang, 0)}</Ltr>{' '}
+                  <Ltr>{formatNumber(project.estimated_value, lang, 0, { latin: true })}</Ltr>{' '}
                   {t('common.currency')}
                 </>
               ) : (
@@ -124,6 +127,30 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
               )}
             </span>
           </div>
+
+          {/* v1.3 — where in the build it is, not just that it's being
+              built. Under-construction projects with a known number
+              only; see showProgress. */}
+          {showProgress(project) && (
+            <div className="flex items-center gap-3" style={{ maxWidth: 360 }}>
+              <div className="flex-1">
+                <RasdProgressBar
+                  percent={progressValue(project)}
+                  label={t('rasd.project.timing.progress')}
+                />
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: 'var(--text-ink-soft)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t('rasd.projects.progressDone', { percent: `${progressValue(project)}%` })}
+              </span>
+            </div>
+          )}
 
           {isOpportunity && (
             <div className="flex flex-col gap-1.5">

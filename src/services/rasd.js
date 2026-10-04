@@ -96,6 +96,9 @@ export const rasd = {
      *
      * @param {{ q?, city?, sector?, stage?, confidence?, has_gap?,
      *           min_value?, max_value?, sort?, page?, per_page? }} filters
+     *
+     * Rows carry `progress_percent` (v1.3) — integer 0–100 or null
+     * (unknown, not zero). No `min_progress` filter exists yet.
      */
     async list(filters = {}) {
       const params = strip({

@@ -26,7 +26,11 @@ import {
   RASD_LATE_STAGE_MONTHS,
   monthsUntil,
   showContactSection,
+  showProgress,
+  progressValue,
+  progressPhase,
 } from '../../config/rasdConstants';
+import RasdProgressBar from '../../components/rasd/RasdProgressBar';
 
 /* ============================================================
  *  RasdProjectDetailPage — /rasd/projects/:id
@@ -172,6 +176,7 @@ export default function RasdProjectDetailPage() {
             <TimingStrip
               startAt={project.expected_start_at}
               endAt={project.expected_end_at}
+              progress={showProgress(project) ? progressValue(project) : null}
               t={t}
               lang={lang}
             />
@@ -195,7 +200,7 @@ export default function RasdProjectDetailPage() {
                 value={
                   project.estimated_value != null ? (
                     <>
-                      <Ltr>{formatNumber(project.estimated_value, lang, 0)}</Ltr>{' '}
+                      <Ltr>{formatNumber(project.estimated_value, lang, 0, { latin: true })}</Ltr>{' '}
                       {t('common.currency')}
                     </>
                   ) : (
@@ -208,7 +213,7 @@ export default function RasdProjectDetailPage() {
                 label={t('rasd.project.facts.announcedAt')}
                 value={
                   project.announced_at
-                    ? formatDate(project.announced_at, lang)
+                    ? formatDate(project.announced_at, lang, { latin: true })
                     : t('rasd.projects.notAnnounced')
                 }
               />
@@ -217,7 +222,7 @@ export default function RasdProjectDetailPage() {
                 label={t('rasd.project.facts.collectedAt')}
                 value={
                   project.collected_at
-                    ? formatDate(project.collected_at, lang)
+                    ? formatDate(project.collected_at, lang, { latin: true })
                     : t('common.notSpecified')
                 }
               />
@@ -270,7 +275,7 @@ export default function RasdProjectDetailPage() {
           {project.updated_at && (
             <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
               {t('rasd.project.updatedAt', {
-                date: formatDate(project.updated_at, lang),
+                date: formatDate(project.updated_at, lang, { latin: true }),
               })}
             </div>
           )}
@@ -285,9 +290,13 @@ export default function RasdProjectDetailPage() {
  *  data — a project eighteen months from done is still buying, one
  *  two months out isn't — so it gets a strip of its own above the
  *  facts rather than a cell among them. Present on every project;
- *  `expected_start_at` is missing on about twenty. */
-function TimingStrip({ startAt, endAt, t, lang }) {
-  if (!endAt && !startAt) return null;
+ *  `expected_start_at` is missing on about twenty.
+ *
+ *  `progress` (v1.3, null unless showProgress) sits in the same strip:
+ *  the end date says how long is left, the percentage says which trades
+ *  are still buying — together they answer «do I call them now?». */
+function TimingStrip({ startAt, endAt, progress, t, lang }) {
+  if (!endAt && !startAt && progress == null) return null;
   const months = monthsUntil(endAt);
 
   let tone = 'default';
@@ -302,14 +311,14 @@ function TimingStrip({ startAt, endAt, t, lang }) {
     } else {
       tone = months >= RASD_LATE_STAGE_MONTHS ? 'success' : 'warning';
       remaining = t('rasd.project.timing.monthsLeft', {
-        months: formatNumber(months, lang, 0),
+        months: formatNumber(months, lang, 0, { latin: true }),
       });
     }
   }
 
   return (
     <div
-      className="flex items-center gap-3 flex-wrap mb-4"
+      className="flex flex-col gap-3 mb-4"
       style={{
         background: 'var(--bg-canvas)',
         border: '1px solid var(--border-soft)',
@@ -317,31 +326,54 @@ function TimingStrip({ startAt, endAt, t, lang }) {
         padding: '12px 14px',
       }}
     >
-      <CalendarClock
-        size={18}
-        strokeWidth={1.8}
-        style={{ color: 'var(--accent-primary)', flexShrink: 0 }}
-      />
-      <div className="min-w-0 flex-1">
-        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
-          {t('rasd.project.timing.endAt')}
+      <div className="flex items-center gap-3 flex-wrap">
+        <CalendarClock
+          size={18}
+          strokeWidth={1.8}
+          style={{ color: 'var(--accent-primary)', flexShrink: 0 }}
+        />
+        <div className="min-w-0 flex-1">
+          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+            {t('rasd.project.timing.endAt')}
+          </div>
+          <div
+            className="flex items-center gap-2 flex-wrap"
+            style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)', marginTop: 2 }}
+          >
+            {endAt ? formatDate(endAt, lang, { latin: true }) : t('common.notSpecified')}
+            {remaining && <Badge tone={tone}>{remaining}</Badge>}
+          </div>
         </div>
-        <div
-          className="flex items-center gap-2 flex-wrap"
-          style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)', marginTop: 2 }}
-        >
-          {endAt ? formatDate(endAt, lang) : t('common.notSpecified')}
-          {remaining && <Badge tone={tone}>{remaining}</Badge>}
+        <div className="min-w-0">
+          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+            {t('rasd.project.timing.startAt')}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-ink)', marginTop: 2 }}>
+            {startAt ? formatDate(startAt, lang, { latin: true }) : t('common.notSpecified')}
+          </div>
         </div>
       </div>
-      <div className="min-w-0">
-        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
-          {t('rasd.project.timing.startAt')}
+
+      {progress != null && (
+        <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 12 }}>
+          <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+              {t('rasd.project.timing.progress')}
+              <span style={{ marginInlineStart: 8, fontWeight: 500 }}>
+                · {t(`rasd.project.timing.phase.${progressPhase(progress)}`)}
+              </span>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-ink)' }}>
+              <Ltr>{formatNumber(progress, lang, 0, { latin: true })}%</Ltr>
+            </div>
+          </div>
+          <RasdProgressBar
+            percent={progress}
+            height={8}
+            label={t('rasd.project.timing.progress')}
+          />
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-ink)', marginTop: 2 }}>
-          {startAt ? formatDate(startAt, lang) : t('common.notSpecified')}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
