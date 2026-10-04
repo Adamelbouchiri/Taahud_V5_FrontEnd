@@ -140,6 +140,7 @@ export default {
     services: '服务',
     servicesAll: '所有服务',
     arenas: '场域',
+    rasd: 'RASD',
     plans: '套餐',
     programs: 'Taahud 计划',
     programsItems: {

@@ -5,7 +5,6 @@ import Hero from '../components/landing/Hero';
 import Partners from '../components/landing/Partners';
 import IntegratedPlatform from '../components/landing/IntegratedPlatform';
 import FeaturedProjects from '../components/landing/FeaturedProjects';
-import Arenas from '../components/landing/Arenas';
 import Testimonials from '../components/landing/Testimonials';
 import PlatformFeatures from '../components/landing/PlatformFeatures';
 import Plans from '../components/landing/Plans';
@@ -21,8 +20,8 @@ import Footer from '../components/landing/Footer';
  *  ----------------------------------------------------------------
  *  Order:
  *    Hero → Partners → IntegratedPlatform → FeaturedProjects
- *      → Arenas → Testimonials → PlatformFeatures → Plans
- *      → RasdSection → SolidarityAddon → GuaranteeStrip
+ *      → RasdSection → Testimonials → PlatformFeatures → Plans
+ *      → SolidarityAddon → GuaranteeStrip
  *      → CtaBanner → GetStarted → Footer
  *
  *  Services and Contact were extracted out to dedicated routes
@@ -53,15 +52,10 @@ export default function LandingPage() {
         <Partners />
         <IntegratedPlatform />
         <FeaturedProjects />
-        <Arenas />
+        <RasdSection />
         <Testimonials />
         <PlatformFeatures />
         <Plans />
-        {/* The two add-ons sit together after the plans grid: someone
-            who has just read the pricing is the right audience for
-            "and here's what else you can bolt on". رصد leads because
-            it asks for a callback rather than a purchase. */}
-        <RasdSection />
         <SolidarityAddon />
         <GuaranteeStrip />
         <CtaBanner />

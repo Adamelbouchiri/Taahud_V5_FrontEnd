@@ -143,6 +143,7 @@ export default {
     services: 'الخدمات',
     servicesAll: 'كل الخدمات',
     arenas: 'الساحات',
+    rasd: 'رصد',
     plans: 'الاشتراكات',
     programs: 'برامج تعاهد',
     programsItems: {

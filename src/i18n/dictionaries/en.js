@@ -142,6 +142,7 @@ export default {
     services: 'Services',
     servicesAll: 'All services',
     arenas: 'Arenas',
+    rasd: 'RASD',
     plans: 'Subscriptions',
     programs: 'Taahud Programs',
     programsItems: {

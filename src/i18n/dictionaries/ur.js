@@ -143,6 +143,7 @@ export default {
     services: 'خدمات',
     servicesAll: 'تمام خدمات',
     arenas: 'میدان',
+    rasd: 'رصد',
     plans: 'سبسکرپشنز',
     programs: 'Taahud پروگرامز',
     programsItems: {
