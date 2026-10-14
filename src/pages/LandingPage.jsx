@@ -3,14 +3,12 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../components/landing/Navbar';
 import Hero from '../components/landing/Hero';
 import Partners from '../components/landing/Partners';
-import IntegratedPlatform from '../components/landing/IntegratedPlatform';
+import HowItWorks from '../components/landing/HowItWorks';
+import RoleServices from '../components/landing/RoleServices';
 import FeaturedProjects from '../components/landing/FeaturedProjects';
 import Testimonials from '../components/landing/Testimonials';
-import PlatformFeatures from '../components/landing/PlatformFeatures';
 import Plans from '../components/landing/Plans';
 import RasdSection from '../components/landing/RasdSection';
-import SolidarityAddon from '../components/landing/SolidarityAddon';
-import GuaranteeStrip from '../components/landing/GuaranteeStrip';
 import CtaBanner from '../components/landing/CtaBanner';
 import GetStarted from '../components/landing/GetStarted';
 import Footer from '../components/landing/Footer';
@@ -19,20 +17,18 @@ import Footer from '../components/landing/Footer';
  *  LandingPage — public marketing page
  *  ----------------------------------------------------------------
  *  Order:
- *    Hero → Partners → IntegratedPlatform → FeaturedProjects
- *      → RasdSection → Testimonials → PlatformFeatures → Plans
- *      → SolidarityAddon → GuaranteeStrip
- *      → CtaBanner → GetStarted → Footer
+ *    Hero → Partners → HowItWorks → RoleServices → RasdSection
+ *      → FeaturedProjects → Plans → Testimonials
+ *      → CtaBanner → GetStarted (affiliate band) → Footer
  *
- *  Services and Contact were extracted out to dedicated routes
- *  (/services and /contact) — reached via the navbar mega menu
- *  and the "تواصل معنا" link respectively.
+ *  Services, Contact, About, Pricing and FAQ live on dedicated
+ *  routes — reached from the navbar and footer.
  * ============================================================ */
 
 export default function LandingPage() {
   // When the landing page mounts (or its hash changes), scroll to
   // the section named in the URL hash. Cross-page links from
-  // /services or /contact bounce here with "/#platform" etc.
+  // /services or /contact bounce here with "/#rasd" etc.
   const { hash } = useLocation();
   useEffect(() => {
     if (!hash) return;
@@ -50,14 +46,12 @@ export default function LandingPage() {
       <main>
         <Hero />
         <Partners />
-        <IntegratedPlatform />
-        <FeaturedProjects />
+        <HowItWorks />
+        <RoleServices />
         <RasdSection />
-        <Testimonials />
-        <PlatformFeatures />
+        <FeaturedProjects />
         <Plans />
-        <SolidarityAddon />
-        <GuaranteeStrip />
+        <Testimonials />
         <CtaBanner />
         <GetStarted />
       </main>

@@ -15,7 +15,7 @@
      - solidarity  ساحة التضامن           contractor-to-contractor cooperation
      - arena       ساحة أرينا              developer's project pool
      - isnad       ساحة إسناد              large / financed projects (>100M ر.س)
-                                          — requires the إسناد upgrade (600 ر.س/شهر)
+                                          — requires the إسناد upgrade (999 ر.س/شهر)
 
    Each entry carries:
      - `postableBy`:  account types allowed to CREATE a project here.
@@ -106,7 +106,7 @@ export const ARENAS = [
   },
   {
     value: 'isnad',
-    label: 'مشاريع إسناد',
+    label: 'ساحة إسناد',
     shortLabel: 'إسناد',
     desc: 'وصول حصري إلى المشاريع الكبرى والفرص التمويليّة (+100 مليون ر.س).',
     color: '#0d5538',
@@ -121,7 +121,7 @@ export const ARENAS = [
     applicableBy: ['entrepreneur', 'engineering', 'developer'],
     isUpgrade: true,
     addonCode: 'isnad_addon',
-    upgradePrice: '600 ر.س / شهر',
+    upgradePrice: '999 ر.س / شهر',
     lockReason: 'تتطلّب ترقية إسناد.',
   },
 ];

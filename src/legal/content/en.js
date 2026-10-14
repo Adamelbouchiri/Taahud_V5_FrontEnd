@@ -9,7 +9,7 @@
 const en = {
   terms: {
     title: 'Terms & Conditions – Taahud Platform',
-    lastUpdated: 'August 22, 2026',
+    lastUpdated: 'October 7, 2026',
     intro: [
       'Welcome to the Taahud platform.',
       'Your use of the platform, your registration on it, or your benefit from its services constitutes an express acknowledgement that you have read, understood, and agreed to these Terms & Conditions. Continued use constitutes binding statutory acceptance of everything set out herein and of all policies associated with it.',
@@ -21,7 +21,7 @@ const en = {
           'For the purposes of these Terms, the following expressions shall have the meanings set out beside them:',
         ],
         bullets: [
-          'Platform: the Taahud digital platform and all services and systems associated with it.',
+          'Platform: the Taahud digital platform and all services and systems associated with it, including the RASD service.',
           'Company: Taahud Smart Information Technology Company.',
           'User: any natural or legal person who uses the platform or creates an account on it.',
           'Subscription: the paid package for benefiting from the platform services for a specified period.',
@@ -35,6 +35,11 @@ const en = {
           'Referral: the registration of a new user through the link of an affiliate-marketing broker.',
           'Wallet: the electronic balance of the broker dues within the platform.',
           'Project record: the electronic record issued by the platform containing the project data and its registered transactions.',
+          'RASD: the market data service provided by the platform, which enables the subscriber to view data on construction and real estate development projects, the companies operating in them, their roles, and the decision makers, together with tools for search, filtering, alerts, relevance scoring, and export, whether provided as a standalone service or as part of a package with the other platform services.',
+          'RASD Data: all data, information, classifications, analyses, scores, and alerts made available through the RASD service, and the database comprising them in its aggregated form.',
+          'Licensed User (Seat): the natural person specified by name and linked to the subscriber account, who is authorised to access RASD within the number of users included in or added to the package.',
+          'Decision Maker: the natural person whose name, job title, employer, or professional contact details are included in RASD Data by virtue of their role in a project or establishment.',
+          'Monitored Entity: the establishment, project, or person whose data appears within RASD Data, whether or not they are a user of the platform.',
         ],
       },
       {
@@ -120,6 +125,7 @@ const en = {
           'Creating multiple accounts for the purpose of obtaining commissions or benefits without entitlement is a grave violation, and the platform may cancel the commissions or benefits associated with the violation and suspend or terminate the account.',
           'A broker may not be an executor of, or a competitor for, the same project on which they act as a broker, unless the platform approves otherwise and after disclosure to the parties concerned.',
           'Where a broker practises brokerage activity in a corporate capacity, registration shall be made according to the data of the establishment and the relevant commercial register or statutory licence.',
+          'The RASD service is a service added to the existing subscriber account, and its seats are linked to the establishment account. Each seat is allocated to a single Licensed User with independent login credentials, and a seat may not be shared between more than one person or used from more than one device at the same time beyond what the platform permits.',
         ],
       },
       {
@@ -158,6 +164,7 @@ const en = {
           'Infringement of the rights of others.',
           'Providing data, documents, or content that is incorrect or unlawful.',
           'Fraud, circumvention, or misuse of the services.',
+          'Using RASD Data or Decision Maker data in a manner contrary to these Terms, the personal data protection laws, or the controls governing marketing messages.',
         ],
       },
       {
@@ -250,6 +257,7 @@ const en = {
           'Upon expiry of the reservation period without the opportunity converting into a project or an actual dealing, the precedence of the broker lapses, and a waiting period of (15) days may be applied before the opportunity is made available for registration by another broker.',
           'The platform maintains the confidentiality of broker data associated with attempts to register opportunities, in accordance with the law and the requirements of dispute management.',
           'The mere registration or reservation of an opportunity does not give rise to any financial entitlement, and the commission is due only upon fulfilment of the conditions of entitlement.',
+          'Transferring the data of a project or entity from RASD is not sufficient to register it as an opportunity or to establish precedence over it, and the broker must demonstrate an actual relationship with the opportunity or with one of its parties as required by the platform.',
         ],
       },
       {
@@ -300,6 +308,7 @@ const en = {
           'The commission enters the wallet with the status specified for it, and does not become withdrawable until the conditions of approval are satisfied.',
           'The platform may refuse, cancel, or recover a commission established to be connected with fraud, manipulation, a refund of the subscription value, or a breach of the programme terms.',
           'The marketing broker is prohibited from impersonating an employee or official representative of the platform without authorisation, from making promises in its name without approval, from using misleading advertisements, or from misusing the Taahud name or mark.',
+          'A RASD subscription, whether standalone or part of a package, is deemed an additional service for the purposes of this section. No referral commission is calculated on it unless the platform announces that RASD is included in the affiliate-marketing programme and the applicable rate, and the commission does not cover additional seats unless this is announced.',
         ],
       },
       {
@@ -370,14 +379,73 @@ const en = {
           'Refrain from using the opportunity data registered by the broker in a manner contrary to the purpose for which it was collected or contrary to the law and the Privacy Policy.',
         ],
       },
+      {
+        heading: 'Twenty-ninth: The RASD Service – Its Nature and Scope',
+        bullets: [
+          'RASD is an information service that enables the subscriber to view data on new and in-progress construction and real estate development projects, the companies operating in them and their roles, unassigned roles, and decision makers and their professional contact details, together with tools for search, filtering, alerts, relevance scoring, and export, according to what is included in the subscribed package.',
+          'RASD Data is based on open data and information lawfully available to the public, which the platform collects, organises, classifies, analyses, and links together. The detailed sources of RASD Data and the methodology of its collection and processing constitute trade secrets and intellectual property rights of the platform, and the platform is not obliged to disclose them except to the extent required by law.',
+          'RASD Data is intended to make information available for the purposes of research, analysis, and business development. It does not constitute an announcement of a tender, an invitation to contract, or an offer from any Monitored Entity, and the appearance of a project or an unassigned role in RASD does not give rise to any right of the subscriber to an award or a contract.',
+          'Relevance scores, alerts, and classifications are automated results calculated according to the criteria of the platform and the activity data of the subscriber. They are indicative tools and do not constitute a recommendation or an assessment of any entity.',
+          'The platform may update RASD Data or amend its content or its geographical or sectoral coverage, or remove any part of it, at any time, without this being deemed a breach of the subscription unless it affects the essence of the agreed service.',
+        ],
+      },
+      {
+        heading: 'Thirtieth: RASD Subscription and Licensed Users',
+        bullets: [
+          'Subscription to RASD is in accordance with the packages, prices, terms, and number of users announced at the time of subscription, whether standalone or as part of a package with the other platform services.',
+          'The subscriber specifies the Licensed Users by name, and each Licensed User has independent login credentials. Additional seats may be added in accordance with the announced prices.',
+          'The platform may apply limits on the number of searches, views, exports, or concurrent sessions, as announced for each package.',
+          'The right of access to RASD ends upon expiry of the subscription term unless it is renewed. The provisions on subscriptions, fees, and subscription term set out in these Terms apply to the RASD subscription in respect of matters for which no specific provision exists.',
+        ],
+      },
+      {
+        heading: 'Thirty-first: Permitted Use of RASD Data and Restrictions',
+        paragraphs: [
+          'The platform grants the subscriber a limited, non-exclusive, non-transferable, and non-sublicensable licence, for the duration of the subscription, to use RASD Data solely for the purposes of its lawful internal business. The subscriber and the Licensed Users undertake the following:',
+        ],
+        bullets: [
+          'Not to sell, lease, publish, redistribute, or make available RASD Data to others, in whole or in part, whether for consideration or not.',
+          'Not to use RASD Data to create, feed, or develop a competing or similar database, product, or service.',
+          'Not to use any automated means to extract or copy data in bulk, such as scraping or crawling software or bots, or to circumvent export and viewing limits.',
+          'Not to share login credentials or enable persons other than Licensed Users to view RASD.',
+          'Not to use RASD Data for defamation, abuse, discrimination, or any purpose contrary to the law.',
+        ],
+        closing:
+          'Upon establishing a breach of this section, the platform may immediately suspend the access of the Licensed User or the subscriber to RASD without a refund of fees, claim compensation, and take the necessary statutory measures.',
+      },
+      {
+        heading: 'Thirty-second: Decision Maker Data and Business Communication',
+        bullets: [
+          'Decision Maker data is made available solely for the purposes of professional communication concerning business relevant to their job role.',
+          'The subscriber is an independent controller in respect of the processing of the personal data it views or exports, and undertakes to comply with the Personal Data Protection Law and its regulations, and with the controls governing marketing messages and communications in the Kingdom of Saudi Arabia.',
+          'Sending unsolicited bulk messages or repeated or disturbing communications is prohibited, and the subscriber undertakes to cease communication immediately with any person who requests this.',
+          'The platform may suspend the subscriber upon receipt of documented complaints from Decision Makers or Monitored Entities concerning the manner of its communication or its use of their data.',
+        ],
+      },
+      {
+        heading: 'Thirty-third: Accuracy of RASD Data and Limits of Liability',
+        bullets: [
+          'RASD Data is provided on an "as is" basis, and the platform does not guarantee its accuracy, completeness, or currency, given its reliance on open data available to the public and the continuous change in the status of projects and entities.',
+          'The subscriber bears responsibility for independently verifying the data before relying on it in any commercial, financial, or contractual decision.',
+          'The platform does not bear responsibility for any loss, damage, or loss of profit resulting from reliance on RASD Data, relevance scores, or alerts, or for the outcome of any communication, negotiation, or contracting the subscriber undertakes with a Monitored Entity.',
+          'The platform does not guarantee that the subscriber will obtain any project, contract, award, or commercial result from using RASD.',
+        ],
+      },
+      {
+        heading: 'Thirty-fourth: Relationship of RASD with the Other Platform Services',
+        bullets: [
+          'The appearance of a project or entity in RASD does not constitute registration or reservation of an opportunity for the benefit of any broker, and does not create precedence for any party.',
+          'Where dealings are conducted with an entity the subscriber reached through RASD by means of the arenas or services of the platform, the provisions, fees, and commissions specific to that service apply to those dealings.',
+        ],
+      },
     ],
     closing:
-      'By using the Taahud platform, creating an account, subscribing, or using any of its services, you acknowledge that you have read, understood, and agreed to these Terms & Conditions and the policies associated with them, and that you are bound by what is set out in them in accordance with the laws in force in the Kingdom of Saudi Arabia.',
+      'By using the Taahud platform, creating an account, subscribing, or using any of its services, including the RASD service, you acknowledge that you have read, understood, and agreed to these Terms & Conditions and the policies associated with them, and that you are bound by what is set out in them in accordance with the laws in force in the Kingdom of Saudi Arabia.',
   },
 
   privacy: {
-    title: 'Privacy Policy',
-    lastUpdated: 'June 14, 2026',
+    title: 'Privacy Policy – Taahud Platform',
+    lastUpdated: 'October 7, 2026',
     intro: [
       'The "Taahud" platform respects the privacy of its users and is committed to protecting their personal data in accordance with the provisions of the Personal Data Protection Law in the Kingdom of Saudi Arabia and related regulations.',
       'By using the platform, you agree to the collection and processing of your data as described in this policy.',
@@ -391,7 +459,10 @@ const en = {
           'Use its services',
           'Communicate with the support team',
           'Enter data or upload documents through the system',
+          'Subscribe to or use the RASD service',
         ],
+        closing:
+          'It also applies to persons whose professional data appears within the RASD service, such as decision makers and representatives of monitored entities, even if they are not users of the platform.',
       },
       {
         heading: 'II. Types of Data Collected',
@@ -415,7 +486,18 @@ const en = {
               'Payment information via approved payment gateways (note: the platform does not retain full bank card data)',
             ],
           },
+          {
+            heading: '5. RASD Service Data',
+            bullets: [
+              'Project data: project name, type, location, stage, estimated value, and the entities participating in it and their roles.',
+              'Monitored entity data: establishment name, activity, city, and its public contact details.',
+              'Professional data of decision makers: name, job title, employer, role in the project, professional contact details such as work email or work phone, and published professional links.',
+              'Subscriber usage data for RASD: searches and filters, saved projects and entities, alert settings, view and export logs, and licensed user and session data.',
+            ],
+          },
         ],
+        closing:
+          'Project, entity, and decision maker data is collected from open data and information lawfully available to the public, and is then organised, classified, and analysed by the platform. The platform does not collect any sensitive personal data for the RASD service.',
       },
       {
         heading: 'III. Legal Basis for Data Processing',
@@ -426,6 +508,8 @@ const en = {
           'Compliance with legal obligations',
           'Achieving a legitimate interest of the platform that does not conflict with the user\'s rights',
         ],
+        closing:
+          'The professional data of decision makers within the RASD service is processed on the basis of the legitimate interest in making market information available for business purposes, after balancing it against the rights and interests of the data subjects, within the limits of the professional data associated with their job role, and with respect for their right to object.',
       },
       {
         heading: 'IV. Purposes of Data Use',
@@ -438,6 +522,8 @@ const en = {
           'Communicating with the user',
           'Protecting the platform from fraud or misuse',
           'Compliance with laws and government instructions',
+          'Providing the RASD service, updating and verifying its data, calculating relevance scores, and sending alerts to subscribers',
+          'Verifying the compliance of RASD subscribers with the terms of use, and preventing seat sharing and automated data extraction',
         ],
         closing:
           'Data is not used for any other purpose without notifying the user and obtaining their consent if the law requires.',
@@ -460,8 +546,12 @@ const en = {
           'With contractors/suppliers to complete projects.',
           'If required by a judicial or legal order.',
           'To protect the rights of the platform or its users.',
+          'Making RASD professional data available to licensed subscribers of the service, under terms of use that restrict them to the professional purpose and prohibit them from redistributing it.',
         ],
-        closing: 'In all cases, receiving parties are bound by confidentiality and lawful data-processing agreements.',
+        closing: [
+          'In all cases, receiving parties are bound by confidentiality and lawful data-processing agreements.',
+          'Making RASD professional data available to subscribers does not constitute a sale or rental of the personal data of platform users.',
+        ],
       },
       {
         heading: 'VII. Cross-Border Data Transfer',
@@ -477,7 +567,10 @@ const en = {
           'Or for the period necessary to comply with the law',
           'Or until the purpose of collection ends',
         ],
-        closing: 'Some data may be retained after closing the account if the law requires.',
+        closing: [
+          'Some data may be retained after closing the account if the law requires.',
+          'Decision maker data in RASD is retained for as long as it remains associated with an existing project or entity and relevant to the purpose of the service, and is deleted or anonymised once it is established to be inaccurate or no longer relevant, or once an objection by the data subject is accepted. Subscriber usage logs for RASD are retained throughout the subscription term and for the period necessary thereafter to evidence compliance with the terms of use and to settle disputes.',
+        ],
       },
       {
         heading: 'IX. User Rights',
@@ -489,7 +582,10 @@ const en = {
           'Request restriction of processing',
           'Withdraw consent (without prejudice to prior processing)',
         ],
-        closing: 'Requests are submitted via the official channels announced on the platform.',
+        closing: [
+          'Requests are submitted via the official channels announced on the platform.',
+          'These rights also apply to every person whose data appears within the RASD service, even if they are not a user of the platform, including their right to know the general category of the source of their data, and to object to its inclusion and request its removal. The platform may retain the minimum data necessary to ensure that a person who has requested removal is not re-included.',
+        ],
       },
       {
         heading: 'X. Responsibility for Data Accuracy',
@@ -542,6 +638,13 @@ const en = {
           'Regulations of the Saudi Data and AI Authority (SDAIA)',
         ],
       },
+      {
+        heading: 'XVII. Special Provisions on RASD Service Data',
+        bullets: [
+          'Each RASD subscriber is an independent controller in respect of the processing of the personal data it views or exports, and undertakes to comply with the Personal Data Protection Law and the RASD terms of use.',
+          'Upon acceptance of a removal request, the platform ceases to make the data available to subscribers, without this extending to copies exported by subscribers before the request, in respect of which they remain bound by the provisions of the law and the terms of use.',
+        ],
+      },
     ],
     closing:
       'By using the Taahud platform, you acknowledge that you have read, understood, and fully agreed to this Privacy Policy.',
@@ -549,7 +652,7 @@ const en = {
 
   refund: {
     title: 'Refund Policy – Taahud Platform',
-    lastUpdated: 'August 22, 2026',
+    lastUpdated: 'October 7, 2026',
     sections: [
       {
         heading: '1. General Framework',
@@ -561,7 +664,7 @@ const en = {
       {
         heading: '2. Scope of Application',
         paragraphs: [
-          'This policy applies to subscription fees, packages, additional services, and payments that are subject to refund according to their nature and terms.',
+          'This policy applies to subscription fees, packages, additional services, and payments that are subject to refund according to their nature and terms, including RASD service subscription fees and its additional seats, whether standalone or as part of a package with the other platform services.',
           'As for amounts associated with contracts, projects, stages, and payments between the parties on the platform, these are subject to the terms of the contract, the project mechanism, and the warranty and termination provisions adopted on the platform.',
         ],
       },
@@ -595,8 +698,10 @@ const en = {
           'Cancellation of the service before its execution begins, provided that neither it nor any of the benefits associated with it have been used.',
           'A technical fault that led to an amount being deducted without the transaction being completed.',
         ],
-        closing:
+        closing: [
           'Non-use means not using or consuming any part of the service or package, and no benefit accruing to the user from the services or the advantages included in it. Where the service provider is unable to execute or breaches execution, the Taahud platform may address the case or provide a suitable alternative service provider to complete the service. The inability or breach of the first service provider does not give rise to an automatic right to a refund, without prejudice to the rights prescribed by law.',
+          'With respect to the RASD service, the following are deemed use of the service: any Licensed User accessing it and viewing the details of any project, entity, or decision maker, exporting any data from it, or receiving alerts containing detailed data, since the value of the service is realised upon the mere viewing of the data. In a package combining RASD with the other platform services, use of any of its components is deemed use of the package.',
+        ],
       },
       {
         heading: '6. Cases of Non-refund',
@@ -610,6 +715,9 @@ const en = {
           'Services or packages consumed in whole or in part, save in the cases where the platform approves a partial refund or the law requires otherwise.',
           'Where circumvention, fraud, or misuse is established.',
           'Cases where the service has been executed or the benefit has accrued in accordance with what was agreed.',
+          'Suspension of the access of the subscriber or of any Licensed User to the RASD service due to a breach of its terms of use, such as seat sharing, automated data extraction, redistribution of data, or misuse of decision maker data.',
+          'Additional RASD seats after their activation and the added user\'s viewing of the data, as well as a reduction in the number of seats during the subscription term.',
+          'Inaccuracy or lack of currency of some RASD Data, or failure to achieve a commercial result from its use.',
         ],
         closing:
           'A breach by the user of their obligations means any act or omission liable to disrupt or delay execution of the service, including – by way of example and not limitation – failure to provide the necessary requirements, failure to observe deadlines, interruption of communication or responsiveness, or the provision of incorrect or incomplete data.',
@@ -628,6 +736,7 @@ const en = {
         paragraphs: [
           'Refund requests are subject to review and assessment according to the nature of the transaction and the available evidence and documents, and the platform may communicate with all parties concerned to verify the facts.',
           'The decision of the platform is final from an administrative standpoint within the platform, without prejudice to the right of any party to exercise its statutory rights before the competent authorities.',
+          'In requests for a refund of RASD fees, the platform may rely on the login, viewing, export, and alert logs of the Licensed Users to establish whether or not the service has been used.',
         ],
       },
       {
@@ -648,6 +757,7 @@ const en = {
           'Where the referral commission has been added to the wallet of the broker or disbursed to them before the subscription is refunded, the platform may deduct its value from the wallet or from any subsequent dues, or claim it in accordance with the adopted provisions.',
           'Termination or ending of the contract between the parties to a project within the platform does not automatically constitute a refund of the subscription or package fees. The effects of termination on project payments and brokerage commissions are subject to the provisions specific to that in the Terms & Conditions and the contract associated with the project.',
           'A refund of the platform or subscription fees – where made – does not extinguish any independent financial obligation due from the user under another contract or dealing, unless the decision or agreement expressly provides otherwise.',
+          'A refund of RASD fees does not extinguish the obligations of the subscriber relating to data viewed or exported before the refund, and the usage restrictions set out in the Terms & Conditions continue to apply to such data.',
           'The platform reserves the right to accept or reject a refund request based on the status of the request, the evidence, and the terms applicable to it, without prejudice to the rights of the user prescribed by law.',
           'The platform may amend this policy when necessary, and the updated version and its effective date are published through the platform.',
           'This policy is governed by and construed in accordance with the laws in force in the Kingdom of Saudi Arabia.',
@@ -660,7 +770,7 @@ const en = {
 
   cookies: {
     title: 'Cookies Policy – Taahud Platform',
-    lastUpdated: 'August 22, 2026',
+    lastUpdated: 'October 7, 2026',
     sections: [
       {
         heading: 'First: Purpose of the Policy',
@@ -685,6 +795,7 @@ const en = {
           'Analytical cookies: to measure performance and understand how the platform is used, with the aim of developing and improving the services.',
           'Marketing cookies: to measure marketing activities and campaigns or display relevant content. They are activated only after obtaining the consent of the user wherever the law requires this.',
           'Referral cookies: used when the user reaches the platform through a referral link assigned to an affiliate-marketing broker. They may store referral data or identifiers, the source or channel of the visit, and its date, for the purpose of linking the registration or subscription to the entitled broker, calculating the commission, and preventing fraud or manipulation.',
+          'RASD service cookies: these are essential cookies for operating the service, and are used to manage Licensed User sessions, verify that each seat is used by a single person within the permitted number of sessions, apply viewing and export limits, and detect automated or unusual usage patterns.',
         ],
         closing:
           'Referral cookies are retained for the period necessary to apply the referral window approved and announced on the platform, or for the period required by the relevant statutory or operational purposes.',
@@ -704,6 +815,7 @@ const en = {
           'Tracking referrals and linking the user or subscription to the entitled broker.',
           'Calculating affiliate-marketing commissions.',
           'Preventing fraud or manipulation in referral links and commissions.',
+          'Managing RASD service seats and preventing their sharing, and protecting its data from automated extraction or unauthorised copying.',
         ],
       },
       {

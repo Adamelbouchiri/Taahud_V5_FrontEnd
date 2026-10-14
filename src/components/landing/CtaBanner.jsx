@@ -7,8 +7,8 @@ import { useTranslation } from '../../i18n/LanguageContext';
  *  CtaBanner — final dark CTA block before the footer
  *  ----------------------------------------------------------------
  *  Full-width dark navy section with the same faint grid that
- *  appears in the hero. Eyebrow pill, big white serif headline,
- *  subtitle, two buttons. The background stays dark in both
+ *  appears in the hero. Big white serif headline, subtitle, two
+ *  buttons and a «no card» note. The background stays dark in both
  *  light and dark themes — it's an identity surface.
  * ============================================================ */
 
@@ -56,20 +56,6 @@ export default function CtaBanner() {
       />
 
       <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12 text-center">
-        {/* Eyebrow pill */}
-        <div
-          className="inline-flex items-center gap-2 mb-7 px-3.5 py-1.5 rounded-full animate-fade-up"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            color: 'rgba(255,255,255,0.75)',
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
-          {t('landing.cta.pill')}
-        </div>
-
         {/* Headline */}
         <h2
           className="font-display m-0 mb-4 animate-fade-up"
@@ -159,6 +145,13 @@ export default function CtaBanner() {
             {t('landing.cta.contact')}
           </a>
         </div>
+
+        <p
+          className="m-0 mt-5 animate-fade-up"
+          style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}
+        >
+          {t('landing.cta.note')}
+        </p>
       </div>
     </section>
   );

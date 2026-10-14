@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Compass } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -6,23 +6,45 @@ import { useTranslation } from '../../i18n/LanguageContext';
 /* ============================================================
  *  Hero — landing page first viewport
  *  ----------------------------------------------------------------
- *  Centered layout (per screenshots):
- *    - Pill with green dot (i18n key landing.hero.pill)
- *    - Massive two-line serif headline, second line in gold
- *    - Subtitle paragraph
- *    - Two CTAs side by side
- *    - Stats strip baked into the same viewport — no separate
- *      stats section
+ *  Centered layout:
+ *    - Pill with green dot (landing.hero.pill)
+ *    - Headline: a fixed first line («حلول رقمية») and a gold second
+ *      line that rotates through ROTATE_KEYS; the subtitle under it
+ *      rotates in step, so each line keeps its own explanation
+ *    - Two CTAs: free trial → /register, «how it works» → #how
+ *    - Trial note, then the «2,500+ active projects» pill
+ *
+ *  Rotating lines are stacked in one grid cell rather than absolutely
+ *  positioned, so the box is always as tall as the longest line in
+ *  the current language — no hand-tuned min-height per locale.
  *
  *  Background: faint perpendicular grid lines for the technical /
  *  blueprint feel.
  * ============================================================ */
 
-const STAT_KEYS = ['support', 'satisfaction', 'projects', 'contractors'];
+const ROTATE_KEYS = ['sector', 'opportunity', 'agreement', 'payment', 'manage', 'market'];
+const ROTATE_MS = 4200;
+
+function useRotation(count) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || count < 2) return undefined;
+    const id = setInterval(() => {
+      if (!document.hidden) setIndex((i) => (i + 1) % count);
+    }, ROTATE_MS);
+    return () => clearInterval(id);
+  }, [count]);
+  return index;
+}
 
 export default function Hero() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const active = useRotation(ROTATE_KEYS.length);
+  // The outgoing line leaves upward while the next one rises in.
+  const prev = (active - 1 + ROTATE_KEYS.length) % ROTATE_KEYS.length;
+  const rotClass = (i) => (i === active ? 'on' : i === prev ? 'out' : '');
 
   return (
     <section
@@ -65,11 +87,11 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12 pt-[120px] lg:pt-[160px] pb-14 lg:pb-20">
-        <div className="text-center max-w-[820px] mx-auto">
+      <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12 pt-[120px] lg:pt-[150px] pb-14 lg:pb-20">
+        <div className="text-center max-w-[880px] mx-auto">
           {/* Eyebrow pill */}
           <div
-            className="inline-flex items-center gap-2 mb-7 px-3.5 py-1.5 rounded-full animate-fade-up"
+            className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full animate-fade-up"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-default)',
@@ -91,39 +113,45 @@ export default function Hero() {
             {t('landing.hero.pill')}
           </div>
 
-          {/* Headline */}
+          {/* Headline — fixed line + rotating gold line */}
           <h1
             className="font-display m-0 mb-6 animate-fade-up"
+            aria-live="polite"
             style={{
-              fontSize: 'clamp(40px, 6.4vw, 84px)',
+              fontSize: 'clamp(34px, 5.4vw, 70px)',
               fontWeight: 700,
-              lineHeight: 1.05,
-              letterSpacing: '-0.02em',
+              lineHeight: 1.3,
               color: 'var(--text-ink)',
             }}
           >
-            {t('landing.hero.titleLine1')}
-            <br />
-            <span style={{ color: '#c9a35a' }}>{t('landing.hero.titleLine2')}</span>
+            <span className="block">{t('landing.hero.titleFixed')}</span>
+            <span className="hero-rot" style={{ color: '#c9a35a' }}>
+              {ROTATE_KEYS.map((k, i) => (
+                <span key={k} className={rotClass(i)} aria-hidden={i !== active}>
+                  {t(`landing.hero.rotate.${k}.title`)}
+                </span>
+              ))}
+            </span>
           </h1>
 
-          {/* Subtitle — the platform's formal definition. Wider than a
-              tagline would need (720 vs the old 640) because it now
-              names all three pillars: project assignment/management,
-              brokerage, and market data. */}
+          {/* Subtitle — rotates with the headline */}
           <p
-            className="m-0 mb-9 animate-fade-up max-w-[720px] mx-auto"
+            className="hero-rot hero-rot-sub m-0 animate-fade-up max-w-[720px] mx-auto"
             style={{
-              fontSize: 'clamp(15px, 1.4vw, 17.5px)',
-              lineHeight: 1.75,
+              fontSize: 'clamp(15px, 1.4vw, 17px)',
+              lineHeight: 1.9,
               color: 'var(--text-ink-soft)',
             }}
           >
-            {t('landing.hero.subtitle')}
+            {ROTATE_KEYS.map((k, i) => (
+              <span key={k} className={rotClass(i)} aria-hidden={i !== active}>
+                {t(`landing.hero.rotate.${k}.sub`)}
+              </span>
+            ))}
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-3 flex-wrap mb-14 lg:mb-16 animate-fade-up">
+          <div className="flex items-center justify-center gap-3 flex-wrap mt-10 lg:mt-12 animate-fade-up">
             <button
               type="button"
               onClick={() => navigate('/register')}
@@ -147,13 +175,13 @@ export default function Hero() {
               }}
             >
               <Sparkles size={15} strokeWidth={2} />
-              {t('landing.hero.ctaPrimary')}
+              {t('landing.hero.ctaTrial')}
             </button>
 
             <button
               type="button"
               onClick={() => {
-                const el = document.getElementById('services');
+                const el = document.getElementById('how');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
               className="inline-flex items-center gap-2 rounded-[12px] font-semibold transition-all"
@@ -175,41 +203,83 @@ export default function Hero() {
               }}
             >
               <Compass size={15} strokeWidth={1.8} />
-              {t('landing.hero.ctaSecondary')}
+              {t('landing.hero.ctaHow')}
             </button>
           </div>
 
-          {/* Stats strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 max-w-[800px] mx-auto animate-fade-up">
-            {STAT_KEYS.map((k) => (
-              <div key={k} className="text-center">
-                <div
-                  className="font-display"
-                  style={{
-                    fontSize: 'clamp(28px, 3.4vw, 40px)',
-                    fontWeight: 700,
-                    color: 'var(--text-ink)',
-                    lineHeight: 1,
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {t(`landing.hero.stats.${k}.value`)}
-                </div>
-                <div
-                  className="mt-2"
-                  style={{
-                    fontSize: 12.5,
-                    color: 'var(--text-muted)',
-                    fontWeight: 500,
-                  }}
-                >
-                  {t(`landing.hero.stats.${k}.label`)}
-                </div>
-              </div>
-            ))}
+          {/* Trial note */}
+          <p className="m-0 mt-4 animate-fade-up" style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+            {t('landing.hero.note')} ·{' '}
+            <b style={{ color: 'var(--text-ink)', fontWeight: 700 }}>{t('landing.hero.noteStrong')}</b>
+          </p>
+
+          {/* Active projects pill */}
+          <div
+            className="inline-flex items-center gap-2.5 mt-8 rounded-full animate-fade-up"
+            style={{
+              padding: '9px 18px 9px 14px',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              boxShadow: '0 6px 18px -12px rgba(0,20,128,0.35)',
+            }}
+          >
+            <span
+              className="grid place-items-center rounded-full flex-none"
+              style={{
+                width: 28,
+                height: 28,
+                background: 'rgba(15,17,71,0.07)',
+                color: 'var(--text-ink)',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3.5 20.5h17" />
+                <path d="M6 20.5V9.5l6-4 6 4v11" />
+                <path d="M10 20.5v-5h4v5" />
+              </svg>
+            </span>
+            <b
+              dir="ltr"
+              className="font-display inline-flex items-baseline"
+              style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-ink)', lineHeight: 1, gap: 1 }}
+            >
+              {t('landing.hero.activeProjects.value')}
+              <i style={{ fontStyle: 'normal', fontSize: '0.8em', color: '#b08a3e', fontWeight: 800 }}>+</i>
+            </b>
+            <span style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>
+              {t('landing.hero.activeProjects.label')}
+            </span>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .hero-rot {
+          display: grid;
+        }
+        .hero-rot > span {
+          grid-area: 1 / 1;
+          opacity: 0;
+          transform: translateY(0.25em);
+          filter: blur(5px);
+          transition: opacity .55s cubic-bezier(.22,.61,.36,1),
+                      transform .55s cubic-bezier(.22,.61,.36,1),
+                      filter .55s;
+          pointer-events: none;
+        }
+        .hero-rot > span.out {
+          transform: translateY(-0.25em);
+        }
+        .hero-rot > span.on {
+          opacity: 1;
+          transform: none;
+          filter: none;
+          pointer-events: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-rot > span { transition: none; filter: none; transform: none; }
+        }
+      `}</style>
     </section>
   );
 }

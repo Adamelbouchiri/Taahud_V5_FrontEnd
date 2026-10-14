@@ -1,411 +1,152 @@
 import React, { useState } from 'react';
-import { GraduationCap, Percent, BellRing, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { submitLead } from '../../utils/leads';
-import arDict from '../../i18n/dictionaries/ar';
-import enDict from '../../i18n/dictionaries/en';
-import zhDict from '../../i18n/dictionaries/zh';
-import urDict from '../../i18n/dictionaries/ur';
-
-// Direct dictionary access — needed for array-valued keys (tags
-// list). The shared t() helper only resolves leaf strings and
-// returns undefined for arrays, so it falls back to the key
-// string itself and arrays disappear from the rendered output.
-const DICTS = { ar: arDict, en: enDict, zh: zhDict, ur: urDict };
-function lookupArray(lang, path) {
-  const parts = path.split('.');
-  let cur = DICTS[lang] || DICTS.ar;
-  for (const p of parts) {
-    if (cur && typeof cur === 'object' && p in cur) cur = cur[p];
-    else return [];
-  }
-  return Array.isArray(cur) ? cur : [];
-}
 
 /* ============================================================
- *  GetStarted — "جاهز تبدأ مع تعاهد؟"
+ *  GetStarted — affiliate-program band under the final CTA
  *  ----------------------------------------------------------------
- *  Two cards side-by-side:
- *
- *    Academy   — coming-soon, lets the visitor leave their email
- *                for a launch notification.
- *    Affiliate — "register your interest" email capture for the
- *                partner program.
- *
- *  Both cards POST the email to a Google Sheet via submitLead()
- *  (see src/utils/leads.js + LEADS_SHEET_URL). Submission flips
- *  the card to a confirmed state.
- *
- *  Replaces the older UpcomingFeatures block. The conversion
- *  surface is identical (Academy + affiliate) but the layout
- *  is more interactive: email input on Academy, tag pills on
- *  Affiliate, and tighter visual rhythm overall.
+ *  One slim row: «%» mark, «التسويق بالعمولة» + soon badge with a
+ *  one-line pitch, and an email capture. The email goes to the
+ *  Google Sheet via submitLead() (see src/utils/leads.js); the form
+ *  then flips to a confirmed state regardless of network outcome.
  * ============================================================ */
 
 export default function GetStarted() {
   const { t } = useTranslation();
-  return (
-    <section
-      id="get-started"
-      className="relative py-20 lg:py-24 scroll-mt-20"
-      style={{ background: 'var(--bg-canvas)' }}
-    >
-      <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
-        <div className="text-center max-w-[640px] mx-auto mb-10 lg:mb-12">
-          <h2
-            className="font-display m-0 mb-3 animate-fade-up"
-            style={{
-              fontSize: 'clamp(24px, 3vw, 34px)',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
-              color: 'var(--text-brand-deep)',
-            }}
-          >
-            {t('landing.getStarted.title')}
-          </h2>
-          <p
-            className="m-0 animate-fade-up"
-            style={{
-              fontSize: 14.5,
-              lineHeight: 1.75,
-              color: 'var(--text-muted)',
-            }}
-          >
-            {t('landing.getStarted.subtitle')}
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-5 items-stretch">
-          <AcademyCard t={t} />
-          <AffiliateCard t={t} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
-/* ============================================================
- *  AcademyCard — Taahud Academy, email-capture coming-soon
- * ============================================================ */
-function AcademyCard({ t }) {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const accent = '#2c2f7c';
-  const accentSoft = 'rgba(44,47,124,0.10)';
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    // Fire-and-forget the email to the Google Sheet, then flip the
-    // UI to a confirmed state (regardless of network outcome).
-    submitLead(email.trim(), 'academy');
-    setSubmitted(true);
-  };
-
-  return (
-    <article
-      className="relative flex flex-col md:flex-row gap-4 rounded-[18px] animate-fade-up"
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        padding: '22px 22px',
-        boxShadow: 'var(--shadow-card)',
-      }}
-    >
-      {/* Right icon (visual leading edge in RTL/LTR thanks to source order) */}
-      <div
-        className="flex items-center justify-center flex-shrink-0"
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 14,
-          background: accentSoft,
-          color: accent,
-          alignSelf: 'flex-start',
-        }}
-      >
-        <GraduationCap size={26} strokeWidth={1.7} />
-      </div>
-
-      <div className="min-w-0 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-1.5">
-          <h3
-            className="font-display m-0"
-            style={{
-              fontSize: 17,
-              fontWeight: 700,
-              color: 'var(--text-ink)',
-            }}
-          >
-            {t('landing.getStarted.academy.title')}
-          </h3>
-          <span
-            className="font-bold rounded-full"
-            style={{
-              background: 'rgba(184,134,42,0.12)',
-              color: '#8a6a1f',
-              border: '1px solid rgba(184,134,42,0.28)',
-              fontSize: 10,
-              padding: '2px 8px',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {t('landing.getStarted.academy.soon')}
-          </span>
-        </div>
-        <p
-          className="m-0 mb-4"
-          style={{
-            fontSize: 13,
-            lineHeight: 1.7,
-            color: 'var(--text-muted)',
-          }}
-        >
-          {t('landing.getStarted.academy.desc')}
-        </p>
-
-        {submitted ? (
-          <div
-            className="inline-flex items-center gap-2 mt-auto self-start"
-            style={{
-              padding: '10px 14px',
-              borderRadius: 11,
-              background: 'rgba(19,109,74,0.08)',
-              border: '1px solid rgba(19,109,74,0.22)',
-              color: '#136d4a',
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            <Check size={15} strokeWidth={2.3} />
-            {t('landing.getStarted.academy.notifyDone')}
-          </div>
-        ) : (
-          <form onSubmit={submit} className="mt-auto flex gap-2 flex-wrap">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('landing.getStarted.academy.placeholder')}
-              className="flex-1 min-w-0"
-              style={{
-                background: 'var(--bg-canvas)',
-                border: '1px solid var(--border-default)',
-                borderRadius: 11,
-                outline: 0,
-                padding: '11px 14px',
-                fontSize: 13.5,
-                color: 'var(--text-ink)',
-                fontFamily: 'inherit',
-                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = accent;
-                e.currentTarget.style.boxShadow = `0 0 0 4px ${accentSoft}`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-default)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 font-semibold"
-              style={{
-                padding: '11px 16px',
-                background: accent,
-                color: 'white',
-                border: `1px solid ${accent}`,
-                borderRadius: 11,
-                fontSize: 13.5,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                boxShadow: '0 6px 14px rgba(44,47,124,0.18)',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#1f2258';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = accent;
-              }}
-            >
-              <BellRing size={14} strokeWidth={2} />
-              {t('landing.getStarted.academy.notify')}
-            </button>
-          </form>
-        )}
-      </div>
-    </article>
-  );
-}
-
-
-/* ============================================================
- *  AffiliateCard — partner program teaser
- * ============================================================ */
-function AffiliateCard({ t }) {
-  const { lang } = useTranslation();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const accent = '#b8862a';
   const accentSoft = 'rgba(184,134,42,0.12)';
-  // Read the tags array straight from the active dictionary —
-  // t() resolves leaves only and would return undefined here.
-  const tags = lookupArray(lang, 'landing.getStarted.affiliate.tags');
 
   const submit = (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-    // Fire-and-forget the email to the Google Sheet, then flip the
-    // UI to a confirmed state (regardless of network outcome).
     submitLead(email.trim(), 'affiliate');
     setSubmitted(true);
   };
 
   return (
-    <article
-      className="relative flex flex-col md:flex-row gap-4 rounded-[18px] animate-fade-up"
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        padding: '22px 22px',
-        boxShadow: 'var(--shadow-card)',
-        animationDelay: '0.05s',
-      }}
+    <section
+      id="get-started"
+      aria-label={t('landing.getStarted.affiliate.title')}
+      className="relative py-10 lg:py-12 scroll-mt-20"
+      style={{ background: 'var(--bg-canvas)' }}
     >
-      <div
-        className="flex items-center justify-center flex-shrink-0"
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 14,
-          background: accentSoft,
-          color: accent,
-          alignSelf: 'flex-start',
-        }}
-      >
-        <Percent size={26} strokeWidth={1.7} />
-      </div>
-
-      <div className="min-w-0 flex-1 flex flex-col">
-        <h3
-          className="font-display m-0 mb-1.5"
+      <div className="relative max-w-[1280px] mx-auto px-6 lg:px-12">
+        <div
+          className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 rounded-[18px] animate-fade-up"
           style={{
-            fontSize: 17,
-            fontWeight: 700,
-            color: 'var(--text-ink)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            padding: '20px 22px',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
-          {t('landing.getStarted.affiliate.title')}
-        </h3>
-        <p
-          className="m-0 mb-3"
-          style={{
-            fontSize: 13,
-            lineHeight: 1.7,
-            color: 'var(--text-muted)',
-          }}
-        >
-          {t('landing.getStarted.affiliate.desc')}
-        </p>
-
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  padding: '5px 10px',
-                  borderRadius: 999,
-                  background: 'var(--bg-canvas)',
-                  border: '1px solid var(--border-default)',
-                  color: 'var(--text-ink-soft)',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {submitted ? (
-          <div
-            className="inline-flex items-center gap-2 mt-auto self-start"
+          <span
+            aria-hidden
+            className="flex items-center justify-center flex-shrink-0 font-display"
             style={{
-              padding: '10px 14px',
-              borderRadius: 11,
-              background: 'rgba(19,109,74,0.08)',
-              border: '1px solid rgba(19,109,74,0.22)',
-              color: '#136d4a',
-              fontSize: 13,
-              fontWeight: 600,
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: accentSoft,
+              color: accent,
+              fontSize: 22,
+              fontWeight: 700,
             }}
           >
-            <Check size={15} strokeWidth={2.3} />
-            {t('landing.getStarted.affiliate.done')}
+            %
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3
+                className="font-display m-0"
+                style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-ink)' }}
+              >
+                {t('landing.getStarted.affiliate.title')}
+              </h3>
+              <span
+                className="font-bold rounded-full"
+                style={{
+                  background: 'rgba(184,134,42,0.12)',
+                  color: '#8a6a1f',
+                  border: '1px solid rgba(184,134,42,0.28)',
+                  fontSize: 10,
+                  padding: '2px 8px',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {t('landing.roles.badges.soon')}
+              </span>
+            </div>
+            <p
+              className="m-0"
+              style={{ fontSize: 13.5, lineHeight: 1.7, color: 'var(--text-muted)' }}
+            >
+              {t('landing.getStarted.affiliate.desc')}
+            </p>
           </div>
-        ) : (
-          <form onSubmit={submit} className="mt-auto flex gap-2 flex-wrap">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('landing.getStarted.affiliate.placeholder')}
-              className="flex-1 min-w-0"
+
+          {submitted ? (
+            <div
+              className="inline-flex items-center gap-2 self-start md:self-center"
               style={{
-                background: 'var(--bg-canvas)',
-                border: '1px solid var(--border-default)',
+                padding: '10px 14px',
                 borderRadius: 11,
-                outline: 0,
-                padding: '11px 14px',
-                fontSize: 13.5,
-                color: 'var(--text-ink)',
-                fontFamily: 'inherit',
-                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = accent;
-                e.currentTarget.style.boxShadow = `0 0 0 4px ${accentSoft}`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-default)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 font-semibold"
-              style={{
-                padding: '11px 16px',
-                background: accent,
-                color: 'white',
-                border: `1px solid ${accent}`,
-                borderRadius: 11,
-                fontSize: 13.5,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                boxShadow: '0 6px 14px rgba(184,134,42,0.22)',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#9a701f';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = accent;
+                background: 'rgba(19,109,74,0.08)',
+                border: '1px solid rgba(19,109,74,0.22)',
+                color: '#136d4a',
+                fontSize: 13,
+                fontWeight: 600,
               }}
             >
-              {t('landing.getStarted.affiliate.cta')}
-            </button>
-          </form>
-        )}
+              <Check size={15} strokeWidth={2.3} />
+              {t('landing.getStarted.affiliate.done')}
+            </div>
+          ) : (
+            <form onSubmit={submit} className="flex gap-2 flex-wrap md:flex-nowrap md:w-[420px]">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('landing.getStarted.affiliate.placeholder')}
+                aria-label={t('landing.getStarted.affiliate.placeholder')}
+                className="flex-1 min-w-0"
+                style={{
+                  background: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 11,
+                  outline: 0,
+                  padding: '11px 14px',
+                  fontSize: 13.5,
+                  color: 'var(--text-ink)',
+                  fontFamily: 'inherit',
+                }}
+              />
+              <button
+                type="submit"
+                className="font-semibold"
+                style={{
+                  padding: '11px 16px',
+                  background: 'var(--bg-ink-deep)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 11,
+                  fontSize: 13.5,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t('landing.getStarted.affiliate.cta')}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
-    </article>
+    </section>
   );
 }

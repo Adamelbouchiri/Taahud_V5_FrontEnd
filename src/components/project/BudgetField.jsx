@@ -1,4 +1,5 @@
 import React from 'react';
+import { EyeOff } from 'lucide-react';
 import FieldLabel from '../form/FieldLabel';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -37,6 +38,21 @@ export default function BudgetField({ value, onChange, error }) {
       </div>
       {error && <p className="field-err">{error}</p>}
       {!error && <p className="field-hint">{t(`${k}.budgetHint`)}</p>}
+      <p
+        role="note"
+        className="flex items-center gap-1.5 m-0 mt-2 rounded-[8px]"
+        style={{
+          padding: '6px 10px',
+          fontSize: 12.5,
+          lineHeight: 1.6,
+          color: 'var(--text-brand)',
+          background: 'rgba(44,47,124,0.06)',
+          border: '1px solid rgba(44,47,124,0.14)',
+        }}
+      >
+        <EyeOff size={14} strokeWidth={2} aria-hidden style={{ flexShrink: 0 }} />
+        {t(`${k}.budgetPrivate`)}
+      </p>
     </div>
   );
 }

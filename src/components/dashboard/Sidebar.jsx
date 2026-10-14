@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
   UserCircle,
@@ -30,7 +30,9 @@ import { ARENAS, canViewArena, canPostAnyArena } from '../../config/projectConst
 import { canUseRasd } from '../../config/rasdConstants';
 import useArenaAddons from '../../hooks/useArenaAddons';
 import useBrokerInbox from '../../hooks/useBrokerInbox';
+import useRasdEnrollment from '../../hooks/useRasdEnrollment';
 import { useTranslation } from '../../i18n/LanguageContext';
+import rasdLogo from '../../assets/products/rasd.png';
 
 /* ============================================================
  *  Sidebar
@@ -187,8 +189,27 @@ const ARENA_ICONS = {
   isnad: Landmark,
 };
 
+/* Which sidebar group each arena sits in:
+     products  المنتجات — sold as its own product (next to رصد)
+     arenas    الساحات  — the add-on arena
+     projects  المشاريع — the listings that come with a plan */
+const ARENA_GROUPS = {
+  solidarity: 'products',
+  isnad: 'arenas',
+  public: 'projects',
+  private: 'projects',
+  arena: 'projects',
+};
+
+// Sidebar-only labels where the arena's short dictionary label isn't
+// descriptive enough on its own.
+const ARENA_LABEL_KEYS = {
+  arena: 'dashboard.sidebar.arenaDev',
+};
+
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { t } = useTranslation();
   const { user, loading, logout, isAdmin } = useUser();
   const accountType = user?.account_type;
@@ -304,6 +325,15 @@ export default function Sidebar({ open, onClose }) {
   const arenaLinks = navReady
     ? ARENAS.filter((a) => canViewArena(a.value, accountType, addons))
     : [];
+  // Split into the sidebar's three groups — see ARENA_GROUPS.
+  const productArenas = arenaLinks.filter((a) => ARENA_GROUPS[a.value] === 'products');
+  const arenaGroup = arenaLinks.filter((a) => ARENA_GROUPS[a.value] === 'arenas');
+  const projectArenas = arenaLinks.filter((a) => ARENA_GROUPS[a.value] === 'projects');
+
+  // The «مفعّل» pill on رصد. A display hint only — /rasd is gated
+  // backend-side (see useRasdEnrollment).
+  const { enrolled: rasdEnrolled } = useRasdEnrollment();
+  const inRasd = pathname === '/rasd' || pathname.startsWith('/rasd/');
 
   const handleLogout = async () => {
     try {
@@ -473,16 +503,7 @@ export default function Sidebar({ open, onClose }) {
             )}
 
             {navReady && (
-            <div
-              className="px-3 mb-2 font-semibold uppercase"
-              style={{
-                fontSize: 10.5,
-                letterSpacing: '0.12em',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {t('dashboard.sidebar.navigation')}
-            </div>
+              <GroupHeading first>{t('dashboard.sidebar.navigation')}</GroupHeading>
             )}
             <ul className="m-0 p-0 flex flex-col gap-0.5">
               {items.map((item) => (
@@ -505,92 +526,78 @@ export default function Sidebar({ open, onClose }) {
               ))}
             </ul>
 
-            {/* Arena links — one per arena the user can view,
-                per the V5 viewableBy matrix (تظهر لمن). Suppliers
-                get only الساحة العامة. The colored dot mirrors the
-                arena's accent so users learn the visual identity. */}
-            {arenaLinks.length > 0 && (
+            {/* المنتجات — رصد and التضامن: products sold on their own
+                subscription. رصد is one link; its overview / projects /
+                companies sub-links unfold under it only while the user
+                is inside /rasd. */}
+            {(showRasd || productArenas.length > 0) && (
               <>
-                <div
-                  className="px-3 mt-6 mb-2 font-semibold uppercase"
-                  style={{
-                    fontSize: 10.5,
-                    letterSpacing: '0.12em',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {t('dashboard.sidebar.arenas')}
-                </div>
+                <GroupHeading>{t('dashboard.sidebar.products')}</GroupHeading>
                 <ul className="m-0 p-0 flex flex-col gap-0.5">
-                  {arenaLinks.map((a) => {
-                    const ArenaIcon = ARENA_ICONS[a.value];
-                    return (
-                      <li key={a.value} className="list-none">
-                        <NavLink
-                          to={`/projects/${a.value}`}
-                          onClick={onClose}
-                          className={({ isActive }) =>
-                            `nav-link${isActive ? ' nav-link-active' : ''}`
-                          }
-                        >
-                          {ArenaIcon ? (
-                            <ArenaIcon
-                              size={17}
-                              strokeWidth={1.75}
-                              style={{ color: a.color, flexShrink: 0 }}
-                            />
-                          ) : (
-                            <span
-                              className="rounded-full flex-shrink-0"
-                              style={{
-                                width: 9,
-                                height: 9,
-                                background: a.color,
-                                marginInlineStart: 4,
-                                marginInlineEnd: 4,
-                              }}
-                            />
-                          )}
-                          <span className="flex-1 truncate">
-                            {t(`arena.${a.value}.label`)}
-                          </span>
-                        </NavLink>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-
-            {/* رصد — market data. Same navReady gate as everything
-                else so no link is drawn before the account resolves. */}
-            {showRasd && (
-              <>
-                <div
-                  className="px-3 mt-6 mb-2 font-semibold uppercase"
-                  style={{
-                    fontSize: 10.5,
-                    letterSpacing: '0.12em',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {t('rasd.sidebarGroup')}
-                </div>
-                <ul className="m-0 p-0 flex flex-col gap-0.5">
-                  {RASD_ITEMS.map((item) => (
-                    <li key={item.to} className="list-none">
+                  {showRasd && (
+                    <li className="list-none">
                       <NavLink
-                        to={item.to}
-                        end={item.end}
+                        to="/rasd"
                         onClick={onClose}
                         className={({ isActive }) =>
                           `nav-link${isActive ? ' nav-link-active' : ''}`
                         }
                       >
-                        <item.icon size={17} strokeWidth={1.75} />
-                        <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                        <img src={rasdLogo} alt="" className="nav-logo" />
+                        <span className="flex-1 truncate">{t('dashboard.sidebar.rasd')}</span>
+                        {rasdEnrolled && (
+                          <span className="active-pill">{t('dashboard.sidebar.active')}</span>
+                        )}
                       </NavLink>
+                      {inRasd && (
+                        <ul className="m-0 p-0 mt-0.5 flex flex-col gap-0.5">
+                          {RASD_ITEMS.map((item) => (
+                            <li key={item.to} className="list-none">
+                              <NavLink
+                                to={item.to}
+                                end={item.end}
+                                onClick={onClose}
+                                className={({ isActive }) =>
+                                  `nav-link nav-sublink${isActive ? ' nav-sublink-active' : ''}`
+                                }
+                              >
+                                <item.icon size={15} strokeWidth={1.75} />
+                                <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
+                  )}
+                  {productArenas.map((a) => (
+                    <ArenaLink key={a.value} arena={a} t={t} onClose={onClose} />
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* الساحات — ساحة إسناد, the add-on arena for large and
+                financed projects. */}
+            {arenaGroup.length > 0 && (
+              <>
+                <GroupHeading>{t('dashboard.sidebar.arenas')}</GroupHeading>
+                <ul className="m-0 p-0 flex flex-col gap-0.5">
+                  {arenaGroup.map((a) => (
+                    <ArenaLink key={a.value} arena={a} t={t} onClose={onClose} />
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* المشاريع — the project listings that come with a plan
+                (نمو، عهد، أرينا), each per the V5 viewableBy matrix. */}
+            {projectArenas.length > 0 && (
+              <>
+                <GroupHeading>{t('dashboard.sidebar.projects')}</GroupHeading>
+                <ul className="m-0 p-0 flex flex-col gap-0.5">
+                  {projectArenas.map((a) => (
+                    <ArenaLink key={a.value} arena={a} t={t} onClose={onClose} />
                   ))}
                 </ul>
               </>
@@ -600,16 +607,7 @@ export default function Sidebar({ open, onClose }) {
                 placeholder) but the feature itself is not live yet. */}
             {soonItems.length > 0 && (
               <>
-                <div
-                  className="px-3 mt-6 mb-2 font-semibold uppercase"
-                  style={{
-                    fontSize: 10.5,
-                    letterSpacing: '0.12em',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {t('dashboard.sidebar.soon')}
-                </div>
+                <GroupHeading>{t('dashboard.sidebar.soon')}</GroupHeading>
                 <ul className="m-0 p-0 flex flex-col gap-0.5">
                   {soonItems.map((item) => (
                     <li key={item.to} className="list-none">
@@ -778,6 +776,51 @@ export default function Sidebar({ open, onClose }) {
             flex-shrink: 0;
           }
 
+          /* Group heading — the gold small-caps label over each
+             section (التنقّل، المنتجات، الساحات، المشاريع، قريباً). */
+          .nav-group {
+            padding: 0 12px;
+            margin: 24px 0 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #b08a3e;
+          }
+          .nav-group-first {
+            margin-top: 0;
+          }
+
+          /* Product logo in place of an icon (رصد). */
+          .nav-logo {
+            width: 26px;
+            height: 18px;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+
+          /* رصد's pages, unfolded under it while inside /rasd. */
+          .nav-sublink {
+            padding: 7px 14px;
+            padding-inline-start: 40px;
+            font-size: 12.5px;
+          }
+          .nav-sublink-active {
+            color: var(--accent-primary);
+            font-weight: 600;
+          }
+
+          /* «مفعّل» — the user holds this product. */
+          .active-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #8a6a1f;
+            background: rgba(184,134,42,0.14);
+            flex-shrink: 0;
+          }
+
           .soon-pill {
             display: inline-flex;
             align-items: center;
@@ -794,5 +837,42 @@ export default function Sidebar({ open, onClose }) {
         `}</style>
       </aside>
     </>
+  );
+}
+
+function GroupHeading({ first, children }) {
+  return <div className={`nav-group${first ? ' nav-group-first' : ''}`}>{children}</div>;
+}
+
+/* One arena's browse link. Icons take the link's own ink color, like
+   every other nav link. */
+function ArenaLink({ arena, t, onClose }) {
+  const ArenaIcon = ARENA_ICONS[arena.value];
+  return (
+    <li className="list-none">
+      <NavLink
+        to={`/projects/${arena.value}`}
+        onClick={onClose}
+        className={({ isActive }) => `nav-link${isActive ? ' nav-link-active' : ''}`}
+      >
+        {ArenaIcon ? (
+          <ArenaIcon size={17} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+        ) : (
+          <span
+            className="rounded-full flex-shrink-0"
+            style={{
+              width: 9,
+              height: 9,
+              background: arena.color,
+              marginInlineStart: 4,
+              marginInlineEnd: 4,
+            }}
+          />
+        )}
+        <span className="flex-1 truncate">
+          {t(ARENA_LABEL_KEYS[arena.value] || `arena.${arena.value}.label`)}
+        </span>
+      </NavLink>
+    </li>
   );
 }

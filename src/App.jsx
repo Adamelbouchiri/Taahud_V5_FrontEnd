@@ -13,6 +13,9 @@ import StorePage from './pages/StorePage';
 import ServicesPage from './pages/ServicesPage';
 import ContactPage from './pages/ContactPage';
 import PartnersPage from './pages/PartnersPage';
+import AboutPage from './pages/AboutPage';
+import PricingPage from './pages/PricingPage';
+import FaqPage from './pages/FaqPage';
 
 // Legal pages — public, no guards
 import TermsPage from './pages/legal/TermsPage';
@@ -116,6 +119,11 @@ import AdminActivityPage from './pages/admin/AdminActivityPage';
 import AdminBrokersPage from './pages/admin/AdminBrokersPage';
 import AdminOpportunitiesPage from './pages/admin/AdminOpportunitiesPage';
 import AdminOpportunityDetailPage from './pages/admin/AdminOpportunityDetailPage';
+import AdminRasdSummaryPage from './pages/admin/rasd/AdminRasdSummaryPage';
+import AdminRasdProjectsPage from './pages/admin/rasd/AdminRasdProjectsPage';
+import AdminRasdCompaniesPage from './pages/admin/rasd/AdminRasdCompaniesPage';
+import AdminRasdContactsPage from './pages/admin/rasd/AdminRasdContactsPage';
+import AdminRasdImportsPage from './pages/admin/rasd/AdminRasdImportsPage';
 
 
 /* ============================================================
@@ -168,6 +176,9 @@ function AppShell() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         {/* Public "Become a Partner" directory + application form.
             Wired to the public POST /api/partners/apply endpoint. */}
         <Route path="/partners" element={<PartnersPage />} />
@@ -556,6 +567,13 @@ function AppShell() {
           <Route path="brokers" element={<AdminBrokersPage />} />
           <Route path="opportunities" element={<AdminOpportunitiesPage />} />
           <Route path="opportunities/:id" element={<AdminOpportunityDetailPage />} />
+          {/* رصد dataset maintenance (/api/admin/rasd). Filters live in
+              the query string, so trash is ?trashed=only on each list. */}
+          <Route path="rasd" element={<AdminRasdSummaryPage />} />
+          <Route path="rasd/projects" element={<AdminRasdProjectsPage />} />
+          <Route path="rasd/companies" element={<AdminRasdCompaniesPage />} />
+          <Route path="rasd/contacts" element={<AdminRasdContactsPage />} />
+          <Route path="rasd/imports" element={<AdminRasdImportsPage />} />
           {/* "Become a Partner" program — separate from /partnerships
               (Solidarity offers). force-delete is gated inside the page
               on the super-admin role. */}

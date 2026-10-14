@@ -23,6 +23,7 @@ import { deriveArenaAddons } from '../../services/subscriptions';
 import { addonCopyKey } from '../../config/addonPlans';
 import { isRasdPlan, RASD_CTA_ROUTE } from '../../config/rasdConstants';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { tierFeatureList } from '../../components/landing/plansCatalog';
 import arDict from '../../i18n/dictionaries/ar';
 import enDict from '../../i18n/dictionaries/en';
 import zhDict from '../../i18n/dictionaries/zh';
@@ -1217,13 +1218,11 @@ function localizedPlanContent(plan, { lang, accountType, isAddon, t }) {
 
   const roleLabel = dict?.landing?.plans?.audiences?.[audience] || '';
   const tierLabel = t(`subscribe.page.tierLabels.${tier}`);
+  const features = tierFeatureList(entry);
   return {
     name: roleLabel ? `${roleLabel} — ${tierLabel}` : fallback.name,
     description: entry.description || fallback.description,
-    features:
-      Array.isArray(entry.features) && entry.features.length
-        ? entry.features
-        : backendFeatures,
+    features: features.length ? features : backendFeatures,
   };
 }
 

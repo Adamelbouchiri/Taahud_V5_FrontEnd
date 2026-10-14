@@ -125,6 +125,29 @@ export const RASD_CONTACT_ROLES = [
   'other',
 ];
 
+/* ---------- Company size (admin, v1.4) ----------
+   Headcount bands. The values start with digits, so they're keys in
+   the dictionary as strings — `rasd.size.201_500`, never a number. */
+export const RASD_COMPANY_SIZES = ['under_50', '51_200', '201_500', 'over_500'];
+
+/* ---------- Record status (admin) ---------- */
+export const RASD_RECORD_STATUSES = ['published', 'draft'];
+
+/* ---------- Approved cities (admin writes) ----------
+   Mirrors config('rasd.cities') on the BE. Writes and the admin
+   `city` filter are validated against exactly this list (422 «المدينة
+   المحددة ليست من القائمة المعتمدة.» otherwise), so the admin forms
+   offer it as a closed select. The subscriber pages keep deriving
+   their city filter from /rasd/summary instead — see useRasdSummary. */
+export const RASD_CITIES = [
+  'الرياض', 'جدة', 'الدمام', 'الخبر', 'الظهران', 'مكة المكرمة', 'المدينة المنورة',
+  'الطائف', 'تبوك', 'أبها', 'جيزان', 'نجران', 'حائل', 'بريدة', 'الجبيل', 'ينبع',
+  'الأحساء', 'القطيف', 'نيوم', 'أخرى', 'الدرعية', 'أملج', 'ضباء',
+  'خميس مشيط', 'ضمد', 'الوجه', 'صامطة', 'صبيا', 'الخرج',
+  'الباحة', 'رابغ', 'سكاكا', 'بلجرشي', 'صفوى', 'الخفجي',
+  'مدينة الملك عبدالله الاقتصادية', 'السودة', 'مدينة مسك', 'عنيزة', 'البيضاء',
+];
+
 /* ---------- Sort ---------- */
 export const RASD_SORTS = ['recent', 'value_desc', 'value_asc'];
 

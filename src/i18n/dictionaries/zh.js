@@ -141,13 +141,18 @@ export default {
     servicesAll: '所有服务',
     arenas: '场域',
     rasd: 'RASD',
-    plans: '套餐',
-    programs: 'Taahud 计划',
-    programsItems: {
-      academy: 'Taahud 学院',
-      affiliate: '联盟营销中介',
+    plans: '价格',
+    products: 'Taahud 产品',
+    productsItems: {
+      rasd: { title: 'RASD 项目', desc: '项目报告与决策者直达' },
+      solidarity: { title: 'Solidarity', desc: '与能补足您需求的一方合作：施工、土地、供应或专业知识' },
+      store: { title: 'Taahud 商城', desc: '供应商产品、询价与供货' },
+      academy: { title: 'Taahud 学院', desc: '建筑行业认证课程' },
     },
     contact: '联系',
+    faq: '常见问题',
+    subscriptions: '订阅',
+    tryFree: '免费试用',
     partners: 'Taahud 合作伙伴',
     testimonials: '客户评价',
     store: '商城',
@@ -199,29 +204,228 @@ export default {
     },
     hero: {
       pill: '沙特持牌平台',
-      titleLine1: '管理建筑工程',
-      titleLine2: '所需的一切',
-      subtitle:
-        'Taahud 是面向建筑与工程行业的一体化数字基础设施，连接行业各方，在同一体系内实现项目委派与管理、商业中介，以及项目数据与机会的获取 — 效率更高，问题更少。',
+      titleFixed: '数字化解决方案',
+      rotate: {
+        sector: {
+          title: '服务建筑行业。',
+          sub: 'Taahud 是面向建筑与工程行业的一体化数字基础设施，连接行业各方，在同一体系内实现项目机会与数据的发现、工作委派、项目管理和商业中介。',
+        },
+        opportunity: {
+          title: '为您带来机会。',
+          sub: '市场项目与机会在成为公开招标之前就送到您面前，并按与您业务和地域范围的接近程度排序。',
+        },
+        agreement: {
+          title: '记录您的协议。',
+          sub: '各方之间经认证的数字合同，阶段和条款清晰，每项操作都有记录 — 发生争议时有唯一依据。',
+        },
+        payment: {
+          title: '保障您的应得款项。',
+          sub: '款项存放于 Taahud，仅在阶段完成后释放 — 业主不受损失，承包商的权益也不会落空。',
+        },
+        manage: {
+          title: '管理您的项目。',
+          sub: '项目阶段、文件、报价和付款申请集中在一个面板中，从招标到交付。',
+        },
+        market: {
+          title: '为您打开市场。',
+          sub: '供应、分包、合作、项目数据和决策者 — 一个体系为您打开整个市场。',
+        },
+      },
+      // ctaPrimary is also the navbar's button — the hero has its own.
       ctaPrimary: '免费开始',
-      ctaSecondary: '浏览项目',
-      stats: {
-        support: {
-          value: '24/7',
-          label: '持续支持',
+      ctaTrial: '开始免费试用',
+      ctaHow: '平台如何运作？',
+      note: '免费注册 14 天',
+      noteStrong: '无需信用卡',
+      activeProjects: { value: '2,500', label: '个平台活跃项目' },
+    },
+    how: {
+      title: 'Taahud 如何运作？',
+      subtitle: '从注册到收款，只需三步。',
+      steps: {
+        register: {
+          title: '注册并选择您的角色',
+          body: '个人、项目业主、承包商、工程事务所、房地产开发商或供应商。',
         },
-        satisfaction: {
-          value: '92%',
-          label: '用户满意度',
+        browse: {
+          title: '发布项目或浏览机会',
+          body: '在同一处完成项目委派，并获取市场数据与机会。',
         },
-        projects: {
-          value: '+450',
-          label: '活跃项目',
+        deliver: {
+          title: '安全执行与收款',
+          body: '数字合同，以及在满足交付条件时自动释放款项的担保账户。',
         },
+      },
+    },
+    roleServices: {
+      title: '项目所需的一切，尽在一处',
+      subtitle: '无需外部软件的工具，从签订合同到最后一笔付款。',
+    },
+    roles: {
+      more: '浏览服务',
+      start: '免费开始',
+      servicesHeading: '服务',
+      toolsHeading: '工具',
+      badges: {
+        soon: '即将上线',
+        extra: '附加',
+        free: '免费',
+        freeFirst: '首个项目免费',
+      },
+      items: {
         contractors: {
-          value: '+1200',
-          label: '已注册承包商',
+          title: '承包商与工程事务所',
+          menuTitle: '承包商',
+          desc: '赢得更多项目，轻松管理合同与付款',
         },
+        engineering: {
+          title: '工程事务所',
+          desc: '契合您专业的项目，图纸与审批集中一处',
+        },
+        developers: {
+          title: '房地产开发商',
+          desc: '选择可信赖的承包商，在一处跟进所有项目',
+        },
+        individuals: {
+          title: '个人与项目业主',
+          desc: '发布项目，接收可信承包商的报价，并分阶段付款',
+        },
+        brokers: {
+          title: '项目中介',
+          desc: '登记您的机会，并在对接前将佣金写入合同',
+        },
+        suppliers: {
+          title: '供应商',
+          desc: '在 Taahud 商城展示您的材料，直接接收承包商的询价',
+        },
+      },
+      services: {
+        projects: 'Taahud 项目',
+        arena: 'Arena 房地产开发项目',
+        offers: '技术与商务报价',
+        tracking: '项目阶段跟进',
+        trackingCreate: '创建并跟进项目阶段',
+        trackingAll: '项目阶段跟进',
+        drawingsApproval: '客户审批图纸',
+        import: '迁移并管理外部项目 — 不限数量',
+        profile: '专业公司简介',
+        qualify: '承包商资格预审',
+        postProject: '在 Taahud 项目中发布您的项目',
+        contractorOffers: '来自承包商与工程事务所的报价',
+        stagedPayments: '分阶段付款',
+        inspection: '房产查验',
+        registerOpp: '登记项目机会',
+        commission: '佣金记录',
+        verifiedBroker: '认证中介',
+      },
+      tools: {
+        contractGen: '合同生成与审核',
+        contractCheck: '合同审核',
+        calculator: '项目计算器',
+        assets: '土地与资产管理',
+        investment: '房地产投资',
+        investorReports: '投资者报告',
+      },
+      allMore: {
+        summary: '查看全部服务与工具',
+        available: '现已推出',
+        soon: '即将推出',
+        items: {
+          escrow: '付款担保（Escrow）',
+          dashContractor: '承包商控制面板',
+          dashEngineering: '工程事务所控制面板',
+          dashDeveloper: '房地产开发商综合控制面板',
+          supervision: '项目跟进与监理 — 最多 50 个项目',
+          appointments: '预约管理',
+          verifiedId: '认证识别号',
+          clients: '客户管理',
+          wallet: '钱包',
+          stageApproval: '施工前阶段审批服务',
+          accountManager: '客户经理与技术支持',
+          billing: '支付网关与发票',
+          brokerDrafts: '中介草稿',
+          esign: '电子签名 — 最多 50 次',
+          fit: '项目匹配',
+          prioritySupport: '24/7 优先技术支持',
+          badgeContractor: '承包商信誉徽章 — 依据业绩、资质分类及平台条款',
+          badgeEngineering: '工程事务所信誉徽章 — 依据业绩、资质分类及平台条款',
+          badgeDeveloper: '开发商信誉徽章 — 依据业绩、资质分类及平台条款',
+          approvals: '审批与批准管理',
+          rfis: '技术审批管理（RFIs）',
+          rfq: '提交询价请求（RFQ）',
+          analyzer: '智能项目分析 — 每月限额',
+          execAssistant: '智能执行助手 — 每月限额',
+          engAssistant: '智能工程助手 — 每月限额',
+          templates: '专业现成模板',
+          postDev: '发布开发项目',
+          promote: '项目首页推广',
+          devAdvisor: '智能开发顾问 — 每月限额',
+          offerCompare: '智能报价分析与比较 — 每月限额',
+          reviews: '可信评价',
+          store: '访问 Taahud 建材商店',
+          documents: '文件与资料管理',
+          drawingsDocs: '文件与图纸管理',
+          messages: '消息',
+          notifications: '通知',
+          stats: '统计与报告',
+          export: '文件导出（PDF / Word）',
+          cashback: '通过 Taahud 购买材料的钱包返现',
+          salePosts: '发布房产出售机会',
+          investPosts: '发布投资房产',
+        },
+      },
+      shared: {
+        allLabel: '所有人可用：',
+        all: '付款担保 · 钱包 · 文件管理 · 中介草稿',
+        addonLabel: '附加订阅：',
+        addon: 'RASD 项目 · Solidarity · Isnad 场域',
+        soonLabel: '即将对所有人开放：',
+        soon: '消息 · 通知 · 统计与报告 · 可信评价 · 智能助手',
+        soonNote: '个人用户为附加功能',
+      },
+    },
+    rasd: {
+      logoAlt: 'RASD',
+      title: '为您打开机会之门、直达决策者的项目报告。',
+      lead: 'RASD 是 Taahud 的项目情报层：它收集并核实项目数据，补充业主及相关方信息，每个项目都有一个从许可到交付的统一编号 {taid}。',
+      points: {
+        projects: '实时更新的项目与机会',
+        reports: '完整的报告与数据',
+        decisionMakers: '直达决策者',
+      },
+      cta: '了解 RASD',
+      mock: {
+        status: '尚未开工',
+        name: '多层住宅综合体',
+        loc: '利雅得，Al Narjis 区 · 住宅',
+        valueLabel: '估算价值',
+        value: '1.85 亿里亚尔',
+        areaLabel: '总面积',
+        areaUnit: '平方米',
+        unitsLabel: '单元类型',
+        units: '住宅公寓',
+        licenseLabel: '许可',
+        license: '期房销售 · 有效',
+        developerLabel: '开发商',
+        developer: '一家房地产开发公司',
+        gapsTitle: '尚未分配的角色',
+        gaps: {
+          main: '总承包商',
+          engineering: '工程事务所',
+          mep: 'MEP 承包商',
+          elevators: '电梯供应商',
+        },
+        fit: '与您业务的匹配度',
+        reveal: '查看联系人',
+        save: '保存项目',
+        toastHead: '新提醒，刚刚',
+        toast: '利雅得有一个新项目与您的业务匹配 — 目前尚无总承包商。',
+        caption: 'RASD 项目卡片与提醒的示例',
+      },
+      form: {
+        title: '对 RASD 感兴趣？',
+        subtitle: '留下您的信息，我们会联系您，介绍适合您业务的 RASD 服务。',
+        submit: '联系我们',
       },
     },
     services: {
@@ -400,13 +604,15 @@ export default {
       },
     },
     featuredProjects: {
-      eyebrow: '精选项目',
-      title: '面向承包商和开发商的真实机会',
+      title: 'Taahud 项目',
       sampleNote: '此处展示的项目仅为示例。',
       seeAll: '查看所有项目',
+      details: '详情',
+      valueUnit: '百万里亚尔',
       cards: {
         residential: {
           type: '住宅',
+          scope: '私人项目',
           status: '施工中',
           title: '豪华住宅综合体 — 雅斯敏区，利雅得',
           city: '利雅得',
@@ -415,7 +621,8 @@ export default {
         },
         commercial: {
           type: '商业',
-          status: '招标中',
+          scope: '公共项目',
+          status: '开放报价',
           title: '办公塔楼 — 吉达海滨大道',
           city: '吉达',
           duration: '24 个月',
@@ -423,7 +630,8 @@ export default {
         },
         infrastructure: {
           type: '基础设施',
-          status: '开放',
+          scope: '中介项目',
+          status: '已授标',
           title: '道路与绿化项目 — 达曼',
           city: '达曼',
           duration: '12 个月',
@@ -612,6 +820,11 @@ export default {
       startsFrom: '起价',
       perMonth: 'SAR / 月',
       perMonthShort: 'SAR / 月',
+      // Under a period card the figure is the whole period's price.
+      periodTotal: 'SAR · 整个周期总价',
+      briefSubtitle: '按月订阅，为您开放整个平台。',
+      briefNote: '所有套餐均含技术支持和专属客户经理 · 可随时取消 · 未使用可在 7 天内 100% 退款',
+      seeAll: '查看所有套餐',
       saveX: '节省 {value}%',
       highlights: '主要功能',
       allFeatures: '全部功能',
@@ -629,7 +842,7 @@ export default {
         eyebrow: 'Isnad 升级',
         title: 'Isnad 附加 — 解锁私享场域',
         body: '在月度套餐基础上仅需 {price}，即可解锁 Ahd 私享场域并访问超过 {threshold} 的独家项目。',
-        price: '600 SAR',
+        price: '999 SAR',
         threshold: '1 亿 SAR',
         cta: '添加 Isnad 升级',
         features: [
@@ -683,7 +896,7 @@ export default {
         contractor: {
           basic: {
             description: '面向寻求项目机会、组织报价并在 Taahud 生态内建立可信专业形象的承包商。',
-            prices: { '1': '399', '6': '2,035', '12': '3,830' },
+            prices: { '1': '99', '6': '589', '12': '990' },
             features: [
               '承包商控制台',
               '"Ahd" 私享场域（独家项目）',
@@ -714,7 +927,7 @@ export default {
           },
           premium: {
             description: '面向需要更大机会、更先进 AI 工具,以及更专业的运营与财务项目管理的承包商。',
-            prices: { '1': '499', '6': '2,545', '12': '4,790' },
+            prices: { '1': '119', '6': '699', '12': '1,399' },
             features: [
               '技术与财务报价 — 不限次数',
               'RFQ 提交 — 不限次数',
@@ -739,7 +952,7 @@ export default {
         engineering: {
           basic: {
             description: '面向寻求项目与招标机会,以及在 Taahud 生态内更高效地管理报价与工程运营的工程事务所。',
-            prices: { '1': '499', '6': '2,545', '12': '4,790' },
+            prices: { '1': '69', '6': '399', '12': '699' },
             features: [
               '工程事务所控制台',
               '"Numu" 公共场域（政府项目）',
@@ -774,7 +987,7 @@ export default {
           },
           premium: {
             description: '面向需要更大、更专业机会，更广与承包商及开发商协调，以及高效团队、项目与审批管理工具的工程事务所。',
-            prices: { '1': '599', '6': '3,055', '12': '5,750' },
+            prices: { '1': '99', '6': '589', '12': '990' },
             features: [
               '技术与财务报价 — 不限次数',
               'AI 工程助手 — 不限次数',
@@ -796,7 +1009,7 @@ export default {
         developer: {
           basic: {
             description: '面向需要在统一安全的数字环境中管理与运营项目的房地产开发商。',
-            prices: { '1': '599', '6': '3,055', '12': '5,750' },
+            prices: { '1': '129', '6': '759', '12': '1,290' },
             features: [
               '开发商综合控制台',
               '项目组合管理',
@@ -824,7 +1037,7 @@ export default {
           },
           premium: {
             description: '面向需要更专属机会、对开发决策的智能支持，以及在 Taahud 内强化项目管理与交易的财务/运营特权的房地产开发商。',
-            prices: { '1': '699', '6': '3,565', '12': '6,710' },
+            prices: { '1': '159', '6': '939', '12': '1,590' },
             features: [
               '专属招标与机会',
               'RFQ 提交 — 不限次数',
@@ -848,7 +1061,7 @@ export default {
         supplier: {
           basic: {
             description: '面向需要直接接入承包与房地产开发领域项目及客户的供应商。',
-            prices: { '1': '299', '6': '1,525', '12': '2,870' },
+            prices: { '1': '79', '6': '469', '12': '799' },
             features: [
               '直接供应市场',
               '产品管理',
@@ -874,7 +1087,7 @@ export default {
           },
           premium: {
             description: '面向需要更深市场分析、更广曝光,以及提升销售与信任度的 AI 工具的供应商。',
-            prices: { '1': '399', '6': '2,035', '12': '3,830' },
+            prices: { '1': '99', '6': '589', '12': '990' },
             features: [
               '市场需求与竞争价格分析',
               '供应商可信徽章',
@@ -895,6 +1108,7 @@ export default {
       title: '更多项目正在等待您',
       subtitle: '立即免费注册 — 几分钟内即可开始使用 Taahud 的全部服务。',
       register: '立即免费注册',
+      note: '无需信用卡',
       contact: '联系我们',
     },
     upcoming: {
@@ -912,29 +1126,6 @@ export default {
         label: '佣金推广',
         desc: '一项合作计划，按每笔通过您推荐促成的交易支付佣金 — 提供现成的推广素材、跟踪链接，以及账户内透明的佣金面板。',
         cta: '加入计划',
-      },
-    },
-    integrated: {
-      eyebrow: '一体化平台',
-      title: 'Taahud — 面向项目的智能财务与运营交付',
-      subtitle: '一个智能平台，将合同、交付、审批、付款和托管账户整合到单一安全的数字系统中，覆盖完整的项目生命周期。',
-      pillars: {
-        verify: {
-          title: '验证与认证',
-          desc: '验证承包商和供应商的身份，确保系统中每一方的可信度。',
-        },
-        payments: {
-          title: '审批与付款',
-          desc: '在一个地方跟踪从审批申请到实际拨款的整个付款周期。',
-        },
-        escrow: {
-          title: '托管账户',
-          desc: '为付款提供完整的财务保护，并在满足交付条件时自动放款。',
-        },
-        contracts: {
-          title: '数字合同',
-          desc: '在所有相关方之间以电子方式快速、安全地记录和管理合同。',
-        },
       },
     },
     guarantee: {
@@ -1024,6 +1215,255 @@ export default {
       addressValue: '利雅得，沙特阿拉伯王国',
     },
   },
+  /* 「关于我们」页面 — /about */
+  faq: {
+    title: '常见问题',
+    intro:
+      '关于 Taahud 最常见问题的简要解答：平台性质、注册与套餐、产品与服务、RASD、中介、项目管理、付款与合同，以及平台责任范围。',
+    tabsLabel: '问题分类',
+    notFound: {
+      title: '没有找到您要的答案？',
+      body: '联系我们，我们会解答您的问题，并将其加入常见问题，让更多人受益。',
+      support: '联系客服',
+      contact: '联系我们',
+    },
+  },
+
+  about: {
+    hero: {
+      badge: '关于我们',
+      title: '我们正在打造一个',
+      titleGold: '更透明、更高效的建筑行业。',
+      facts: {
+        projects: '个平台活跃项目',
+        launched: '平台上线年份',
+        licensed: '沙特持牌平台',
+        company: 'Taahud Thaki 信息技术公司',
+      },
+    },
+    why: {
+      eyebrow: '我们为何出发',
+      title: '我们来自这个行业，亲身经历过它的问题。',
+      p1: '我们在承包与供应领域工作多年，遇到的问题和所有人一样：得知机会时为时已晚，口头约定以纠纷收场，付款申请无故拖延，文件散落在 WhatsApp 和邮件之间。',
+      p2Before: '我们寻找解决方案，却找不到适合我们工作方式的工具。',
+      p2Strong: '于是我们亲手打造了 Taahud',
+      p2After: '— 一个平台，让每一方都能找到机会、记录协议、跟进执行，并按时收到应得款项。',
+      before: '使用 Taahud 之前',
+      after: '使用 Taahud 之后',
+      rows: {
+        opportunities: { before: '靠人脉获取机会', after: '公开项目，合适的机会主动送达' },
+        contracts: { before: '纸质合同，条款不清', after: '各方之间经认证的数字合同' },
+        payments: { before: '付款延迟，应收款争议', after: '款项托管，阶段完成即释放' },
+        tracking: { before: '靠电话和消息跟进', after: '项目阶段与文件集中在一个面板' },
+      },
+    },
+    offer: {
+      eyebrow: '我们提供什么',
+      title: '覆盖项目全程的三大支柱',
+      subtitle: '从机会到最后一笔付款 — 每个支柱都源自项目周期内部，而非外部附加。',
+      items: {
+        assignment: {
+          title: '项目委派',
+          body: '发布项目或浏览机会，在同一处联系合适的一方。平台上的每个阶段都对应真实阶段：招标、授标、执行、付款申请、交付。',
+        },
+        contracts: {
+          title: '合同与付款',
+          body: '数字合同，款项存放于 Taahud，仅在阶段完成后释放 — 业主不受损失，承包商的权益也不会落空。每项操作都有记录、日期和责任方。',
+        },
+        rasd: {
+          title: 'RASD — 项目报告',
+          body: 'RASD 从许可阶段起跟踪建筑与房地产开发项目，让您在招标公开之前就知道哪个角色空缺、应该联系谁。',
+        },
+      },
+    },
+    who: {
+      eyebrow: '为谁服务',
+      title: '服务行业各方的统一体系',
+      subtitle: '每类用户在其套餐中享有专属服务，另有在平台框架下运行的产品。',
+      items: {
+        contractors: { title: '承包商与工程事务所', body: '与您业务匹配的机会，合同与付款在一个面板中管理。' },
+        developers: { title: '房地产开发商', body: '发布工作、比较报价，并跟进执行直至交付。' },
+        individuals: { title: '个人与项目业主', body: '发布项目，接收可信承包商的报价，并分阶段付款。' },
+        suppliers: { title: '供应商', body: '了解需要您供货的项目，直达采购负责人。' },
+        brokers: { title: '项目中介', body: '登记您的机会，并在对接前将佣金写入合同。' },
+      },
+      productsEyebrow: 'Taahud 产品',
+      productsSubtitle: '在平台框架下运行的产品，可通过您的套餐或单独订阅使用。',
+      products: {
+        rasd: { title: 'RASD 项目', body: '项目报告与决策者' },
+        solidarity: { title: 'Solidarity', body: '与能补足您需求的一方合作' },
+        isnad: { title: 'Isnad', body: '大型项目与融资机会' },
+        store: { title: 'Taahud 商城', body: '供应商产品与供货请求' },
+        academy: { title: 'Taahud 学院', body: '建筑行业认证课程' },
+      },
+    },
+    vision: {
+      eyebrow: '我们的影响',
+      title: '与沙特 2030 愿景同行',
+      subtitle: '建筑业是国家转型的支柱之一 — Taahud 正在为它构建数字基础设施。',
+      items: {
+        digital: {
+          title: '传统行业的数字化转型',
+          body: '我们将项目周期从纸张和电话转移到一个可追溯的统一体系中 — 为国家转型计划和数字经济贡献力量。',
+        },
+        sme: {
+          title: '赋能中小企业',
+          body: '小型承包商和新兴供应商凭借信息而非人脉获取机会，并通过合同和有保障的付款维护自身权益。',
+        },
+        spending: {
+          title: '支出效率与执行质量',
+          body: '清晰的阶段和与交付挂钩的付款减少停滞与浪费 — 这正是王国大型项目所追求的。',
+        },
+        data: {
+          title: '建筑行业的国家级数据',
+          body: 'RASD 为市场项目及其参与方建立参考库，让决策基于信息而非猜测。',
+        },
+      },
+      note: 'Taahud 是一项私营部门倡议，并非政府机构，也不隶属于任何官方机构。',
+    },
+    trust: {
+      eyebrow: '官方认证',
+      title: '沙特持牌平台',
+      subtitle: 'Taahud Thaki 信息技术公司 — 已在官方机构登记，并依照王国现行法规运营。',
+      items: {
+        sbc: { title: '沙特商业中心', body: '有效商业登记' },
+        saip: { title: '沙特知识产权局', body: '注册商标' },
+        cst: { title: '通信、空间与技术委员会', body: '持牌数字平台' },
+      },
+    },
+  },
+
+  /* /pricing page, in the order of «باقات تعاهُد»: role plans (content
+     in landing.plans.tiers), then free for individuals and brokers,
+     then projects & arenas, then Taahud products. free.*.rows are
+     arrays read straight from the dictionary (PricingPage.jsx). */
+  pricing: {
+    priceNote: '价格以沙特里亚尔计；6 个月和年度价格为整个周期的总价，而非每月价格。',
+    tierNames: { basic: 'Basic', premium: 'Premium' },
+    tierTags: { basic: '基础', premium: '最全面' },
+    cols: { '1': '按月', '6': '6 个月', '12': '按年' },
+    currency: 'SAR',
+    groups: { highlights: '主要亮点', services: '服务', tools: '工具' },
+    soon: '即将上线',
+    includesBasic: '包含 Basic 的全部内容，另加：',
+    choose: '选择 {name}',
+    free: {
+      title: '个人与项目中介免费',
+      subtitle: '注册免费，个人与项目中介无需订阅。',
+      colService: '服务与工具',
+      colStatus: '可用状态',
+      status: { available: '可用', addon: '附加服务', soon: '即将上线' },
+      cta: '免费注册',
+      individuals: {
+        title: '个人与项目业主',
+        badge: '首个项目免费',
+        note: '注册免费，并包含免费发布一个项目。首个项目之后的项目适用相应的服务或套餐。',
+        rows: [
+          { text: '在 Taahud 项目中发布您的项目', status: 'available' },
+          { text: '跟进您的项目阶段', status: 'available' },
+          { text: '来自承包商与工程事务所的报价', status: 'available' },
+          { text: '分阶段付款', status: 'available' },
+          { text: '付款担保（Escrow）', status: 'available' },
+          { text: '资金钱包', status: 'available' },
+          { text: '中介草稿', status: 'available' },
+          { text: '房产查验', status: 'addon' },
+          { text: '合同审核', status: 'addon' },
+          { text: '项目计算器', status: 'addon' },
+          { text: '房地产投资', status: 'addon' },
+          { text: '文件与资料管理', status: 'soon' },
+          { text: '消息 · 通知 · 可信评价', status: 'soon' },
+        ],
+      },
+      brokers: {
+        title: '项目中介',
+        badge: '免费，无需订阅',
+        note: '注册和使用均免费，无需订阅。',
+        rows: [
+          { text: '登记项目机会', status: 'available' },
+          { text: '对接前将佣金写入合同', status: 'available' },
+          { text: '中介草稿', status: 'available' },
+          { text: '资金钱包', status: 'available' },
+          { text: '认证中介标识', status: 'soon' },
+          { text: '消息 · 通知', status: 'soon' },
+        ],
+      },
+    },
+    cols4: { audience: '展示对象', forWhom: '适用对象', desc: '说明', sub: '订阅' },
+    arenas: {
+      title: '项目与场域',
+      colName: '项目与场域',
+      included: '已含于套餐',
+      addonTag: '附加',
+      rows: {
+        taahud: {
+          title: 'Taahud 项目',
+          desc: '平台内的主要项目场域，项目以三种标签发布：“公开”用于公共及政府项目与招标；“私享”用于 Taahud 客户发布、面向合适各方征集报价的项目；“中介”用于项目中介登记的机会，并在对接前将中介佣金写入合同。',
+          audience: '承包商 · 工程事务所 · 供应商（仅限“公开”标签）',
+        },
+        arena: {
+          title: 'Arena 房地产开发项目',
+          desc: '开发商在此发布其项目以及投资和房地产机会，以接收报价、建立合作，并展示待售或可投资的房产。',
+          audience: '承包商 · 工程事务所',
+        },
+        isnad: {
+          title: 'Isnad 场域',
+          desc: '融资与配套服务场域：为需要项目融资的一方对接合适的融资机构，并委派项目运营所需的配套服务 — 政府手续代办机构、劳务供应、人力资源服务、会计服务等。',
+          audience: '开发商 · 承包商 · 工程事务所 · 供应商 · 融资机构 · 配套服务提供商',
+          cta: '添加 Isnad 场域',
+        },
+      },
+    },
+    products: {
+      title: 'Taahud 产品',
+      colName: '产品',
+      note: '各产品在平台框架下运行，可单独订阅，也可加入您的套餐。',
+      rows: {
+        rasd: {
+          title: 'RASD 项目',
+          desc: '建筑与房地产开发项目及其公司和决策者的报告，并针对您关注的地区和行业提供提醒。',
+          audience: '承包商 · 工程事务所 · 供应商 · 开发商',
+          price: '获取报价',
+          priceNote: '根据业务和用户数量',
+          cta: '登记意向',
+        },
+        solidarity: {
+          title: 'Solidarity',
+          desc: '与能补足您所需的一方合作 — 施工、土地、供应或专业知识 — 以承接更大型或多专业的项目。',
+          audience: '承包商 · 工程事务所 · 供应商 · 开发商',
+          cta: '立即订阅',
+        },
+        store: {
+          title: 'Taahud 商城',
+          desc: '平台内的供应商商城：展示产品与价格，接收询价请求（RFQ），并跟踪供货与配送。',
+          audience: '供应商 · 承包商 · 工程事务所',
+        },
+        academy: {
+          title: 'Taahud 学院',
+          desc: '建筑行业认证课程。',
+          audience: '平台全体成员',
+        },
+      },
+    },
+    addons: {
+      title: '附加服务与独立服务',
+      subtitle: 'Isnad 场域可添加到您的套餐，Solidarity 无需套餐即可购买，RASD 按您的业务定价。',
+      badges: { rasd: '按需报价', isnad: '添加到套餐', solidarity: '无需套餐' },
+      rasdDesc: '建筑与房地产开发市场的项目、企业与决策者报告——在招标之前就掌握机会。',
+      rasdPoints: {
+        planning: '处于规划和招标前阶段的项目',
+        roles: '尚未分配的角色——您的切入点',
+        contacts: '决策者及联系方式',
+      },
+      isnadDesc: '为需要项目融资的一方对接合适的融资机构，并委派项目运营所需的配套服务——政府手续办理、劳务供应、人力资源服务、会计服务等。',
+      solidarityDesc: '与能补足您需求的一方共同参与机会：施工、土地、供应或专业经验。',
+    },
+    guarantee: {
+      label: 'Taahud 保障：',
+      body: '未使用可在 (7) 天内 100% 退款，依据',
+      link: '条款与退款政策',
+    },
+  },
+
   legal: {
     chrome: {
       backHome: '返回首页',
@@ -1265,6 +1705,11 @@ export default {
     sidebar: {
       navigation: '导航',
       arenas: '场域',
+      products: '产品',
+      projects: '项目',
+      rasd: 'RASD 项目',
+      arenaDev: 'Arena 房地产开发项目',
+      active: '已启用',
       soon: '即将推出',
       newProject: '新项目',
       logout: '退出登录',
@@ -1913,6 +2358,7 @@ export default {
           budgetLabel: '预计预算',
           budgetPlaceholder: '100000',
           budgetHint: '项目分配的总预算。',
+          budgetPrivate: '在接受报价之前，预算不会向服务提供方显示。',
         },
       },
       fields: {
@@ -2174,7 +2620,7 @@ export default {
       lockReason: '仅向 Taahud 客户开放。',
     },
     solidarity: {
-      label: 'Solidarity 场域',
+      label: 'Solidarity',
       short: 'Solidarity',
       desc: '承包商、工程办公室与开发商之间针对更大规模项目的跨专业合作。',
       lockReason: '需要 Solidarity 附加服务。',
@@ -2191,7 +2637,7 @@ export default {
       short: 'Isnad',
       desc: '专享访问大型项目与融资机会（+1 亿 SAR）。',
       lockReason: '需要 Isnad 升级。',
-      upgradePrice: '600 SAR / 月',
+      upgradePrice: '999 SAR / 月',
     },
     unknownLockReason: '此选项不向您的账户类型开放。',
   },
@@ -2683,6 +3129,7 @@ export default {
         partners: 'Taahud 合作伙伴',
         brokers: '中介',
         opportunities: '商机',
+        rasd: 'RASD 数据',
         subscriptions: '订阅',
         payments: '付款',
         withdrawals: '提现申请',

@@ -200,6 +200,32 @@ function unwrapPage(res) {
 }
 
 
+/* The three RASD entities share one route shape, so one builder. */
+function rasdEntity(entity) {
+  const base = `/admin/rasd/${entity}`;
+  return {
+    async list(filters = {}) {
+      return unwrapPage(await http.get(base, { params: strip(filters) }));
+    },
+    async get(id) {
+      return unwrap(await http.get(`${base}/${id}`));
+    },
+    async create(payload) {
+      return unwrap(await http.post(base, payload));
+    },
+    async update(id, payload) {
+      return unwrap(await http.patch(`${base}/${id}`, payload));
+    },
+    async remove(id, reason) {
+      return http.delete(`${base}/${id}`, { data: strip({ reason }) });
+    },
+    async restore(id) {
+      return unwrap(await http.post(`${base}/${id}/restore`));
+    },
+  };
+}
+
+
 /* ============================================================
  *  Public service surface
  * ============================================================ */
@@ -1119,6 +1145,121 @@ export const admin = {
      *  Allowed at any live stage: draft, pending_review, or active. */
     async cancel(id, reason) {
       return http.post(`/admin/opportunities/${id}/cancel`, { reason });
+    },
+  },
+
+
+  /* ============================================================
+   * RASD — maintaining the market-intelligence dataset
+   * ----------------------------------------------------------------
+   * The ADMIN side of رصد (RASD_ADMIN_API.md v1.4) — separate from the
+   * subscriber reads in services/rasd.js, which stay untouched.
+   *
+   *   GET    /admin/rasd/summary
+   *   {entity} = projects | companies | contacts:
+   *   GET    /admin/rasd/{entity}               list + filters
+   *   POST   /admin/rasd/{entity}               create
+   *   GET    /admin/rasd/{entity}/:id           show (incl. soft-deleted)
+   *   PATCH  /admin/rasd/{entity}/:id           update
+   *   DELETE /admin/rasd/{entity}/:id           soft delete { reason? }
+   *   POST   /admin/rasd/{entity}/:id/restore
+   *   POST   /admin/rasd/classify-companies     ?force=true re-classifies all
+   *   POST   /admin/rasd/imports                multipart { file, type, dry_run }
+   *   GET    /admin/rasd/imports                batch list
+   *   GET    /admin/rasd/imports/:batch         poll until not queued/running
+   *   POST   /admin/rasd/imports/:batch/run     dry run → new real batch
+   *   GET    /admin/rasd/imports/:batch/rejections  ?format=csv downloads
+   *   POST   /admin/rasd/imports/:batch/undo    deletes what it CREATED only
+   *
+   * There is no hard delete anywhere in رصد. The «trash» screen is the
+   * same list with trashed=only.
+   *
+   * Sorting is `sort` + `direction` (asc|desc) — the doc's `-field`
+   * prefix is not what the BE validates. Filters are passed through
+   * as given (minus empties): the pages own the filter vocabulary.
+   *
+   * Derived columns (name_normalized, website_normalized, external_ref,
+   * batch ids) are never sent — the BE recomputes them on save.
+   * ============================================================ */
+  rasd: {
+    /** GET /admin/rasd/summary — flat, no `data` wrapper. */
+    async summary() {
+      return http.get('/admin/rasd/summary');
+    },
+
+    projects: rasdEntity('projects'),
+    companies: rasdEntity('companies'),
+    contacts: rasdEntity('contacts'),
+
+    /** POST /admin/rasd/classify-companies. Without force it only touches
+     *  unclassified rows; force=true re-classifies everyone and can wipe
+     *  manual categories — the UI keeps it behind a second confirmation.
+     *  Returns { message, force, output } — `output` is shown verbatim. */
+    async classifyCompanies({ force = false } = {}) {
+      return http.post('/admin/rasd/classify-companies', null, {
+        params: force ? { force: 1 } : undefined,
+      });
+    },
+
+    imports: {
+      /** GET /admin/rasd/imports — newest first.
+       *  Filters: type, status, dry_run (1/0), per_page (≤50). */
+      async list(filters = {}) {
+        return unwrapPage(
+          await http.get('/admin/rasd/imports', { params: strip(filters) })
+        );
+      },
+
+      /** GET /admin/rasd/imports/:batch */
+      async get(id) {
+        return unwrap(await http.get(`/admin/rasd/imports/${id}`));
+      },
+
+      /**
+       * POST /admin/rasd/imports — 202 with the queued batch.
+       * Always a dry run from the UI: the doc is explicit that a direct
+       * real import must not be offered. The real run is `run()` on a
+       * completed dry run, which reuses the exact file that was checked.
+       */
+      async upload({ file, type }) {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('type', type);
+        form.append('dry_run', '1');
+        return unwrap(
+          await http.post('/admin/rasd/imports', form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+        );
+      },
+
+      /** POST /admin/rasd/imports/:batch/run — returns the NEW real batch. */
+      async run(id) {
+        return unwrap(await http.post(`/admin/rasd/imports/${id}/run`));
+      },
+
+      /** GET /admin/rasd/imports/:batch/rejections — [{ row, errors[], original{} }]. */
+      async rejections(id) {
+        const res = await http.get(`/admin/rasd/imports/${id}/rejections`);
+        return Array.isArray(res?.data) ? res.data : [];
+      },
+
+      /** GET …/rejections?format=csv — the original columns plus «سبب الرفض».
+       *  Returns a Blob; the caller saves it. */
+      async rejectionsCsv(id) {
+        return http.get(`/admin/rasd/imports/${id}/rejections`, {
+          params: { format: 'csv' },
+          responseType: 'blob',
+        });
+      },
+
+      /** POST /admin/rasd/imports/:batch/undo →
+       *  { message, deleted: { projects, companies, contacts, updated_only } }.
+       *  422s carry a ready-to-show Arabic message (and `counts` when the
+       *  batch only updated rows). */
+      async undo(id) {
+        return http.post(`/admin/rasd/imports/${id}/undo`);
+      },
     },
   },
 

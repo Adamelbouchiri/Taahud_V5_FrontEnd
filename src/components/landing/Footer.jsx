@@ -46,11 +46,10 @@ const AUTHORITIES = toLogoList(AUTHORITY_MODULES);
 
 const NAV_PLATFORM = [
   { id: 'services', to: '/services' },
-  { id: 'rasd', href: '#rasd' },
+  { id: 'rasd', to: '/#rasd' },
   { id: 'partners', to: '/partners' },
-  { id: 'testimonials', href: '#testimonials' },
-  { id: 'plans', href: '#plans' },
-  { id: 'contact', to: '/contact' },
+  { id: 'subscriptions', to: '/pricing' },
+  { id: 'faq', to: '/faq' },
 ];
 
 const LEGAL_LINKS = [

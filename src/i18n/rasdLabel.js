@@ -42,5 +42,6 @@ export function rasdLabels(t) {
     confidence: resolver(t, 'confidence'),
     contactRole: resolver(t, 'contactRole'),
     category: resolver(t, 'category'),
+    size: resolver(t, 'size'),
   };
 }

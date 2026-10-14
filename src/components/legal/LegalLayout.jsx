@@ -261,14 +261,16 @@ function Section({ section }) {
         </div>
       ))}
 
-      {section.closing && (
+      {/* closing — one paragraph, or several when the text has them */}
+      {[].concat(section.closing || []).map((c, i) => (
         <p
+          key={`c-${i}`}
           className="m-0 mt-3 leading-[1.9] text-[14.5px] italic"
           style={{ color: 'var(--text-muted)' }}
         >
-          {section.closing}
+          {c}
         </p>
-      )}
+      ))}
     </section>
   );
 }
