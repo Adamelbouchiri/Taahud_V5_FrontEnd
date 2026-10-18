@@ -192,11 +192,12 @@ const ARENA_ICONS = {
 /* Which sidebar group each arena sits in:
      products  المنتجات — sold as its own product (next to رصد)
      arenas    الساحات  — the add-on arena
-     projects  المشاريع — the listings that come with a plan */
+     projects  المشاريع — the listings that come with a plan
+   The public (نمو) arena has no sidebar link — the private arena,
+   branded مشاريع تعاهد, is the plan's listing. */
 const ARENA_GROUPS = {
   solidarity: 'products',
   isnad: 'arenas',
-  public: 'projects',
   private: 'projects',
   arena: 'projects',
 };
@@ -591,7 +592,7 @@ export default function Sidebar({ open, onClose }) {
             )}
 
             {/* المشاريع — the project listings that come with a plan
-                (نمو، عهد، أرينا), each per the V5 viewableBy matrix. */}
+                (تعاهد، أرينا), each per the V5 viewableBy matrix. */}
             {projectArenas.length > 0 && (
               <>
                 <GroupHeading>{t('dashboard.sidebar.projects')}</GroupHeading>

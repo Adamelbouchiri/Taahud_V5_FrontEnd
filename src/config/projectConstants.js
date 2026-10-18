@@ -61,8 +61,8 @@ export const ARENAS = [
   },
   {
     value: 'private',
-    label: 'مشاريع عهد',
-    shortLabel: 'عهد',
+    label: 'مشاريع تعاهد',
+    shortLabel: 'تعاهد',
     desc: 'مشاريع حصريّة لعملاء تعاهد — تُعرض على المقاولين والمكاتب الهندسيّة.',
     color: '#136d4a',
     accentSoft: 'rgba(19,109,74,0.08)',

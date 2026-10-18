@@ -12,7 +12,7 @@ import { useTranslation } from '../../i18n/LanguageContext';
  *      line that rotates through ROTATE_KEYS; the subtitle under it
  *      rotates in step, so each line keeps its own explanation
  *    - Two CTAs: free trial → /register, «how it works» → #how
- *    - Trial note, then the «2,500+ active projects» pill
+ *    - Trial note, then the «3,500+ active projects» pill
  *
  *  Rotating lines are stacked in one grid cell rather than absolutely
  *  positioned, so the box is always as tall as the longest line in

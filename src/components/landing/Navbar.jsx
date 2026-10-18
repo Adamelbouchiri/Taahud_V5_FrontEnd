@@ -74,9 +74,9 @@ function navLinksFor(t) {
     {
       key: 'services',
       label: t('nav.services'),
-      // The «all services» page — the mobile drawer and the menu's
-      // footer link both land here.
-      servicesMenu: { to: '/services', route: true },
+      // The tabbed menu is desktop-only; the mobile drawer links to
+      // the landing page's role cards instead.
+      servicesMenu: { href: '#services' },
     },
     {
       key: 'plans',
@@ -173,8 +173,8 @@ export default function Navbar() {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      // Section lives on the landing page; we're on /services or
-      // /contact — bounce to "/" with the hash so LandingPage's
+      // Section lives on the landing page; we're on another page
+      // (/about, /contact…) — bounce to "/" with the hash so LandingPage's
       // hash-scroll effect can pick it up after render.
       navigate('/' + href);
     }
@@ -511,7 +511,6 @@ function NavDropdown({ link, onNavigate, t }) {
               dir={dir}
               t={t}
               onStart={() => handleItem({ to: '/register', route: true })}
-              onAll={() => handleItem(link.servicesMenu)}
             />
           ) : (
             <ul className="m-0 p-2 flex flex-col gap-0.5">
@@ -591,7 +590,7 @@ function NavDropdown({ link, onNavigate, t }) {
  *  their tab shows only the card. A strip along the bottom lists
  *  what every account gets, what's an add-on, and what's coming.
  * ============================================================ */
-function ServicesMenu({ role, setRole, dir, t, onStart, onAll }) {
+function ServicesMenu({ role, setRole, dir, t, onStart }) {
   const active = ROLES.find((r) => r.key === role) || ROLES[0];
   const Icon = active.icon;
   const arrow = dir === 'rtl' ? '←' : '→';
@@ -765,7 +764,6 @@ function ServicesMenu({ role, setRole, dir, t, onStart, onAll }) {
 
       {/* Shared strip */}
       <div
-        className="flex flex-wrap items-end justify-between gap-3"
         style={{
           padding: '14px 26px',
           borderTop: '1px solid var(--border-default)',
@@ -790,14 +788,6 @@ function ServicesMenu({ role, setRole, dir, t, onStart, onAll }) {
             </p>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onAll}
-          className="text-[13px] font-semibold bg-transparent border-0 p-0 cursor-pointer"
-          style={{ color: 'var(--text-brand)', fontFamily: 'inherit' }}
-        >
-          {t('nav.servicesAll')} {arrow}
-        </button>
       </div>
     </>
   );
@@ -931,17 +921,17 @@ function MiniBadge({ children }) {
 
 /* ============================================================
  *  MobileNavItem — flat link or expandable group for the mobile
- *  drawer. The Services menu collapses to one row per role, each
- *  going to /services — the tabbed menu is desktop-only.
+ *  drawer. The Services menu is a flat link to the landing page's
+ *  role cards — the tabbed menu is desktop-only.
  * ============================================================ */
 function MobileNavItem({ link, onNavigate, t }) {
   const [open, setOpen] = useState(false);
-  const hasChildren = !!(link.items || link.servicesMenu);
+  const hasChildren = !!link.items;
 
   if (!hasChildren) {
     return (
       <a
-        onClick={() => onNavigate(link)}
+        onClick={() => onNavigate(link.servicesMenu || link)}
         className="py-3 inline-flex items-center gap-2 text-[15px] font-medium cursor-pointer border-b last:border-0"
         style={{
           color: 'var(--text-ink-soft)',
@@ -954,16 +944,6 @@ function MobileNavItem({ link, onNavigate, t }) {
       </a>
     );
   }
-
-  const isServices = !!link.servicesMenu;
-  const childItems = link.items
-    ? link.items
-    : ROLES.map((r) => ({
-        key: r.key,
-        label: t(roleMenuTitleKey(r)),
-        soon: r.soon,
-        ...link.servicesMenu,
-      }));
 
   return (
     <div
@@ -990,7 +970,7 @@ function MobileNavItem({ link, onNavigate, t }) {
           className="m-0 pb-2 ps-2 flex flex-col gap-0.5"
           style={{ listStyle: 'none', padding: 0 }}
         >
-          {childItems.map((it) => (
+          {link.items.map((it) => (
             <li key={it.key} className="list-none">
               <button
                 type="button"
@@ -1032,28 +1012,6 @@ function MobileNavItem({ link, onNavigate, t }) {
               </button>
             </li>
           ))}
-          {isServices && (
-            <li className="list-none mt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate(link.servicesMenu)}
-                className="w-full flex items-center gap-2 text-start"
-                style={{
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 13.5,
-                  fontWeight: 600,
-                  color: 'var(--text-brand)',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {t('nav.servicesAll')}
-              </button>
-            </li>
-          )}
         </ul>
       )}
     </div>

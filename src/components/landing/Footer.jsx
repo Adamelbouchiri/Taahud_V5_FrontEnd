@@ -45,7 +45,7 @@ const AUTHORITIES = toLogoList(AUTHORITY_MODULES);
  * ============================================================ */
 
 const NAV_PLATFORM = [
-  { id: 'services', to: '/services' },
+  { id: 'services', to: '/#services' },
   { id: 'rasd', to: '/#rasd' },
   { id: 'partners', to: '/partners' },
   { id: 'subscriptions', to: '/pricing' },

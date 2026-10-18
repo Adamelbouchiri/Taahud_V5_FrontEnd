@@ -28,7 +28,7 @@ import Footer from '../components/landing/Footer';
 export default function LandingPage() {
   // When the landing page mounts (or its hash changes), scroll to
   // the section named in the URL hash. Cross-page links from
-  // /services or /contact bounce here with "/#rasd" etc.
+  // /about or /contact bounce here with "/#rasd" etc.
   const { hash } = useLocation();
   useEffect(() => {
     if (!hash) return;

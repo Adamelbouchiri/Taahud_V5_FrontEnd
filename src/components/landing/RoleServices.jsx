@@ -10,7 +10,7 @@ import { ROLES, openServicesMenu } from './landingRoles';
  *  of its own: on desktop it scrolls to the top and opens the
  *  navbar's Services menu on that role's tab, so the full list lives
  *  in one place. The desktop nav is hidden below `lg`, so there the
- *  card goes to /services instead.
+ *  cards are informational only.
  *
  *  Suppliers are «قريباً» — the card shows, but doesn't click.
  * ============================================================ */
@@ -22,12 +22,9 @@ export default function RoleServices() {
   const navigate = useNavigate();
 
   const openRole = (role) => {
-    if (window.matchMedia?.(LG).matches) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      openServicesMenu(role);
-    } else {
-      navigate('/services');
-    }
+    if (!window.matchMedia?.(LG).matches) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    openServicesMenu(role);
   };
 
   return (
@@ -187,6 +184,11 @@ export default function RoleServices() {
         .rs-soon { cursor: default; background: var(--bg-surface); }
         .rs-soon:hover { transform: none; box-shadow: none; border-color: var(--border-default); }
         .rs-soon .rs-ic { color: var(--text-muted); background: var(--bg-surface-soft); }
+        @media (max-width: 1023px) {
+          .rs-card { cursor: default; }
+          .rs-card:hover { transform: none; box-shadow: none; border-color: var(--border-default); }
+          .rs-more { display: none; }
+        }
         @media (max-width: 1100px) { .rs-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 860px)  { .rs-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 520px)  { .rs-grid { grid-template-columns: 1fr; } }

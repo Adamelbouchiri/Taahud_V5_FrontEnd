@@ -238,7 +238,7 @@ export default {
       ctaHow: 'پلیٹ فارم کیسے کام کرتا ہے؟',
       note: '14 دن کے لیے مفت رجسٹر کریں',
       noteStrong: 'کریڈٹ کارڈ کی ضرورت نہیں',
-      activeProjects: { value: '2,500', label: 'پلیٹ فارم پر فعال منصوبے' },
+      activeProjects: { value: '3,500', label: 'پلیٹ فارم پر فعال منصوبے' },
     },
     how: {
       title: 'Taahud کیسے کام کرتا ہے؟',

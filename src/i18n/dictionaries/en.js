@@ -238,7 +238,7 @@ export default {
       ctaHow: 'How does it work?',
       note: 'Sign up free for 14 days',
       noteStrong: 'No credit card required',
-      activeProjects: { value: '2,500', label: 'active projects on the platform' },
+      activeProjects: { value: '3,500', label: 'active projects on the platform' },
     },
     how: {
       title: 'How does Taahud work?',
@@ -2459,7 +2459,7 @@ export default {
             ],
             insteadLabel: 'Where to post instead',
             insteadBody:
-              'Choose the Private arena to post your own project, or Solidarity if you are looking for a partner rather than a contractor.',
+              'Choose Taahud projects to post your own project, or Solidarity if you are looking for a partner rather than a contractor.',
             browseCta: 'Browse this arena',
             ok: 'Got it',
           },
@@ -2821,8 +2821,8 @@ export default {
       lockReason: 'Public opportunities are aggregated automatically from external sources.',
     },
     private: {
-      label: 'Private arena — Ahd',
-      short: 'Ahd',
+      label: 'Taahud projects',
+      short: 'Taahud',
       desc: "Exclusive projects from Taahud clients — shown to contractors and engineering offices.",
       lockReason: 'Available to Taahud clients only.',
     },

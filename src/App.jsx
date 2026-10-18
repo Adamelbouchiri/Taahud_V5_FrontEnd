@@ -10,7 +10,6 @@ import RegisterPage from './pages/RegisterPage';
 import OtpPage from './pages/OtpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import StorePage from './pages/StorePage';
-import ServicesPage from './pages/ServicesPage';
 import ContactPage from './pages/ContactPage';
 import PartnersPage from './pages/PartnersPage';
 import AboutPage from './pages/AboutPage';
@@ -174,7 +173,6 @@ function AppShell() {
             and admin sidebars (for authenticated users). The page
             itself shows a coming-soon screen for now. */}
         <Route path="/store" element={<StorePage />} />
-        <Route path="/services" element={<ServicesPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />

@@ -237,7 +237,7 @@ export default {
       ctaHow: '平台如何运作？',
       note: '免费注册 14 天',
       noteStrong: '无需信用卡',
-      activeProjects: { value: '2,500', label: '个平台活跃项目' },
+      activeProjects: { value: '3,500', label: '个平台活跃项目' },
     },
     how: {
       title: 'Taahud 如何运作？',
