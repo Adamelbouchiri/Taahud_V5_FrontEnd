@@ -1,13 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Filter, Sparkles, DoorOpen, Building2 } from 'lucide-react';
 import { rasd, readAccessDenial, isRasdValidationError } from '../../services/rasd';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { rasdLabels } from '../../i18n/rasdLabel';
 import { cityLabel } from '../../config/cityTranslations';
 import useRasdSummary from '../../hooks/useRasdSummary';
 import RasdAccessNotice from '../../components/rasd/RasdAccessNotice';
-import RasdProjectCard from '../../components/rasd/RasdProjectCard';
+import IdentifierChip from '../../components/IdentifierChip';
+import { ProjectQuickPreview } from '../../components/rasd/RasdQuickPreview';
+import Ltr from '../../components/Ltr';
+import {
+  RasdDashStyles,
+  RasdDash,
+  InvCard,
+  InvCards,
+  DataTable,
+  LinkRow,
+  RowGo,
+  STAGE_CHIP,
+} from '../../components/rasd/RasdDashKit';
+import { formatNumber } from '../../utils/money';
+import { formatDate } from '../../utils/date';
+import { regionLabel } from '../../config/cityTranslations';
 import {
   PageHeader,
   Card,
@@ -25,7 +40,110 @@ import {
   RASD_SORTS,
   RASD_PER_PAGE,
   hasValueData,
+  showProgress,
+  progressValue,
 } from '../../config/rasdConstants';
+
+const CONFIDENCE_CHIP = { high: 'green', medium: 'gold', needs_verification: 'muted' };
+
+/* At most this many open-role chips per row; the rest fold into «+N»
+   so one busy project can't stretch the whole table. */
+const MAX_ROLE_CHIPS = 2;
+
+/* ---------- one table row ----------
+ *  Same nullable rules as the old card: `estimated_value` and
+ *  `announced_at` render their own «not announced» copy, never a zero
+ *  or a blank cell. Open roles are flat Arabic strings in the list
+ *  shape, so they're rendered as sent. */
+function ProjectRow({ project, t, lang, rtl, labels, onOpen }) {
+  const roles = project.open_roles || [];
+  const extra = roles.length - MAX_ROLE_CHIPS;
+  const region =
+    project.region && project.region !== project.city ? regionLabel(project.region, lang) : '';
+
+  return (
+    <LinkRow onOpen={onOpen}>
+      <td style={{ minWidth: 220 }}>
+        <div className="rd-cell-p">{project.name}</div>
+        <div className="rd-cell-s flex items-center gap-1.5 flex-wrap">
+          <span>{labels.sector(project.sector, project.sector_label)}</span>
+          {project.is_internal && (
+            <span className="rd-chip navy">{t('rasd.projects.internal')}</span>
+          )}
+          <IdentifierChip identifier={project.taid} />
+        </div>
+      </td>
+      <td>
+        <div>{project.city ? cityLabel(project.city, lang) : '—'}</div>
+        {region && <div className="rd-cell-s">{region}</div>}
+      </td>
+      <td>
+        {project.stage ? (
+          <span className={`rd-chip ${STAGE_CHIP[project.stage] || 'muted'}`}>
+            {labels.stage(project.stage, project.stage_label)}
+          </span>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+        {showProgress(project) && (
+          <div className="rd-cell-s">
+            {t('rasd.projects.progressDone', { percent: `${progressValue(project)}%` })}
+          </div>
+        )}
+      </td>
+      <td>
+        {roles.length ? (
+          <div className="rd-chips">
+            {roles.slice(0, MAX_ROLE_CHIPS).map((r, i) => (
+              <span key={`${r}-${i}`} className="rd-chip gold">
+                {r}
+              </span>
+            ))}
+            {extra > 0 && (
+              <span className="rd-chip gold" title={roles.slice(MAX_ROLE_CHIPS).join('، ')}>
+                <Ltr>+{extra}</Ltr>
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+      </td>
+      <td>
+        {project.confidence ? (
+          <span className={`rd-chip ${CONFIDENCE_CHIP[project.confidence] || 'muted'}`}>
+            {labels.confidence(project.confidence, project.confidence_label)}
+          </span>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+      </td>
+      <td className="rd-num">
+        {project.estimated_value != null ? (
+          <>
+            <Ltr>{formatNumber(project.estimated_value, lang, 0, { latin: true })}</Ltr>{' '}
+            {t('common.currency')}
+          </>
+        ) : (
+          <span className="rd-muted">{t('rasd.projects.valueUndisclosed')}</span>
+        )}
+      </td>
+      <td className="rd-num">
+        {project.announced_at ? (
+          formatDate(project.announced_at, lang, { latin: true })
+        ) : (
+          <span className="rd-muted">{t('rasd.projects.notAnnounced')}</span>
+        )}
+      </td>
+      <td className="rd-num">
+        {project.updated_at ? formatDate(project.updated_at, lang, { latin: true }) : '—'}
+      </td>
+      <td>
+        <RowGo rtl={rtl} />
+      </td>
+    </LinkRow>
+  );
+}
 
 /* ============================================================
  *  RasdProjectsPage — /rasd/projects
@@ -52,12 +170,14 @@ import {
  * ============================================================ */
 export default function RasdProjectsPage() {
   const navigate = useNavigate();
-  const { t, lang } = useTranslation();
+  const { t, lang, dir } = useTranslation();
   const labels = useMemo(() => rasdLabels(t), [t]);
   const [params, setParams] = useSearchParams();
 
   const { summary } = useRasdSummary();
   const showValueControls = hasValueData(summary.totals);
+  const totals = summary.totals || {};
+  const num = (n) => formatNumber(n ?? 0, lang, 0, { latin: true });
 
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -65,6 +185,10 @@ export default function RasdProjectsPage() {
   const [error, setError] = useState('');
   const [denial, setDenial] = useState(null);
   const [invalid, setInvalid] = useState(false);
+  // Row click opens the quick-preview drawer; «open full project»
+  // inside it navigates.
+  const [preview, setPreview] = useState(null);
+  const closePreview = useCallback(() => setPreview(null), []);
 
   /* ---------- filters, read straight off the URL ---------- */
   const q = params.get('q') || '';
@@ -216,6 +340,54 @@ export default function RasdProjectsPage() {
         subtitle={t('rasd.projects.subtitle')}
       />
 
+      {/* Summary cards — the table below is unchanged. The first card
+          counts the CURRENT filtered result (meta.total); the rest are
+          whole-dataset totals from /rasd/summary. */}
+      <RasdDash>
+        <RasdDashStyles />
+        <InvCards>
+          <InvCard
+            icon={Filter}
+            tone="navy"
+            lang={lang}
+            value={loading || meta?.total == null ? '—' : meta.total}
+            label={t('rasd.dash.matching')}
+            note={
+              totals.projects != null
+                ? t('rasd.dash.matchingProjectsNote', { total: num(totals.projects) })
+                : null
+            }
+          />
+          <InvCard
+            icon={Sparkles}
+            tone="gold"
+            goldValue
+            lang={lang}
+            value={totals.projects_with_open_roles ?? '—'}
+            label={t('rasd.dash.projectsWithRoles')}
+            note={hasGap ? t('rasd.dash.filterOn') : t('rasd.dash.filterOff')}
+            onClick={() => setFilter('has_gap', !hasGap)}
+          />
+          <InvCard
+            icon={DoorOpen}
+            tone="gold"
+            lang={lang}
+            value={totals.open_roles ?? '—'}
+            label={t('rasd.dash.openRoles')}
+            note={t('rasd.dash.openRolesNote')}
+          />
+          <InvCard
+            icon={Building2}
+            tone="green"
+            lang={lang}
+            value={totals.companies ?? '—'}
+            label={t('rasd.overview.totals.companies')}
+            note={t('rasd.dash.companiesNote')}
+            onClick={() => navigate('/rasd/companies')}
+          />
+        </InvCards>
+      </RasdDash>
+
       <FilterBar
         title={t('rasd.projects.filters.title')}
         activeCount={activeCount}
@@ -294,8 +466,8 @@ export default function RasdProjectsPage() {
 
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="shimmer" style={{ height: 116, borderRadius: 14 }} />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="shimmer" style={{ height: 48, borderRadius: 10 }} />
           ))}
         </div>
       ) : invalid ? (
@@ -354,23 +526,50 @@ export default function RasdProjectsPage() {
           />
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {rows.map((project) => (
-            <RasdProjectCard
-              key={project.id}
-              project={project}
-              t={t}
-              lang={lang}
-              labels={labels}
-            />
-          ))}
-        </div>
+        <RasdDash>
+          <DataTable
+            head={[
+              t('rasd.table.project'),
+              t('rasd.table.location'),
+              t('rasd.table.stage'),
+              t('rasd.table.openRoles'),
+              t('rasd.table.confidence'),
+              t('rasd.table.value'),
+              t('rasd.table.announced'),
+              t('rasd.table.updated'),
+              '',
+            ]}
+          >
+            {rows.map((project) => (
+              <ProjectRow
+                key={project.taid}
+                project={project}
+                t={t}
+                lang={lang}
+                rtl={dir === 'rtl'}
+                labels={labels}
+                onOpen={() => setPreview(project)}
+              />
+            ))}
+          </DataTable>
+          {/* The open-role chips are inferred; the old card said so on
+              every opportunity, the table says it once. */}
+          {rows.some((p) => (p.open_roles || []).length > 0) && (
+            <p className="m-0 mt-2" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+              {t('rasd.projects.inferredCaution')}
+            </p>
+          )}
+        </RasdDash>
       )}
 
       {meta && meta.last_page > 1 && (
         <Card padded={false}>
           <Pagination meta={meta} onPage={(p) => setFilter('page', p)} t={t} />
         </Card>
+      )}
+
+      {preview && (
+        <ProjectQuickPreview taid={preview.taid} seed={preview} onClose={closePreview} />
       )}
     </div>
   );

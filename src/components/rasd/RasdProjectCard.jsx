@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, CalendarDays, DoorOpen, ChevronLeft, Layers } from 'lucide-react';
 import Ltr from '../Ltr';
+import IdentifierChip from '../IdentifierChip';
 import { Card, Badge } from '../admin/AdminUI';
 import { cityLabel, regionLabel } from '../../config/cityTranslations';
 import { formatDate } from '../../utils/date';
@@ -46,11 +47,21 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
           : undefined
       }
     >
-      <button
-        type="button"
-        onClick={() => navigate(`/rasd/projects/${project.id}`)}
+      {/* A div with link semantics rather than a <button>: the TAID copy
+          chip inside is itself a button, and buttons can't nest. The
+          target check keeps Enter on the chip from also opening the
+          project. */}
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={() => navigate(`/rasd/projects/${project.taid}`)}
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && e.key === 'Enter') {
+            navigate(`/rasd/projects/${project.taid}`);
+          }
+        }}
         className="w-full text-start flex items-start gap-4 px-5 py-4"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+        style={{ cursor: 'pointer' }}
       >
         <div
           className="flex items-center justify-center flex-shrink-0"
@@ -87,6 +98,9 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
             {project.is_internal && (
               <Badge tone="primary">{t('rasd.projects.internal')}</Badge>
             )}
+            {/* v1.5 — the permanent, quotable project number. Never the
+                row `id`: a sequential id leaks the dataset's size. */}
+            <IdentifierChip identifier={project.taid} label={t('rasd.project.taid')} />
           </div>
 
           <div
@@ -200,7 +214,7 @@ export default function RasdProjectCard({ project, t, lang, labels }) {
             transform: lang === 'ar' || lang === 'ur' ? 'none' : 'rotate(180deg)',
           }}
         />
-      </button>
+      </div>
     </Card>
   );
 }

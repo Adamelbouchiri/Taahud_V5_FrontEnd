@@ -1,45 +1,60 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowRight,
-  MapPin,
-  Map as MapIcon,
-  Phone,
-  Layers,
-  ChevronLeft,
-} from 'lucide-react';
+import { Layers, Activity, Briefcase, UsersRound, CalendarClock, Building2 } from 'lucide-react';
 import Ltr from '../../components/Ltr';
-import { Card, PageHeader, Badge, EmptyState } from '../../components/admin/AdminUI';
+import { Card, EmptyState } from '../../components/admin/AdminUI';
 import RasdAccessNotice from '../../components/rasd/RasdAccessNotice';
 import ContactsSection from '../../components/rasd/ContactsSection';
+import { ProjectQuickPreview } from '../../components/rasd/RasdQuickPreview';
+import {
+  RasdDashStyles,
+  RasdDash,
+  Crumbs,
+  Band,
+  OvwGroup,
+  InvCards,
+  InvCard,
+  DataTable,
+  LinkRow,
+  RowGo,
+  STAGE_CHIP,
+  CONFIDENCE_CHIP,
+} from '../../components/rasd/RasdDashKit';
 import { rasd, readAccessDenial } from '../../services/rasd';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { rasdLabels } from '../../i18n/rasdLabel';
 import { cityLabel, regionLabel } from '../../config/cityTranslations';
-import {
-  RASD_STAGE_TONE,
-  RASD_CONFIDENCE_TONE,
-} from '../../config/rasdConstants';
+import { formatDate } from '../../utils/date';
+import { RASD_ACTIVE_STAGES } from '../../config/rasdConstants';
 
 /* ============================================================
  *  RasdCompanyDetailPage — /rasd/companies/:id
  *  ----------------------------------------------------------------
- *  One company and every project it touches, each with the role it
- *  holds there.
+ *  Laid out as the design's company profile: breadcrumb and page
+ *  head, four quick-fact cards, the company details, then key people
+ *  beside the company's projects.
  *
- *  A company can appear TWICE in `projects` with the same project id
+ *  A company can appear TWICE in `projects` with the same project
  *  under different roles — owner on one line, developer on the next.
- *  That is valid data, not a duplicate: the list is keyed on the
- *  (project, role) pair and nothing de-duplicates it.
+ *  That is valid data, not a duplicate: rows are keyed on the
+ *  (project, role) pair and nothing de-duplicates them.
  *
- *  This is where contacts live (v1.2) — a project's `contacts` is
- *  always empty and points here. Companies have no `is_internal`
- *  flag — every row in this directory was collected from the market.
+ *  A project row opens the quick-preview drawer, as in the design;
+ *  «open full project» inside it navigates.
  * ============================================================ */
+const TABS = ['all', 'active', 'awarded', 'completed'];
+
+const inTab = (tab, p) => {
+  if (tab === 'active') return RASD_ACTIVE_STAGES.includes(p.stage);
+  if (tab === 'awarded') return p.stage === 'awarded';
+  if (tab === 'completed') return p.stage === 'completed';
+  return true;
+};
+
 export default function RasdCompanyDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t, lang } = useTranslation();
+  const { t, lang, dir } = useTranslation();
   const labels = useMemo(() => rasdLabels(t), [t]);
 
   const [company, setCompany] = useState(null);
@@ -47,10 +62,14 @@ export default function RasdCompanyDetailPage() {
   const [denial, setDenial] = useState(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState('all');
+  const [preview, setPreview] = useState(null);
+  const closePreview = useCallback(() => setPreview(null), []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setTab('all');
     rasd.companies
       .get(id)
       .then((data) => {
@@ -80,38 +99,49 @@ export default function RasdCompanyDetailPage() {
     return <RasdAccessNotice message={denial} onBack={() => navigate('/rasd/companies')} />;
   }
 
-  const projects = company?.projects || [];
+  const back = () => navigate('/rasd/companies');
+  const c = company;
+  const projects = c?.projects || [];
+  const date = (d) => (d ? formatDate(d, lang, { latin: true }) : null);
+  const notSet = <span className="rd-muted">{t('common.notSpecified')}</span>;
+
+  const unique = new Set(projects.map((p) => p.taid)).size;
+  const active = new Set(
+    projects.filter((p) => RASD_ACTIVE_STAGES.includes(p.stage)).map((p) => p.taid)
+  ).size;
+  const roles = [...new Set(projects.map((p) => labels.role(p.role, p.role_label)).filter(Boolean))];
+  const contacts = c?.contacts || [];
+  const reachable = contacts.filter((x) => x.has_phone || x.has_email).length;
+  const place = c
+    ? [
+        c.city ? cityLabel(c.city, lang) : null,
+        c.region && c.region !== c.city ? regionLabel(c.region, lang) : null,
+      ]
+        .filter(Boolean)
+        .join('، ')
+    : '';
+  const shown = projects.filter((p) => inTab(tab, p));
+  const ext = (url) => (
+    <a href={url} target="_blank" rel="noopener noreferrer" dir="ltr">
+      {url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+    </a>
+  );
 
   return (
-    <div className="px-5 lg:px-8 py-8 lg:py-10 max-w-[900px] flex flex-col gap-5">
-      <button
-        type="button"
-        onClick={() => navigate('/rasd/companies')}
-        className="inline-flex items-center gap-2 self-start"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text-muted)',
-          fontSize: 13,
-          fontFamily: 'inherit',
-          cursor: 'pointer',
-          padding: 0,
-        }}
-      >
-        <ArrowRight
-          size={15}
-          strokeWidth={2}
-          style={{
-            transform: lang === 'ar' || lang === 'ur' ? 'none' : 'rotate(180deg)',
-          }}
-        />
-        {t('rasd.company.back')}
-      </button>
+    <RasdDash className="px-5 lg:px-8 py-8 lg:py-10 max-w-[1180px] flex flex-col gap-4">
+      <RasdDashStyles />
+      <Crumbs
+        items={[
+          { label: t('rasd.nav.companies'), onClick: back },
+          { label: c?.name || '…' },
+        ]}
+      />
 
       {loading ? (
         <div className="flex flex-col gap-4">
-          <div className="shimmer" style={{ height: 120, borderRadius: 14 }} />
-          <div className="shimmer" style={{ height: 200, borderRadius: 14 }} />
+          <div className="shimmer" style={{ height: 90, borderRadius: 14 }} />
+          <div className="shimmer" style={{ height: 80, borderRadius: 14 }} />
+          <div className="shimmer" style={{ height: 220, borderRadius: 14 }} />
         </div>
       ) : missing ? (
         <Card>
@@ -119,12 +149,7 @@ export default function RasdCompanyDetailPage() {
             title={t('rasd.company.notFound.title')}
             description={t('rasd.company.notFound.description')}
             action={
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{ width: 'auto' }}
-                onClick={() => navigate('/rasd/companies')}
-              >
+              <button type="button" className="btn-secondary" style={{ width: 'auto' }} onClick={back}>
                 {t('rasd.company.notFound.cta')}
               </button>
             }
@@ -136,173 +161,192 @@ export default function RasdCompanyDetailPage() {
             {error}
           </p>
         </Card>
-      ) : company ? (
+      ) : c ? (
         <>
-          <PageHeader
-            eyebrow={t('rasd.brand')}
-            title={company.name}
-            subtitle={company.notes || undefined}
-          />
-
-          <Card>
-            <div className="flex items-center gap-2 flex-wrap mb-4">
-              {company.category && (
-                <Badge tone={company.category === 'unclassified' ? 'muted' : 'primary'}>
-                  {labels.category(company.category, company.category_label)}
-                </Badge>
-              )}
-              {company.confidence && (
-                <Badge tone={RASD_CONFIDENCE_TONE[company.confidence] || 'default'}>
-                  {labels.confidence(company.confidence, company.confidence_label)}
-                </Badge>
+          {/* ---------- page head ---------- */}
+          <div className="rd-phead">
+            <div>
+              <div className="rd-eyebrow">
+                {[c.category && labels.category(c.category, c.category_label), place]
+                  .filter(Boolean)
+                  .join(' · ') || t('rasd.brand')}
+              </div>
+              <h1 className="font-display">{c.name}</h1>
+              {(c.name_en || c.updated_at) && (
+                <p className="rd-sub m-0">
+                  {c.name_en && <span dir="ltr">{c.name_en}</span>}
+                  {c.name_en && c.updated_at && ' · '}
+                  {c.updated_at && t('rasd.project.updatedAt', { date: date(c.updated_at) })}
+                </p>
               )}
             </div>
-            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
-              <Fact
-                icon={MapPin}
-                label={t('rasd.company.facts.city')}
-                value={
-                  company.city ? cityLabel(company.city, lang) : t('rasd.companies.noCity')
-                }
-              />
-              {company.region && (
-                <Fact
-                  icon={MapIcon}
-                  label={t('rasd.project.facts.region')}
-                  value={regionLabel(company.region, lang)}
-                />
+            <div className="rd-phead-acts">
+              {c.confidence && (
+                <span className={`rd-chip ${CONFIDENCE_CHIP[c.confidence] || 'muted'}`}>
+                  {labels.confidence(c.confidence, c.confidence_label)}
+                </span>
               )}
-              <Fact
-                icon={Phone}
-                label={t('rasd.company.facts.phone')}
-                value={
-                  company.phone ? (
-                    <Ltr>{company.phone}</Ltr>
-                  ) : (
-                    t('common.notSpecified')
+            </div>
+          </div>
+
+          {/* ---------- quick facts ---------- */}
+          <InvCards>
+            <InvCard
+              icon={Activity}
+              tone="gold"
+              goldValue
+              value={active}
+              label={t('rasd.detail.company.active')}
+              note={t('rasd.detail.company.activeNote', { total: unique })}
+              lang={lang}
+            />
+            <InvCard
+              icon={Briefcase}
+              tone="navy"
+              value={roles.length}
+              label={t('rasd.detail.company.roles')}
+              note={roles.slice(0, 2).join('، ') || t('rasd.detail.company.rolesNone')}
+              lang={lang}
+            />
+            <InvCard
+              icon={UsersRound}
+              tone="green"
+              value={contacts.length}
+              label={t('rasd.contacts.title')}
+              note={t('rasd.detail.company.contactsNote', { count: reachable })}
+              lang={lang}
+            />
+            <InvCard
+              icon={CalendarClock}
+              tone="navy"
+              value={date(c.updated_at) || '—'}
+              label={t('rasd.detail.company.lastActivity')}
+              note={t('rasd.detail.company.lastActivityNote')}
+              lang={lang}
+            />
+          </InvCards>
+
+          {/* ---------- company details ---------- */}
+          <Band icon={Building2} title={t('rasd.detail.company.details')}>
+            <div className="rd-ovw">
+              <OvwGroup
+                title={t('rasd.detail.groups.identity')}
+                rows={[
+                  [
+                    t('rasd.table.category'),
+                    c.category ? labels.category(c.category, c.category_label) : notSet,
+                  ],
+                  [t('rasd.detail.location'), place || notSet],
+                  c.size && [t('rasd.detail.company.size'), labels.size(c.size, c.size_label)],
+                  c.cr_number && [t('rasd.detail.company.cr'), <Ltr key="cr">{c.cr_number}</Ltr>],
+                ]}
+              />
+              <OvwGroup
+                title={t('rasd.detail.groups.contact')}
+                rows={[
+                  [t('rasd.company.facts.phone'), c.phone ? <Ltr key="ph">{c.phone}</Ltr> : notSet],
+                  c.email && [
+                    t('rasd.detail.company.email'),
+                    <a key="em" href={`mailto:${c.email}`} dir="ltr">
+                      {c.email}
+                    </a>,
+                  ],
+                  c.website && [t('rasd.detail.company.website'), ext(c.website)],
+                  c.linkedin_url && [t('rasd.contacts.linkedin'), ext(c.linkedin_url)],
+                ]}
+              />
+            </div>
+          </Band>
+
+          {/* ---------- two columns ---------- */}
+          <div className="rd-cols">
+            <div className="rd-col">
+              <Band>
+                <ContactsSection
+                  contacts={c.contacts}
+                  subtitle={t('rasd.company.contacts.subtitle')}
+                  emptyBody={t('rasd.company.contacts.empty')}
+                  t={t}
+                  labels={labels}
+                />
+              </Band>
+            </div>
+            <div className="rd-col">
+              <Band
+                icon={Layers}
+                title={t('rasd.company.projects.title')}
+                count={projects.length}
+                action={
+                  projects.length > 0 && (
+                    <div className="rd-tabs">
+                      {TABS.map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          className={`rd-tab${tab === k ? ' on' : ''}`}
+                          onClick={() => setTab(k)}
+                        >
+                          {t(`rasd.detail.company.tabs.${k}`)}
+                        </button>
+                      ))}
+                    </div>
                   )
                 }
-              />
-            </div>
-          </Card>
-
-          {/* ---------- Every project this company touches ---------- */}
-          <Card>
-            <div className="flex items-center gap-2.5 mb-3">
-              <span
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: 'rgba(44,47,124,0.08)',
-                  color: 'var(--accent-primary)',
-                }}
               >
-                <Layers size={14} strokeWidth={1.9} />
-              </span>
-              <div>
-                <div
-                  className="font-semibold"
-                  style={{ fontSize: 14, color: 'var(--text-ink)' }}
-                >
-                  {t('rasd.company.projects.title')}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                  {t('rasd.company.projects.subtitle')}
-                </div>
-              </div>
-            </div>
-
-            {projects.length === 0 ? (
-              <EmptyState title={t('rasd.company.projects.empty')} />
-            ) : (
-              <ul className="m-0 p-0 flex flex-col gap-2">
-                {projects.map((p, i) => (
-                  // Keyed on project AND role: the same project can
-                  // legitimately appear twice under two roles.
-                  <li key={`${p.id}-${p.role}-${i}`} className="list-none">
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/rasd/projects/${p.id}`)}
-                      className="w-full text-start flex items-center gap-3"
-                      style={{
-                        background: 'var(--bg-canvas)',
-                        border: '1px solid var(--border-soft)',
-                        borderRadius: 11,
-                        padding: '11px 14px',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
+                {projects.length === 0 ? (
+                  <EmptyState title={t('rasd.company.projects.empty')} />
+                ) : shown.length === 0 ? (
+                  <EmptyState title={t('rasd.detail.company.tabEmpty')} />
+                ) : (
+                  <>
+                    <DataTable
+                      flat
+                      head={[
+                        t('rasd.table.project'),
+                        t('rasd.table.city'),
+                        t('rasd.detail.company.role'),
+                        t('rasd.table.stage'),
+                        '',
+                      ]}
                     >
-                      <div className="min-w-0 flex-1">
-                        <div
-                          className="truncate"
-                          style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-ink)' }}
-                        >
-                          {p.name}
-                        </div>
-                        <div
-                          className="flex items-center gap-2 flex-wrap"
-                          style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}
-                        >
-                          {p.city && <span>{cityLabel(p.city, lang)}</span>}
-                          <Badge tone={RASD_STAGE_TONE[p.stage] || 'default'}>
-                            {labels.stage(p.stage, p.stage_label)}
-                          </Badge>
-                          <Badge tone="primary">{labels.role(p.role, p.role_label)}</Badge>
-                        </div>
-                      </div>
-                      <ChevronLeft
-                        size={16}
-                        strokeWidth={1.8}
-                        style={{
-                          color: 'var(--text-muted)',
-                          flexShrink: 0,
-                          transform:
-                            lang === 'ar' || lang === 'ur' ? 'none' : 'rotate(180deg)',
-                        }}
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card>
-            <ContactsSection
-              contacts={company.contacts}
-              subtitle={t('rasd.company.contacts.subtitle')}
-              emptyBody={t('rasd.company.contacts.empty')}
-              t={t}
-              labels={labels}
-            />
-          </Card>
+                      {shown.map((p, i) => (
+                        // Keyed on project AND role: the same project can
+                        // legitimately appear twice under two roles.
+                        <LinkRow key={`${p.taid}-${p.role}-${i}`} onOpen={() => setPreview(p)}>
+                          <td>
+                            <div className="rd-cell-p">{p.name}</div>
+                          </td>
+                          <td>{p.city ? cityLabel(p.city, lang) : '—'}</td>
+                          <td>
+                            <span className="rd-chip muted">{labels.role(p.role, p.role_label)}</span>
+                          </td>
+                          <td>
+                            {p.stage ? (
+                              <span className={`rd-chip ${STAGE_CHIP[p.stage] || 'muted'}`}>
+                                {labels.stage(p.stage, p.stage_label)}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td>
+                            <RowGo rtl={dir === 'rtl'} />
+                          </td>
+                        </LinkRow>
+                      ))}
+                    </DataTable>
+                    <p className="rd-foot">{t('rasd.company.projects.subtitle')}</p>
+                  </>
+                )}
+              </Band>
+            </div>
+          </div>
         </>
       ) : null}
-    </div>
-  );
-}
 
-function Fact({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-start gap-2.5 min-w-0">
-      <Icon
-        size={15}
-        strokeWidth={1.8}
-        style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 3 }}
-      />
-      <div className="min-w-0">
-        <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>
-          {label}
-        </div>
-        <div
-          style={{ fontSize: 13.5, color: 'var(--text-ink)', fontWeight: 600, marginTop: 2 }}
-        >
-          {value}
-        </div>
-      </div>
-    </div>
+      {preview && (
+        <ProjectQuickPreview taid={preview.taid} seed={preview} onClose={closePreview} />
+      )}
+    </RasdDash>
   );
 }

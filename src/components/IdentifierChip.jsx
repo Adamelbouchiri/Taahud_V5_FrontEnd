@@ -21,7 +21,10 @@ export default function IdentifierChip({ identifier, label, className = '' }) {
 
   if (!identifier) return null;
 
-  const copy = async () => {
+  const copy = async (e) => {
+    // The chip sits inside clickable rows/cards (RASD project card,
+    // admin tables) — copying must not also open the row.
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(identifier);
       setCopied(true);

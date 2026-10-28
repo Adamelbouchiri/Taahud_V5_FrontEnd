@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Building2, MapPin, Phone, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Filter, Layers, DoorOpen } from 'lucide-react';
 import Ltr from '../../components/Ltr';
 import { rasd, readAccessDenial, isRasdValidationError } from '../../services/rasd';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -8,10 +8,20 @@ import { rasdLabels } from '../../i18n/rasdLabel';
 import { cityLabel } from '../../config/cityTranslations';
 import useRasdSummary from '../../hooks/useRasdSummary';
 import RasdAccessNotice from '../../components/rasd/RasdAccessNotice';
+import { CompanyQuickPreview, ProjectQuickPreview } from '../../components/rasd/RasdQuickPreview';
+import {
+  RasdDashStyles,
+  RasdDash,
+  InvCard,
+  InvCards,
+  DataTable,
+  LinkRow,
+  RowGo,
+} from '../../components/rasd/RasdDashKit';
+import { formatNumber } from '../../utils/money';
 import {
   PageHeader,
   Card,
-  Badge,
   EmptyState,
   FilterBar,
   FilterSelect,
@@ -20,7 +30,6 @@ import {
 import {
   RASD_PARTY_ROLES,
   RASD_COMPANY_CATEGORIES,
-  RASD_CONFIDENCE_TONE,
   RASD_PER_PAGE,
 } from '../../config/rasdConstants';
 
@@ -46,10 +55,12 @@ import {
  * ============================================================ */
 export default function RasdCompaniesPage() {
   const navigate = useNavigate();
-  const { t, lang } = useTranslation();
+  const { t, lang, dir } = useTranslation();
   const labels = useMemo(() => rasdLabels(t), [t]);
   const [params, setParams] = useSearchParams();
   const { summary } = useRasdSummary();
+  const totals = summary.totals || {};
+  const num = (n) => formatNumber(n ?? 0, lang, 0, { latin: true });
 
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -57,6 +68,10 @@ export default function RasdCompaniesPage() {
   const [error, setError] = useState('');
   const [denial, setDenial] = useState(null);
   const [invalid, setInvalid] = useState(false);
+  // Quick preview: a company row opens its drawer; a project listed in
+  // that drawer swaps it for the project's own preview.
+  const [preview, setPreview] = useState(null);
+  const closePreview = useCallback(() => setPreview(null), []);
 
   const q = params.get('q') || '';
   const city = params.get('city') || '';
@@ -149,6 +164,46 @@ export default function RasdCompaniesPage() {
         subtitle={t('rasd.companies.subtitle')}
       />
 
+      {/* Summary cards — the directory below is unchanged. The first
+          card counts the CURRENT filtered result (meta.total); the rest
+          are whole-dataset totals from /rasd/summary. */}
+      <RasdDash>
+        <RasdDashStyles />
+        <InvCards cols={3}>
+          <InvCard
+            icon={Filter}
+            tone="navy"
+            lang={lang}
+            value={loading || meta?.total == null ? '—' : meta.total}
+            label={t('rasd.dash.matching')}
+            note={
+              totals.companies != null
+                ? t('rasd.dash.matchingCompaniesNote', { total: num(totals.companies) })
+                : null
+            }
+          />
+          <InvCard
+            icon={Layers}
+            tone="green"
+            lang={lang}
+            value={totals.projects ?? '—'}
+            label={t('rasd.overview.totals.projects')}
+            note={t('rasd.dash.projectsNote', { count: num(totals.projects_with_open_roles) })}
+            onClick={() => navigate('/rasd/projects')}
+          />
+          <InvCard
+            icon={DoorOpen}
+            tone="gold"
+            goldValue
+            lang={lang}
+            value={totals.open_roles ?? '—'}
+            label={t('rasd.dash.openRoles')}
+            note={t('rasd.dash.openRolesNote')}
+            onClick={() => navigate('/rasd/projects?has_gap=1')}
+          />
+        </InvCards>
+      </RasdDash>
+
       <FilterBar
         title={t('rasd.companies.filters.title')}
         activeCount={activeCount}
@@ -191,8 +246,8 @@ export default function RasdCompaniesPage() {
 
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="shimmer" style={{ height: 82, borderRadius: 14 }} />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="shimmer" style={{ height: 48, borderRadius: 10 }} />
           ))}
         </div>
       ) : invalid ? (
@@ -249,18 +304,32 @@ export default function RasdCompaniesPage() {
           />
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {rows.map((company) => (
-            <CompanyRow
-              key={company.id}
-              company={company}
-              t={t}
-              lang={lang}
-              labels={labels}
-              onOpen={() => navigate(`/rasd/companies/${company.id}`)}
-            />
-          ))}
-        </div>
+        <RasdDash>
+          <DataTable
+            head={[
+              t('rasd.table.company'),
+              t('rasd.table.category'),
+              t('rasd.table.city'),
+              t('rasd.table.projects'),
+              t('rasd.table.roles'),
+              t('rasd.table.phone'),
+              t('rasd.table.confidence'),
+              '',
+            ]}
+          >
+            {rows.map((company) => (
+              <CompanyRow
+                key={company.id}
+                company={company}
+                t={t}
+                lang={lang}
+                rtl={dir === 'rtl'}
+                labels={labels}
+                onOpen={() => setPreview({ kind: 'company', item: company })}
+              />
+            ))}
+          </DataTable>
+        </RasdDash>
       )}
 
       {meta && meta.last_page > 1 && (
@@ -268,102 +337,102 @@ export default function RasdCompaniesPage() {
           <Pagination meta={meta} onPage={(p) => setFilter('page', p)} t={t} />
         </Card>
       )}
+
+      {preview?.kind === 'company' && (
+        <CompanyQuickPreview
+          id={preview.item.id}
+          seed={preview.item}
+          onClose={closePreview}
+          onOpenProject={(p) => setPreview({ kind: 'project', item: p })}
+        />
+      )}
+      {preview?.kind === 'project' && (
+        <ProjectQuickPreview taid={preview.item.taid} seed={preview.item} onClose={closePreview} />
+      )}
     </div>
   );
 }
 
-function CompanyRow({ company, t, lang, labels, onOpen }) {
+const CONFIDENCE_CHIP = { high: 'green', medium: 'gold', needs_verification: 'muted' };
+const MAX_ROLE_CHIPS = 2;
+
+function CompanyRow({ company, t, lang, rtl, labels, onOpen }) {
+  const roles = company.roles || [];
+  const extra = roles.length - MAX_ROLE_CHIPS;
+  const count = company.projects_count ?? 0;
+
   return (
-    <Card padded={false}>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="w-full text-start flex items-center gap-4 px-5 py-4"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-      >
-        <div
-          className="flex items-center justify-center flex-shrink-0"
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: 11,
-            background: 'rgba(44,47,124,0.07)',
-            color: 'var(--accent-primary)',
-          }}
-        >
-          <Building2 size={18} strokeWidth={1.7} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className="font-semibold truncate"
-              style={{ fontSize: 14.5, color: 'var(--text-ink)' }}
-            >
-              {company.name}
-            </span>
-            {/* `unclassified` is mostly audit firms awaiting a later
-                pass — shown muted, the row stays. */}
-            {company.category && (
-              <Badge tone={company.category === 'unclassified' ? 'muted' : 'primary'}>
-                {labels.category(company.category, company.category_label)}
-              </Badge>
-            )}
-            {company.confidence && (
-              <Badge tone={RASD_CONFIDENCE_TONE[company.confidence] || 'default'}>
-                {labels.confidence(company.confidence, company.confidence_label)}
-              </Badge>
-            )}
+    <LinkRow onOpen={onOpen}>
+      <td style={{ minWidth: 220 }}>
+        <div className="rd-cell-p">{company.name}</div>
+        {company.name_en && (
+          <div className="rd-cell-s" dir="ltr" style={{ textAlign: 'start' }}>
+            {company.name_en}
           </div>
-
-          <div
-            className="flex items-center gap-x-4 gap-y-1 flex-wrap"
-            style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3 }}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin size={13} strokeWidth={1.8} />
-              {company.city ? cityLabel(company.city, lang) : t('rasd.companies.noCity')}
-            </span>
-            {/* The company switchboard — commercial information the
-                company publishes itself, not a person's mobile, so it
-                isn't masked. Mobiles are normalized to +9665…,
-                landlines are stored as typed: expect both shapes. */}
-            {company.phone && (
-              <span className="inline-flex items-center gap-1.5">
-                <Phone size={13} strokeWidth={1.8} />
-                <Ltr>{company.phone}</Ltr>
+        )}
+      </td>
+      <td>
+        {/* `unclassified` is mostly audit firms awaiting a later pass —
+            shown muted, the row stays. */}
+        {company.category ? (
+          <span className={`rd-chip ${company.category === 'unclassified' ? 'muted' : 'navy'}`}>
+            {labels.category(company.category, company.category_label)}
+          </span>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+      </td>
+      <td>
+        {company.city ? (
+          cityLabel(company.city, lang)
+        ) : (
+          <span className="rd-muted">{t('rasd.companies.noCity')}</span>
+        )}
+      </td>
+      <td className="rd-num">
+        <b style={{ color: count > 0 ? 'var(--rasd-gold)' : 'var(--text-muted)' }}>
+          <Ltr>{formatNumber(count, lang, 0, { latin: true })}</Ltr>
+        </b>
+      </td>
+      <td>
+        {/* Roles come back as Arabic labels only — no enum value
+            attached — so they're rendered as sent. */}
+        {roles.length ? (
+          <div className="rd-chips">
+            {roles.slice(0, MAX_ROLE_CHIPS).map((r, i) => (
+              <span key={`${r}-${i}`} className="rd-chip muted">
+                {r}
+              </span>
+            ))}
+            {extra > 0 && (
+              <span className="rd-chip muted" title={roles.slice(MAX_ROLE_CHIPS).join('، ')}>
+                <Ltr>+{extra}</Ltr>
               </span>
             )}
-            <span>
-              {t('rasd.companies.projectsCount', {
-                count: company.projects_count ?? 0,
-              })}
-            </span>
           </div>
-
-          {/* Roles come back as Arabic labels only — no enum value
-              attached — so they're rendered as sent. */}
-          {(company.roles || []).length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap" style={{ marginTop: 6 }}>
-              {company.roles.map((r, i) => (
-                <Badge key={`${r}-${i}`} tone="muted">
-                  {r}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <ChevronLeft
-          size={18}
-          strokeWidth={1.8}
-          style={{
-            color: 'var(--text-muted)',
-            flexShrink: 0,
-            transform: lang === 'ar' || lang === 'ur' ? 'none' : 'rotate(180deg)',
-          }}
-        />
-      </button>
-    </Card>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+      </td>
+      <td className="rd-num">
+        {/* The company switchboard — commercial information the company
+            publishes itself, not a person's mobile, so it isn't masked.
+            Mobiles are normalized to +9665…, landlines are stored as
+            typed: expect both shapes. */}
+        {company.phone ? <Ltr>{company.phone}</Ltr> : <span className="rd-muted">—</span>}
+      </td>
+      <td>
+        {company.confidence ? (
+          <span className={`rd-chip ${CONFIDENCE_CHIP[company.confidence] || 'muted'}`}>
+            {labels.confidence(company.confidence, company.confidence_label)}
+          </span>
+        ) : (
+          <span className="rd-muted">—</span>
+        )}
+      </td>
+      <td>
+        <RowGo rtl={rtl} />
+      </td>
+    </LinkRow>
   );
 }

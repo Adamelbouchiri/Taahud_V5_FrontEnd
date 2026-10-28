@@ -4,7 +4,6 @@ import { useTranslation } from '../../i18n/LanguageContext';
 
 export default function BrandPanel() {
   const { t } = useTranslation();
-  const statKeys = ['providers', 'cities', 'rating'];
   return (
     <aside
       className="hidden lg:flex relative overflow-hidden flex-col"
@@ -104,25 +103,6 @@ export default function BrandPanel() {
           >
             {t('auth.brand.tagline')}
           </p>
-
-          <div className="flex gap-7 mt-10">
-            {statKeys.map((k) => (
-              <div key={k}>
-                <div className="font-display" style={{ fontSize: 22, fontWeight: 600 }}>
-                  {t(`auth.brand.stats.${k}.n`)}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: 'rgba(255,255,255,0.55)',
-                    marginTop: 4,
-                  }}
-                >
-                  {t(`auth.brand.stats.${k}.l`)}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div

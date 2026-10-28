@@ -10,6 +10,7 @@ import {
   Download,
   FileWarning,
   ExternalLink,
+  Hash,
   X,
 } from 'lucide-react';
 import { admin } from '../../../services';
@@ -587,14 +588,14 @@ function BatchPanel({ batchId, onClose, onChanged, onReplaced }) {
     }
   };
 
-  const downloadCsv = async () => {
+  const saveCsv = async (fetchBlob, filename, errorKey) => {
     setActionError('');
     try {
-      const blob = await admin.rasd.imports.rejectionsCsv(batch.id);
+      const blob = await fetchBlob(batch.id);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rejections-${batch.id}.csv`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -602,9 +603,18 @@ function BatchPanel({ batchId, onClose, onChanged, onReplaced }) {
     } catch (err) {
       // A blob error body can't be read as JSON here, so fall back to
       // our own message.
-      setActionError(t('admin.rasd.imports.csvError'));
+      setActionError(t(errorKey));
     }
   };
+
+  const downloadCsv = () =>
+    saveCsv(admin.rasd.imports.rejectionsCsv, `rejections-${batch.id}.csv`, 'admin.rasd.imports.csvError');
+
+  // v1.5 — a project uploaded with an empty «معرّف المشروع» got its TAID
+  // here, and this file is the only way the data team learns it. Without
+  // it next month's upload duplicates those rows instead of updating them.
+  const downloadTaids = () =>
+    saveCsv(admin.rasd.imports.taidsCsv, `taids-${batch.id}.csv`, 'admin.rasd.imports.taidsError');
 
   if (!batch) {
     return (
@@ -761,6 +771,19 @@ function BatchPanel({ batchId, onClose, onChanged, onReplaced }) {
             <ExternalLink size={14} />
             {t('admin.rasd.imports.viewRows')}
           </Link>
+        )}
+        {/* Dry runs assign no numbers (the endpoint 422s), and only
+            project batches touch rows that carry a TAID. */}
+        {!batch.dry_run && batch.status === 'completed' && batch.type === 'projects' && (
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: 'auto', padding: '10px 16px' }}
+            onClick={downloadTaids}
+          >
+            <Hash size={14} />
+            {t('admin.rasd.imports.downloadTaids')}
+          </button>
         )}
         {batch.can_undo && (
           <button

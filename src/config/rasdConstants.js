@@ -343,6 +343,55 @@ export function showRoleNote(openRole) {
   return note !== (openRole?.role_label || '').trim();
 }
 
+/* Stages where a project is still live work — the company profile's
+   «active» tab and the quick preview's active-projects count. */
+export const RASD_ACTIVE_STAGES = [
+  'announced',
+  'planning',
+  'design',
+  'tendering',
+  'awarded',
+  'under_construction',
+];
+
+/* The project lifecycle stepper, in order. `detected` sits on the
+   first step; `on_hold` and `unknown` are off the path entirely. */
+export const RASD_LIFECYCLE = [
+  'announced',
+  'planning',
+  'design',
+  'tendering',
+  'awarded',
+  'under_construction',
+  'completed',
+];
+
+/* The four stakeholders a project header leads with. A consultant is
+   recorded as either `consultant` or `engineering_office`. */
+export const RASD_KEY_PARTIES = [
+  { key: 'owner', roles: ['owner'] },
+  { key: 'developer', roles: ['developer'] },
+  { key: 'consultant', roles: ['consultant', 'engineering_office'] },
+  { key: 'mainContractor', roles: ['main_contractor'] },
+];
+
+/** First party holding any of `roles`, or null. */
+export function partyFor(parties, roles) {
+  return (parties || []).find((p) => roles.includes(p.role) && p.company) || null;
+}
+
+/**
+ * Share of the expected schedule already elapsed, 0–100 — null unless
+ * both `expected_start_at` and `expected_end_at` are known.
+ */
+export function scheduleElapsed(project) {
+  const s = project?.expected_start_at ? new Date(`${project.expected_start_at}T00:00:00`) : null;
+  const e = project?.expected_end_at ? new Date(`${project.expected_end_at}T00:00:00`) : null;
+  if (!s || !e || Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) return null;
+  const pct = ((Date.now() - s.getTime()) / (e.getTime() - s.getTime())) * 100;
+  return Math.round(Math.min(100, Math.max(0, pct)));
+}
+
 /**
  * The value column is empty across the whole dataset today
  * (`estimated_value` null on every project). Hide the value tile

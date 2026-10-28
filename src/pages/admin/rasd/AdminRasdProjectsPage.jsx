@@ -4,6 +4,7 @@ import { useTranslation } from '../../../i18n/LanguageContext';
 import { cityLabel, regionLabel } from '../../../config/cityTranslations';
 import { RASD_STAGE_TONE, RASD_CONFIDENCE_TONE } from '../../../config/rasdConstants';
 import { Badge } from '../../../components/admin/AdminUI';
+import IdentifierChip from '../../../components/IdentifierChip';
 import RasdEntityPage from '../../../components/admin/rasd/RasdEntityPage';
 import { useRasdOptions, num, date } from '../../../components/admin/rasd/RasdAdminKit';
 
@@ -14,6 +15,11 @@ import { useRasdOptions, num, date } from '../../../components/admin/rasd/RasdAd
  *  formatted reading on screen. `progress_percent` is 0–100 or null,
  *  and null is «unknown», never zero — so it's shown as a dash and a
  *  cleared field goes out as null.
+ *
+ *  `taid` (v1.5) is the project's permanent number and replaces the
+ *  row `#id` in the table. `?q=` takes either a name or a TAID — the
+ *  BE tells them apart by shape. The BE `sort` whitelist has no `taid`
+ *  (it's random, so ordering by it means nothing), hence no sort option.
  * ============================================================ */
 
 export default function AdminRasdProjectsPage() {
@@ -67,9 +73,12 @@ export default function AdminRasdProjectsPage() {
             <div className="font-semibold truncate" style={{ fontSize: 13.5, color: 'var(--text-ink)' }}>
               {row.name}
             </div>
-            <div className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              #{row.id} · {cityLabel(row.city, lang)}
-              {row.region && row.region !== row.city ? ` · ${regionLabel(row.region, lang)}` : ''}
+            <div className="flex items-center gap-2 mt-1 min-w-0" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <IdentifierChip identifier={row.taid} />
+              <span className="truncate">
+                {cityLabel(row.city, lang)}
+                {row.region && row.region !== row.city ? ` · ${regionLabel(row.region, lang)}` : ''}
+              </span>
             </div>
           </div>
         ),
@@ -170,6 +179,7 @@ export default function AdminRasdProjectsPage() {
   ];
 
   const detailItems = (p) => [
+    { label: tf('taid'), value: <IdentifierChip identifier={p.taid} /> },
     { label: tf('city'), value: cityLabel(p.city, lang) },
     { label: tf('region'), value: p.region ? regionLabel(p.region, lang) : null },
     { label: tf('sector'), value: L.sector(p.sector, p.sector_label) },

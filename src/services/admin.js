@@ -1253,6 +1253,17 @@ export const admin = {
         });
       },
 
+      /** GET /admin/rasd/imports/:batch/taids?format=csv (v1.5) — the TAIDs
+       *  of every project the batch created or updated, so the data team
+       *  can put the generated numbers back in their sheet. Returns a Blob.
+       *  422 on a dry-run batch (no numbers were assigned). */
+      async taidsCsv(id) {
+        return http.get(`/admin/rasd/imports/${id}/taids`, {
+          params: { format: 'csv' },
+          responseType: 'blob',
+        });
+      },
+
       /** POST /admin/rasd/imports/:batch/undo →
        *  { message, deleted: { projects, companies, contacts, updated_only } }.
        *  422s carry a ready-to-show Arabic message (and `counts` when the

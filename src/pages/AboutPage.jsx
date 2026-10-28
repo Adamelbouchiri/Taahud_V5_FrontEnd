@@ -85,7 +85,7 @@ export default function AboutPage() {
                     <Home size={19} strokeWidth={1.7} />
                   </span>
                   <b dir="ltr" className="font-display">
-                    2,500<i>+</i>
+                    6,000<i>+</i>
                   </b>
                   <span className="ab-f-t">{t('about.hero.facts.projects')}</span>
                 </div>
@@ -249,17 +249,28 @@ export default function AboutPage() {
         .ab-bgwrap { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
         /* The art sits on the side away from the text: left in RTL,
            right in LTR. */
+        /* Slightly smaller than the hero, with its inner edge kept where
+           it was so it stays close to the text. */
         .ab-bgwrap .ab-bg {
           position: absolute;
-          top: 0;
-          bottom: 0;
-          inset-inline-end: 0;
-          width: 52%;
-          height: 100%;
+          top: 7%;
+          ${rtl ? 'left: 8%;' : 'right: 8%;'}
+          width: 44%;
+          height: 86%;
           max-width: none;
           object-fit: cover;
           object-position: ${rtl ? '76%' : '24%'} center;
           ${rtl ? '' : 'transform: scaleX(-1);'}
+          /* Now that the art no longer runs to the hero's edges, feather
+             all four sides so its rectangle doesn't read as a border. */
+          -webkit-mask-image:
+            linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
+          -webkit-mask-composite: source-in;
+          mask-image:
+            linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%),
+            linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
+          mask-composite: intersect;
         }
         .ab-bgwrap::after {
           content: "";
@@ -565,7 +576,7 @@ export default function AboutPage() {
         }
         @media (max-width: 1080px) { .ab-prods { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 980px) {
-          .ab-bgwrap .ab-bg { width: 100%; opacity: .35; }
+          .ab-bgwrap .ab-bg { width: 100%; top: 0; height: 100%; left: 0; right: 0; opacity: .35; -webkit-mask-image: none; mask-image: none; }
           .ab-hero-txt { max-width: none; }
           .ab-hero-in { padding-top: 56px; padding-bottom: 56px; }
           .ab-why { grid-template-columns: 1fr; gap: 30px; }

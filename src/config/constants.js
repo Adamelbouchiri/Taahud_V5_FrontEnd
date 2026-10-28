@@ -42,8 +42,10 @@ export const SALES_PHONE_E164 = '+966537372053';
 
 /* Feature flag — when false, the post-register / post-login OTP step
    is bypassed entirely and the user goes straight to the dashboard.
-   Re-enable once an SMS provider is wired up on the backend. */
-export const OTP_ENABLED = true;
+   Re-enable once an SMS provider is wired up on the backend.
+   [OTP-DISABLED] off together with the /otp route + RequireVerified
+   guards in App.jsx — grep "OTP-DISABLED" to restore all of it. */
+export const OTP_ENABLED = false;
 
 /* How long a freshly-issued OTP stays valid, in minutes. Mirrors the
    backend's TTL on /auth/otp/send so the UI can show a live "code

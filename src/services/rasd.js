@@ -7,7 +7,7 @@ import http from './http';
  *
  *    GET /rasd/summary            dashboard header — totals + buckets
  *    GET /rasd/projects           paginated, filterable project feed
- *    GET /rasd/projects/{id}      one project: parties, open roles
+ *    GET /rasd/projects/{taid}    one project: parties, open roles
  *    GET /rasd/companies          paginated company directory
  *    GET /rasd/companies/{id}     one company: every project it touches
  *
@@ -120,7 +120,11 @@ export const rasd = {
     },
 
     /**
-     * GET /api/rasd/projects/:id
+     * GET /api/rasd/projects/:taid
+     *
+     * Bound by TAID, not the row id (v1.5) — a sequential id in the URL
+     * tells a subscriber how big the dataset is. The subscriber payloads
+     * no longer carry `id` at all.
      *
      * Adds description / notes / collected_at / expected_start_at /
      * expected_end_at plus the two role arrays to the list row. `parties` and `open_roles` are separate
@@ -129,8 +133,8 @@ export const rasd = {
      * A 404 carries Laravel's default English message; the caller
      * renders its own empty state rather than showing it.
      */
-    async get(id) {
-      return unwrap(await http.get(`/rasd/projects/${id}`));
+    async get(taid) {
+      return unwrap(await http.get(`/rasd/projects/${encodeURIComponent(taid)}`));
     },
   },
 

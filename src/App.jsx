@@ -7,7 +7,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import OtpPage from './pages/OtpPage';
+// [OTP-DISABLED] restore with the /otp route below
+// import OtpPage from './pages/OtpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import StorePage from './pages/StorePage';
 import ContactPage from './pages/ContactPage';
@@ -90,7 +91,10 @@ import DraftCreatePage from './pages/broker/DraftCreatePage';
 
 // Route guards
 import RequireAuth from './components/RequireAuth';
-import RequireVerified from './components/RequireVerified';
+// [OTP-DISABLED] RequireVerified was stacked inside RequireAuth on every
+// protected route below (projects, subscribe, pay, dashboard, rasd, broker,
+// admin). Re-wrap those routes when OTP comes back.
+// import RequireVerified from './components/RequireVerified';
 import RequireGuest from './components/RequireGuest';
 import RequireNonSupplier from './components/RequireNonSupplier';
 import RequireServiceProvider from './components/RequireServiceProvider';
@@ -129,15 +133,15 @@ import AdminRasdImportsPage from './pages/admin/rasd/AdminRasdImportsPage';
  *  Routing — guard layers
  *  ----------------------------------------------------------------
  *    RequireAuth          must have a token
- *    RequireVerified      must have a verified phone (snapshot from
- *                         services/auth.js); bounces to /otp otherwise
  *    RequireGuest         must NOT have a token (login/register only)
  *    RequireNonSupplier   blocks suppliers from project routes
  *
- *  Protected routes stack RequireVerified inside RequireAuth so an
- *  authenticated-but-unverified user can't reach the platform via the
- *  back button — they're sent to /otp. The /otp route itself uses
- *  RequireAuth ALONE (wrapping it in RequireVerified would loop).
+ *  [OTP-DISABLED] Phone verification is switched off for now: the
+ *  /otp route and every RequireVerified wrapper are removed. To bring
+ *  it back, grep "OTP-DISABLED", stack RequireVerified inside
+ *  RequireAuth on each protected route (never on /otp — it would
+ *  loop), and flip OTP_ENABLED in config/constants.js.
+ *
  *  Many routes also stack RequireNonSupplier so suppliers see the
  *  "coming soon" view instead of the project page. Auth is checked
  *  first because it's the cheaper gate (no network call).
@@ -215,10 +219,8 @@ function AppShell() {
           }
         />
 
-        {/* /otp is special: the user always has a token by the
-            time they reach it (set during register/login), but
-            their phone isn't verified yet. So we require auth
-            here, but don't apply the guest-only guard. */}
+        {/* [OTP-DISABLED] /otp route removed for now. When restoring:
+            it needs RequireAuth ALONE (no RequireGuest, no RequireVerified).
         <Route
           path="/otp"
           element={
@@ -227,6 +229,7 @@ function AppShell() {
             </RequireAuth>
           }
         />
+        */}
 
         {/* ===== Project flows =====
             Full-screen, no sidebar.
@@ -241,31 +244,29 @@ function AppShell() {
           path="/projects"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <PublicProjectsPage />
-              </RequireVerified>
+              <PublicProjectsPage />
             </RequireAuth>
           }
         />
         <Route
           path="/projects/public"
-          element={<RequireAuth><RequireVerified><PublicArenaPage /></RequireVerified></RequireAuth>}
+          element={<RequireAuth><PublicArenaPage /></RequireAuth>}
         />
         <Route
           path="/projects/private"
-          element={<RequireAuth><RequireVerified><PrivateArenaPage /></RequireVerified></RequireAuth>}
+          element={<RequireAuth><PrivateArenaPage /></RequireAuth>}
         />
         <Route
           path="/projects/solidarity"
-          element={<RequireAuth><RequireVerified><SolidarityArenaPage /></RequireVerified></RequireAuth>}
+          element={<RequireAuth><SolidarityArenaPage /></RequireAuth>}
         />
         <Route
           path="/projects/arena"
-          element={<RequireAuth><RequireVerified><DeveloperArenaPage /></RequireVerified></RequireAuth>}
+          element={<RequireAuth><DeveloperArenaPage /></RequireAuth>}
         />
         <Route
           path="/projects/isnad"
-          element={<RequireAuth><RequireVerified><IsnadArenaPage /></RequireVerified></RequireAuth>}
+          element={<RequireAuth><IsnadArenaPage /></RequireAuth>}
         />
         {/* Legacy alias — keep old links working. */}
         <Route
@@ -276,11 +277,9 @@ function AppShell() {
           path="/projects/new"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireNonSupplier>
-                  <CreateProjectPage />
-                </RequireNonSupplier>
-              </RequireVerified>
+              <RequireNonSupplier>
+                <CreateProjectPage />
+              </RequireNonSupplier>
             </RequireAuth>
           }
         />
@@ -288,11 +287,9 @@ function AppShell() {
           path="/projects/:id"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireNonSupplier>
-                  <ProjectDetailsPage />
-                </RequireNonSupplier>
-              </RequireVerified>
+              <RequireNonSupplier>
+                <ProjectDetailsPage />
+              </RequireNonSupplier>
             </RequireAuth>
           }
         />
@@ -304,11 +301,9 @@ function AppShell() {
           path="/projects/:id/steps"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireNonSupplier>
-                  <ProjectStepsPage />
-                </RequireNonSupplier>
-              </RequireVerified>
+              <RequireNonSupplier>
+                <ProjectStepsPage />
+              </RequireNonSupplier>
             </RequireAuth>
           }
         />
@@ -316,11 +311,9 @@ function AppShell() {
           path="/projects/:id/edit"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireNonSupplier>
-                  <EditProjectPage />
-                </RequireNonSupplier>
-              </RequireVerified>
+              <RequireNonSupplier>
+                <EditProjectPage />
+              </RequireNonSupplier>
             </RequireAuth>
           }
         />
@@ -328,11 +321,9 @@ function AppShell() {
           path="/projects/:id/apply"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireServiceProvider>
-                  <ApplyPage />
-                </RequireServiceProvider>
-              </RequireVerified>
+              <RequireServiceProvider>
+                <ApplyPage />
+              </RequireServiceProvider>
             </RequireAuth>
           }
         />
@@ -343,11 +334,9 @@ function AppShell() {
           path="/projects/:id/partner"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireServiceProvider>
-                  <PartnershipOfferPage />
-                </RequireServiceProvider>
-              </RequireVerified>
+              <RequireServiceProvider>
+                <PartnershipOfferPage />
+              </RequireServiceProvider>
             </RequireAuth>
           }
         />
@@ -366,9 +355,7 @@ function AppShell() {
         <Route
           element={
             <RequireAuth>
-              <RequireVerified>
-                <DashboardLayout />
-              </RequireVerified>
+              <DashboardLayout />
             </RequireAuth>
           }
         >
@@ -378,9 +365,7 @@ function AppShell() {
           path="/subscribe/success"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <SubscribeSuccessPage />
-              </RequireVerified>
+              <SubscribeSuccessPage />
             </RequireAuth>
           }
         />
@@ -388,9 +373,7 @@ function AppShell() {
           path="/subscribe/cancel"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <SubscribeCancelPage />
-              </RequireVerified>
+              <SubscribeCancelPage />
             </RequireAuth>
           }
         />
@@ -403,9 +386,7 @@ function AppShell() {
           path="/pay/:sessionId"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <CheckoutPage />
-              </RequireVerified>
+              <CheckoutPage />
             </RequireAuth>
           }
         />
@@ -417,9 +398,7 @@ function AppShell() {
           path="/dashboard"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <DashboardLayout />
-              </RequireVerified>
+              <DashboardLayout />
             </RequireAuth>
           }
         >
@@ -455,17 +434,16 @@ function AppShell() {
         {/* ===== RASD (رصد) =====
             Market data — projects, the companies on them, and the
             roles nobody holds yet. Runs inside DashboardLayout so it
-            keeps the sidebar; RequireVerified matches the BE's own
-            phone.verified middleware, which sits in front of every
-            RASD route. The rasd.access gate is enforced backend-side
-            and surfaces as a 403 the pages render verbatim. */}
+            keeps the sidebar. [OTP-DISABLED] It was also wrapped in
+            RequireVerified to match the BE's phone.verified middleware
+            in front of every RASD route — restore with OTP. The
+            rasd.access gate is enforced backend-side and surfaces as a
+            403 the pages render verbatim. */}
         <Route
           path="/rasd"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <DashboardLayout />
-              </RequireVerified>
+              <DashboardLayout />
             </RequireAuth>
           }
         >
@@ -475,7 +453,7 @@ function AppShell() {
           <Route element={<RequireRasdAccount />}>
             <Route index element={<RasdOverviewPage />} />
             <Route path="projects" element={<RasdProjectsPage />} />
-            <Route path="projects/:id" element={<RasdProjectDetailPage />} />
+            <Route path="projects/:taid" element={<RasdProjectDetailPage />} />
             <Route path="companies" element={<RasdCompaniesPage />} />
             <Route path="companies/:id" element={<RasdCompanyDetailPage />} />
           </Route>
@@ -503,11 +481,9 @@ function AppShell() {
           path="/broker"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireBroker>
-                  <DashboardLayout />
-                </RequireBroker>
-              </RequireVerified>
+              <RequireBroker>
+                <DashboardLayout />
+              </RequireBroker>
             </RequireAuth>
           }
         >
@@ -538,11 +514,9 @@ function AppShell() {
           path="/admin"
           element={
             <RequireAuth>
-              <RequireVerified>
-                <RequireAdmin>
-                  <AdminLayout />
-                </RequireAdmin>
-              </RequireVerified>
+              <RequireAdmin>
+                <AdminLayout />
+              </RequireAdmin>
             </RequireAuth>
           }
         >

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { readToken, clearSession, writePhoneVerified } from './session';
+import { OTP_ENABLED } from '../config/constants';
 
 /* ============================================================
  *  HTTP CLIENT
@@ -165,7 +166,10 @@ http.interceptors.response.use(
     // there's no `from`-state UX to preserve, and the user must verify
     // before anything else works. Guard against a redirect loop when
     // the failing request originated from /otp itself.
+    // [OTP-DISABLED] gated on OTP_ENABLED while the /otp route is gone,
+    // otherwise this would bounce to a dead route.
     if (
+      OTP_ENABLED &&
       error.response?.status === 403 &&
       error.response?.data?.code === 'phone_not_verified'
     ) {
