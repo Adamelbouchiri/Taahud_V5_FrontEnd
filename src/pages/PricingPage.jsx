@@ -38,7 +38,8 @@ const GROUPS = ['highlights', 'services', 'tools'];
 // Roles shown with their plans but not open for subscription yet.
 const SOON_ROLES = ['supplier'];
 const RASD_POINTS = ['planning', 'roles', 'contacts'];
-// Monthly list prices, shown until the catalog's `addons` land.
+// Monthly list prices, shown until the catalog's `addons` land. رصد
+// has no fallback — its price is shown only when the backend sends it.
 const ADDON_FALLBACK_PRICES = { isnad_addon: 999, solidarity_addon: 799 };
 
 export default function PricingPage() {
@@ -241,12 +242,17 @@ function FeaturePanels({ role, tier, catalog, t, soon }) {
   );
 }
 
-/* «إضافات وخدمات مستقلة»: رصد (priced by quote, leads to the landing
-   callback form), ساحة إسناد (an add-on to a plan) and تضامن (bought
+/* «إضافات وخدمات مستقلة»: رصد (backend price; register interest, plus
+   subscribe when the catalog returns the plan), ساحة إسناد (an add-on to a plan) and تضامن (bought
    on its own), then the refund guarantee. Add-on prices come from the
    catalog's `addons`, with the list prices as fallback. */
 function AddonsSection({ catalog, lang, t, onNavigate, onStart }) {
   const price = (code) => formatPrice(catalog.addon(code)?.price ?? ADDON_FALLBACK_PRICES[code], lang);
+  // رصد: price straight from the catalog. "Register interest" is always
+  // offered; "subscribe" sits beside it only when the catalog returned
+  // the plan (the catalog lists active plans only).
+  const rasd = catalog.addon('rasd_addon');
+  const rasdBundled = catalog.addon('rasd_addon_bundled');
   const cards = [
     {
       key: 'isnad',
@@ -290,12 +296,35 @@ function AddonsSection({ catalog, lang, t, onNavigate, onStart }) {
             </ul>
             <div className="pr-ad-foot">
               <div className="pr-ad-price">
-                <strong className="font-display">{t('pricing.products.rows.rasd.price')}</strong>
-                <small>{t('pricing.products.rows.rasd.priceNote')}</small>
+                {rasd ? (
+                  <>
+                    <strong className="font-display">{formatPrice(rasd.price, lang)}</strong>
+                    <small>
+                      {t('pricing.products.rows.rasd.priceNote')}
+                      {rasdBundled &&
+                        ` · ${t('pricing.products.rows.rasd.bundledNote', {
+                          bundled: formatPrice(rasdBundled.price, lang),
+                        })}`}
+                    </small>
+                  </>
+                ) : (
+                  <strong className="font-display">{t('rasd.plan.priceOnRequest')}</strong>
+                )}
               </div>
-              <button type="button" className="pr-ad-btn" onClick={() => onNavigate(RASD_CTA_ROUTE)}>
-                {t('pricing.products.rows.rasd.cta')}
-              </button>
+              <div className="pr-ad-btns">
+                {rasd && (
+                  <button type="button" className="pr-ad-btn" onClick={onStart}>
+                    {t('pricing.products.rows.rasd.subscribeCta')}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`pr-ad-btn${rasd ? ' ghost' : ''}`}
+                  onClick={() => onNavigate(RASD_CTA_ROUTE)}
+                >
+                  {t('pricing.products.rows.rasd.cta')}
+                </button>
+              </div>
             </div>
           </article>
 
@@ -695,6 +724,10 @@ const PRICING_CSS = `
   .pr-ad.rasd .pr-ad-btn { background: #a77f33; }
   .pr-ad.rasd .pr-ad-btn:hover { background: #8a6d2f; }
   .pr-ad-btn:focus-visible { outline: 2px solid var(--bg-ink-deep); outline-offset: 2px; }
+  .pr-ad.rasd .pr-ad-foot { flex-wrap: wrap; }
+  .pr-ad-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pr-ad.rasd .pr-ad-btn.ghost { background: transparent; color: #a77f33; box-shadow: inset 0 0 0 1px #a77f33; }
+  .pr-ad.rasd .pr-ad-btn.ghost:hover { background: rgba(167,127,51,0.08); }
   .pr-guarantee {
     display: flex;
     align-items: center;
@@ -842,7 +875,7 @@ function StatusBanner({ tone, icon: Icon, title, body, actionLabel, onAction }) 
 function formatPlanDate(d, lang) {
   if (!d) return '';
   try {
-    const locale = lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+    const locale = `${lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA'}-u-nu-latn`;
     return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(
       new Date(d)
     );

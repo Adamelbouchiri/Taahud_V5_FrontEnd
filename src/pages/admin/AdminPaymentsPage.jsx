@@ -107,7 +107,7 @@ export default function AdminPaymentsPage() {
     (n) => {
       if (n == null || Number.isNaN(n)) return '—';
       try {
-        return new Intl.NumberFormat(lang || undefined).format(n);
+        return new Intl.NumberFormat(`${lang || 'en'}-u-nu-latn`).format(n);
       } catch {
         return String(n);
       }
@@ -120,7 +120,7 @@ export default function AdminPaymentsPage() {
       if (num == null || Number.isNaN(num)) return '—';
       let body;
       try {
-        body = new Intl.NumberFormat(lang || undefined, { maximumFractionDigits: 2 }).format(num);
+        body = new Intl.NumberFormat(`${lang || 'en'}-u-nu-latn`, { maximumFractionDigits: 2 }).format(num);
       } catch {
         body = String(num);
       }
@@ -132,7 +132,7 @@ export default function AdminPaymentsPage() {
     (iso) => {
       if (!iso) return '—';
       try {
-        return new Intl.DateTimeFormat(lang || undefined, { dateStyle: 'medium' }).format(new Date(iso));
+        return new Intl.DateTimeFormat(`${lang || 'en'}-u-nu-latn`, { dateStyle: 'medium' }).format(new Date(iso));
       } catch {
         return iso;
       }
@@ -143,7 +143,7 @@ export default function AdminPaymentsPage() {
     (iso) => {
       if (!iso) return '—';
       try {
-        return new Intl.DateTimeFormat(lang || undefined, {
+        return new Intl.DateTimeFormat(`${lang || 'en'}-u-nu-latn`, {
           dateStyle: 'medium',
           timeStyle: 'short',
         }).format(new Date(iso));

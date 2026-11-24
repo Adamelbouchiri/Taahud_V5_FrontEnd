@@ -27,7 +27,7 @@ import {
  *  AdminUserDetailPage — /admin/users/:id
  *
  *  Shows the user's profile + 4 moderation actions:
- *    1. Edit profile (name / email / city / account_type)
+ *    1. Edit profile (name / email / phone / city / specialty / account_type)
  *    2. Suspend / Unsuspend  (reason required for suspend)
  *    3. Force verify phone
  *    4. Force password reset → new password shown ONCE
@@ -57,7 +57,9 @@ export default function AdminUserDetailPage() {
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
+    phone: '',
     city: '',
+    specialty: '',
     account_type: '',
   });
 
@@ -71,7 +73,9 @@ export default function AdminUserDetailPage() {
       setEditForm({
         name: u?.name || '',
         email: u?.email || '',
+        phone: u?.phone || '',
         city: u?.city || '',
+        specialty: u?.specialty || '',
         account_type: u?.account_type || '',
       });
     } catch (err) {
@@ -435,11 +439,30 @@ export default function AdminUserDetailPage() {
             />
           </div>
           <div>
+            <label className="field-label">{t('admin.users.detail.fields.phone')}</label>
+            <input
+              type="tel"
+              dir="ltr"
+              className="field field-no-icon"
+              value={editForm.phone}
+              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+            />
+          </div>
+          <div>
             <label className="field-label">{t('admin.users.detail.fields.city')}</label>
             <input
               className="field field-no-icon"
               value={editForm.city}
               onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="field-label">{t('admin.users.detail.fields.specialty')}</label>
+            <input
+              className="field field-no-icon"
+              maxLength={255}
+              value={editForm.specialty}
+              onChange={(e) => setEditForm({ ...editForm, specialty: e.target.value })}
             />
           </div>
           <div>

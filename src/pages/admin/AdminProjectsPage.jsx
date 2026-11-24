@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import { admin } from '../../services';
 import { ARENAS } from '../../config/projectConstants';
@@ -58,7 +58,10 @@ export default function AdminProjectsPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [arena, setArena] = useState('');
-  const [status, setStatus] = useState('');
+  // Seeded from ?status= so the overview's pending-review links land
+  // on a pre-filtered list.
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState(searchParams.get('status') || '');
   const [type, setType] = useState('');
   const [city, setCity] = useState('');
   // Owner lookup is by the user's human-readable identifier

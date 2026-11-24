@@ -1095,7 +1095,7 @@ function AddonRow({ t, icon: Icon, accent, accentBg, labelKey, bodyKey }) {
 
 function formatAmount(n, lang) {
   if (n == null || Number.isNaN(n)) return '';
-  const locale = lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+  const locale = `${lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA'}-u-nu-latn`;
   try {
     return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(n);
   } catch {
@@ -1112,8 +1112,7 @@ function currencyLabel(currency, lang) {
 function formatRenewDate(d, lang) {
   if (!d) return '';
   try {
-    const locale =
-      lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+    const locale = `${lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA'}-u-nu-latn`;
     return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'short',

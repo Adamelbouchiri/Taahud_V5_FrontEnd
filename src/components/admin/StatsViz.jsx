@@ -33,6 +33,12 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 /* ---------- helpers ---------- */
 
+// Admin stats always render Western digits (0-9), even in Arabic —
+// a bare 'ar' locale would give Arabic-Indic numerals.
+function latn(lang) {
+  return `${lang || 'en'}-u-nu-latn`;
+}
+
 function fmtDelta(value, lang) {
   if (value == null) return { text: '—', tone: 'muted' };
   const rounded = Math.round(value * 10) / 10;
@@ -41,7 +47,7 @@ function fmtDelta(value, lang) {
   // thousands of percent (e.g. "+4,900%") on a platform grown since launch.
   let num;
   try {
-    num = new Intl.NumberFormat(lang || undefined, { maximumFractionDigits: 1 }).format(rounded);
+    num = new Intl.NumberFormat(latn(lang), { maximumFractionDigits: 1 }).format(rounded);
   } catch {
     num = String(rounded);
   }
@@ -61,7 +67,7 @@ function deltaColor(tone) {
 function fmtMonthYear(iso, lang) {
   if (!iso) return '';
   try {
-    return new Intl.DateTimeFormat(lang || undefined, {
+    return new Intl.DateTimeFormat(latn(lang), {
       month: 'short',
       year: 'numeric',
     }).format(new Date(iso));
@@ -73,7 +79,7 @@ function fmtMonthYear(iso, lang) {
 function fmtNumber(n, lang) {
   if (n == null) return '—';
   try {
-    return new Intl.NumberFormat(lang || undefined).format(n);
+    return new Intl.NumberFormat(latn(lang)).format(n);
   } catch {
     return String(n);
   }
@@ -84,7 +90,7 @@ function fmtMonthLabel(yyyymm, lang) {
   try {
     const [y, m] = yyyymm.split('-').map(Number);
     if (!y || !m) return yyyymm;
-    return new Intl.DateTimeFormat(lang || undefined, {
+    return new Intl.DateTimeFormat(latn(lang), {
       month: 'short',
       year: 'numeric',
     }).format(new Date(y, m - 1, 1));

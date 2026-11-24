@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminTopbar from './AdminTopbar';
 import { UserProvider } from '../../contexts/UserContext';
+import { AdminBadgesProvider } from '../../contexts/AdminBadgesContext';
 
 /* ============================================================
  *  AdminLayout — shell for every page under /admin/*.
@@ -22,6 +23,7 @@ export default function AdminLayout() {
 
   return (
     <UserProvider>
+      <AdminBadgesProvider>
       <div
         className="min-h-screen"
         style={{ background: 'var(--bg-canvas)' }}
@@ -37,6 +39,7 @@ export default function AdminLayout() {
           </main>
         </div>
       </div>
+      </AdminBadgesProvider>
     </UserProvider>
   );
 }

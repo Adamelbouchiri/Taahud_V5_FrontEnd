@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   X,
   RefreshCw,
+  Radar,
 } from 'lucide-react';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -114,15 +115,17 @@ export default function SubscribePage() {
   // access). Two-pass detection: an explicit `is_addon === false`
   // wins, otherwise fall back to anything without `is_addon === true`
   // (covers BE responses where `plan` is trimmed and `is_addon` is
-  // undefined). Last resort: take the first active sub so a stray
-  // shape mismatch doesn't hide the user's real subscription.
+  // undefined). Add-ons never count as the base subscription.
   const activeSubs = status?.active_subscriptions || [];
   const baseSub =
     activeSubs.find((s) => s.plan && s.plan.is_addon === false) ||
-    activeSubs.find((s) => !s.plan?.is_addon) ||
-    activeSubs[0] ||
+    // Never fall back onto a known add-on — a رصد-only subscriber would
+    // otherwise see رصد in the base-plan banner with its cancel button.
+    activeSubs.find((s) => !s.plan?.is_addon && !isRasdPlan(s.plan?.code)) ||
     null;
   const hasBaseSub = !!baseSub;
+  // The user's active رصد subscription (standalone or bundled), if any.
+  const rasdSub = activeSubs.find((s) => isRasdPlan(s.plan?.code)) || null;
   // Arena add-ons owned by the user (isnad / solidarity), resolved from
   // active subscriptions. OR in the legacy has_isnad_addon boolean.
   const ownedAddons = deriveArenaAddons(status);
@@ -274,6 +277,32 @@ export default function SubscribePage() {
             chipBg="rgba(184,134,42,0.14)"
             labelKey="subscribe.profile.solidarityAddon.label"
             bodyKey="subscribe.profile.solidarityAddon.body"
+          />
+        )}
+        {rasdSub && (
+          <AddonBanner
+            t={t}
+            icon={Radar}
+            accent="#a77f33"
+            accentBg="rgba(167,127,51,0.06)"
+            accentBorder="rgba(167,127,51,0.30)"
+            chipBg="rgba(167,127,51,0.14)"
+            labelKey="subscribe.profile.rasdAddon.label"
+            bodyKey="subscribe.profile.rasdAddon.body"
+            detail={
+              rasdSub.current_period_ends_at
+                ? t(
+                    rasdSub.canceled_at
+                      ? 'subscribe.profile.rasdAddon.canceledPending'
+                      : 'subscribe.profile.rasdAddon.period',
+                    { date: formatDate(rasdSub.current_period_ends_at, lang) }
+                  )
+                : ''
+            }
+            action={{
+              label: t('subscribe.profile.rasdAddon.open'),
+              onClick: () => navigate('/rasd'),
+            }}
           />
         )}
 
@@ -620,10 +649,12 @@ function AddonBanner({
   chipBg,
   labelKey,
   bodyKey,
+  detail,
+  action,
 }) {
   return (
     <div
-      className="mb-7 rounded-[16px] flex items-start gap-3 animate-fade-up"
+      className="mb-7 rounded-[16px] flex items-start gap-3 flex-wrap sm:flex-nowrap animate-fade-up"
       style={{
         background: accentBg,
         border: `1px solid ${accentBorder}`,
@@ -666,7 +697,31 @@ function AddonBanner({
         <div style={{ fontSize: 13, color: 'var(--text-ink-soft)' }}>
           {t(bodyKey)}
         </div>
+        {detail && (
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>
+            {detail}
+          </div>
+        )}
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="inline-flex items-center justify-center gap-1.5 font-semibold flex-shrink-0 self-center"
+          style={{
+            fontSize: 13,
+            padding: '8px 14px',
+            borderRadius: 9,
+            background: accent,
+            color: '#fff',
+            border: `1px solid ${accent}`,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
@@ -777,8 +832,12 @@ function PlanSection({
           // user already owns (by plan.code) — so owning isnad doesn't
           // lock the solidarity card and vice-versa.
           const lockedByOtherBase = !forceAddon && hasBaseSub && !isActive;
-          const lockedByAddon =
-            forceAddon && !!ownedAddons[plan.code] && !isActive;
+          // The two رصد plans grant the same access — owning either
+          // locks both.
+          const ownsAddon = isRasdPlan(plan.code)
+            ? [...activeSubByPlanId.values()].some((s) => isRasdPlan(s.plan?.code))
+            : !!ownedAddons[plan.code];
+          const lockedByAddon = forceAddon && ownsAddon && !isActive;
           const disabled = lockedByOtherBase || lockedByAddon;
           return (
             <PlanCard
@@ -836,10 +895,9 @@ function PlanCard({
   });
   const price = formatPrice(plan.price, plan.currency, lang);
   const months = plan.billing_interval_months || 1;
-  /* رصد is sold by conversation, not by checkout — so its cards show
-     no figure and no "subscribe" button. Printing a price beside a
-     button that doesn't charge it would be quoting a number nobody
-     has agreed to. See RASD_CTA_ROUTE. */
+  /* رصد checks out like any add-on, with a "register interest" button
+     beside "subscribe" that leads to the landing callback form. The
+     card only exists when the backend returned the plan. */
   const isRasd = isRasdPlan(plan.code);
 
   return (
@@ -903,36 +961,22 @@ function PlanCard({
           `${months} ${t('common.months')}`}
       </div>
 
-      {isRasd ? (
-        <div
-          className="mb-3"
+      <div className="flex items-baseline gap-2 mb-3">
+        <span
+          className="font-display"
           style={{
-            fontSize: 14,
+            fontSize: 26,
             fontWeight: 700,
             color: 'var(--text-brand-deep)',
-            lineHeight: 1.4,
+            lineHeight: 1,
           }}
         >
-          {t('rasd.plan.priceOnRequest')}
-        </div>
-      ) : (
-        <div className="flex items-baseline gap-2 mb-3">
-          <span
-            className="font-display"
-            style={{
-              fontSize: 26,
-              fontWeight: 700,
-              color: 'var(--text-brand-deep)',
-              lineHeight: 1,
-            }}
-          >
-            {price}
-          </span>
-          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-            {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
-          </span>
-        </div>
-      )}
+          {price}
+        </span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+          {plan.currency || 'SAR'} · {t(`subscribe.page.periodLabels.${months}`)}
+        </span>
+      </div>
 
       {description && (
         <p
@@ -976,25 +1020,7 @@ function PlanCard({
 
       <div className="mt-auto flex flex-col gap-2">
         {error && <InlineError compact message={error} />}
-        {isRasd && !isActive ? (
-          /* Not a checkout — the رصد section's callback form. */
-          <button
-            type="button"
-            onClick={() => navigate(RASD_CTA_ROUTE)}
-            className="inline-flex items-center justify-center gap-2 rounded-[10px] text-white font-semibold transition-all"
-            style={{
-              padding: '11px 14px',
-              fontSize: 13.5,
-              background: accent,
-              border: `1px solid ${accent}`,
-              cursor: 'pointer',
-              boxShadow: `0 6px 14px ${accent}40`,
-              fontFamily: 'inherit',
-            }}
-          >
-            {t('rasd.plan.cta')}
-          </button>
-        ) : isActive ? (
+        {isActive ? (
           <div
             className="inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold"
             style={{
@@ -1009,33 +1035,54 @@ function PlanCard({
             {t('subscribe.page.activeChip')}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={onSubscribe}
-            disabled={disabled || busy}
-            className="inline-flex items-center justify-center gap-2 rounded-[10px] text-white font-semibold transition-all"
-            style={{
-              padding: '11px 14px',
-              fontSize: 13.5,
-              background: disabled ? '#8a8ca5' : accent,
-              border: `1px solid ${disabled ? '#8a8ca5' : accent}`,
-              cursor: disabled ? 'not-allowed' : busy ? 'wait' : 'pointer',
-              boxShadow: disabled
-                ? 'none'
-                : `0 6px 14px ${accent}40`,
-              opacity: disabled ? 0.85 : 1,
-              fontFamily: 'inherit',
-            }}
-          >
-            {busy ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                {t('subscribe.page.processing')}
-              </>
-            ) : (
-              t('subscribe.page.subscribeCta')
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onSubscribe}
+              disabled={disabled || busy}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-[10px] text-white font-semibold transition-all"
+              style={{
+                padding: '11px 14px',
+                fontSize: 13.5,
+                background: disabled ? '#8a8ca5' : accent,
+                border: `1px solid ${disabled ? '#8a8ca5' : accent}`,
+                cursor: disabled ? 'not-allowed' : busy ? 'wait' : 'pointer',
+                boxShadow: disabled
+                  ? 'none'
+                  : `0 6px 14px ${accent}40`,
+                opacity: disabled ? 0.85 : 1,
+                fontFamily: 'inherit',
+              }}
+            >
+              {busy ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  {t('subscribe.page.processing')}
+                </>
+              ) : (
+                t('subscribe.page.subscribeCta')
+              )}
+            </button>
+            {isRasd && (
+              /* Not a checkout — the رصد section's callback form. */
+              <button
+                type="button"
+                onClick={() => navigate(RASD_CTA_ROUTE)}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold transition-all"
+                style={{
+                  padding: '11px 14px',
+                  fontSize: 13.5,
+                  background: 'transparent',
+                  color: accent,
+                  border: `1px solid ${accent}`,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {t('rasd.plan.cta')}
+              </button>
             )}
-          </button>
+          </div>
         )}
       </div>
     </article>
@@ -1240,10 +1287,11 @@ function pickDescription(plan, lang) {
   return plan.description_ar || '';
 }
 
+// Prices and dates on this page are always Western digits (0-9).
 function localeFor(lang) {
-  if (lang === 'en') return 'en-US';
-  if (lang === 'zh') return 'zh-CN';
-  return 'ar-SA';
+  if (lang === 'en') return 'en-US-u-nu-latn';
+  if (lang === 'zh') return 'zh-CN-u-nu-latn';
+  return 'ar-SA-u-nu-latn';
 }
 
 function formatPrice(price, currency, lang) {

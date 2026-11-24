@@ -24,6 +24,7 @@ import {
 import Logo from '../Logo';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
+import { useAdminBadges, QUEUE_SECTIONS } from '../../contexts/AdminBadgesContext';
 
 /* ============================================================
  *  AdminSidebar
@@ -40,15 +41,15 @@ import { useTranslation } from '../../i18n/LanguageContext';
 
 const NAV_ITEMS = [
   { to: '/admin', labelKey: 'admin.sidebar.items.overview', icon: ShieldCheck, end: true, roles: ['admin', 'super-admin'] },
-  { to: '/admin/users', labelKey: 'admin.sidebar.items.users', icon: Users, roles: ['admin', 'super-admin'] },
-  { to: '/admin/projects', labelKey: 'admin.sidebar.items.projects', icon: FolderKanban, roles: ['admin', 'super-admin'] },
-  { to: '/admin/applications', labelKey: 'admin.sidebar.items.applications', icon: ClipboardList, roles: ['admin', 'super-admin'] },
+  { to: '/admin/users', labelKey: 'admin.sidebar.items.users', icon: Users, badge: 'users', roles: ['admin', 'super-admin'] },
+  { to: '/admin/projects', labelKey: 'admin.sidebar.items.projects', icon: FolderKanban, badge: 'projects', roles: ['admin', 'super-admin'] },
+  { to: '/admin/applications', labelKey: 'admin.sidebar.items.applications', icon: ClipboardList, badge: 'offers', roles: ['admin', 'super-admin'] },
   { to: '/admin/partnerships', labelKey: 'admin.sidebar.items.partnerships', icon: Handshake, roles: ['admin', 'super-admin'] },
-  { to: '/admin/partner-applications', labelKey: 'admin.sidebar.items.partners', icon: Store, roles: ['admin', 'super-admin'] },
+  { to: '/admin/partner-applications', labelKey: 'admin.sidebar.items.partners', icon: Store, badge: 'partners', roles: ['admin', 'super-admin'] },
   { to: '/admin/brokers', labelKey: 'admin.sidebar.items.brokers', icon: UserCheck, roles: ['admin', 'super-admin'] },
   { to: '/admin/opportunities', labelKey: 'admin.sidebar.items.opportunities', icon: Target, roles: ['admin', 'super-admin'] },
-  { to: '/admin/rasd', labelKey: 'admin.sidebar.items.rasd', icon: Radar, roles: ['admin', 'super-admin'] },
-  { to: '/admin/subscriptions', labelKey: 'admin.sidebar.items.subscriptions', icon: CreditCard, roles: ['admin', 'super-admin'] },
+  { to: '/admin/rasd', labelKey: 'admin.sidebar.items.rasd', icon: Radar, badge: 'rasd', roles: ['admin', 'super-admin'] },
+  { to: '/admin/subscriptions', labelKey: 'admin.sidebar.items.subscriptions', icon: CreditCard, badge: 'subscriptions', roles: ['admin', 'super-admin'] },
   { to: '/admin/payments', labelKey: 'admin.sidebar.items.payments', icon: Receipt, roles: ['admin', 'super-admin'] },
   { to: '/admin/withdrawals', labelKey: 'admin.sidebar.items.withdrawals', icon: Banknote, roles: ['admin', 'super-admin'] },
   { to: '/admin/plans', labelKey: 'admin.sidebar.items.plans', icon: Package, roles: ['admin', 'super-admin'] },
@@ -60,6 +61,7 @@ export default function AdminSidebar({ open, onClose }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, roles, logout, isSuperAdmin } = useUser();
+  const { badges } = useAdminBadges();
 
   const items = NAV_ITEMS.filter((it) =>
     it.roles.some((r) => roles.includes(r))
@@ -201,7 +203,16 @@ export default function AdminSidebar({ open, onClose }) {
                     }
                   >
                     <item.icon size={17} strokeWidth={1.75} />
-                    <span>{t(item.labelKey)}</span>
+                    <span className="flex-1 truncate">{t(item.labelKey)}</span>
+                    <NavBadge
+                      count={item.badge ? badges?.[item.badge] : 0}
+                      queue={QUEUE_SECTIONS.includes(item.badge)}
+                      title={
+                        QUEUE_SECTIONS.includes(item.badge)
+                          ? t('admin.overview.whatsNew.badgeQueueHint')
+                          : t('admin.overview.whatsNew.badgeActivityHint')
+                      }
+                    />
                   </NavLink>
                 </li>
               ))}
@@ -321,6 +332,28 @@ export default function AdminSidebar({ open, onClose }) {
             background: rgba(44,47,124,0.10);
           }
 
+          .taahud-admin-sidebar .admin-nav-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+            color: #fff;
+            background: var(--accent-primary);
+          }
+          .taahud-admin-sidebar .admin-nav-badge.is-queue {
+            color: #8a6418;
+            background: rgba(184,134,42,0.16);
+            border: 1px solid rgba(184,134,42,0.32);
+          }
+
           .taahud-admin-sidebar .admin-soon-pill {
             display: inline-flex;
             align-items: center;
@@ -337,5 +370,17 @@ export default function AdminSidebar({ open, onClose }) {
         `}</style>
       </aside>
     </>
+  );
+}
+
+/* Hidden at 0 per the overview doc. Activity counts are solid indigo;
+   queue counts (projects / partners) are amber outline — they mean
+   "work waiting", and reading the section doesn't clear them. */
+function NavBadge({ count, queue, title }) {
+  if (!count || count <= 0) return null;
+  return (
+    <span className={`admin-nav-badge${queue ? ' is-queue' : ''}`} title={title}>
+      {count > 99 ? '99+' : count}
+    </span>
   );
 }

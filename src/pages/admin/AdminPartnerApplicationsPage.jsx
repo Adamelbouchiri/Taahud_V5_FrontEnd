@@ -11,6 +11,7 @@ import {
   Copy,
   CheckCheck,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { admin } from '../../services';
 import { useUser } from '../../contexts/UserContext';
 import { useTranslation } from '../../i18n/LanguageContext';
@@ -69,7 +70,10 @@ export default function AdminPartnerApplicationsPage() {
   const { isSuperAdmin } = useUser();
 
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  // Seeded from ?status= (the overview's partner-requests card links
+  // to ?status=pending).
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState(searchParams.get('status') || '');
   const [sector, setSector] = useState('');
   const [archived, setArchived] = useState(''); // '' | 'with' | 'only'
   const [page, setPage] = useState(1);

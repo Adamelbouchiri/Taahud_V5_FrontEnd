@@ -20,6 +20,8 @@ import { useTranslation } from '../../i18n/LanguageContext';
 import { ARENAS } from '../../config/projectConstants';
 import { PageHeader, Card } from '../../components/admin/AdminUI';
 import { KpiCard, LineChart, BarList } from '../../components/admin/StatsViz';
+import OverviewWhatsNew from '../../components/admin/OverviewWhatsNew';
+import { useAdminBadges } from '../../contexts/AdminBadgesContext';
 
 /* ============================================================
  *  AdminOverviewPage — landing screen at /admin.
@@ -68,6 +70,8 @@ export default function AdminOverviewPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { refresh: refreshBadges } = useAdminBadges();
 
   const load = async () => {
     setLoading(true);
@@ -153,7 +157,7 @@ export default function AdminOverviewPage() {
   const fmtTime = (iso) => {
     if (!iso) return '';
     try {
-      return new Intl.DateTimeFormat(lang || undefined, {
+      return new Intl.DateTimeFormat(`${lang || 'en'}-u-nu-latn`, {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(new Date(iso));
@@ -218,7 +222,11 @@ export default function AdminOverviewPage() {
             type="button"
             className="btn-secondary"
             style={{ width: 'auto', padding: '10px 16px' }}
-            onClick={load}
+            onClick={() => {
+              load();
+              refreshBadges();
+              setRefreshKey((k) => k + 1);
+            }}
             disabled={loading}
           >
             <RefreshCw size={14} />
@@ -226,6 +234,17 @@ export default function AdminOverviewPage() {
           </button>
         }
       />
+
+      {/* «الجديد» — activity since the window + the two work queues.
+          Sits above the platform-wide stats, which stay on /admin/stats. */}
+      <OverviewWhatsNew refreshKey={refreshKey} />
+
+      <div
+        className="font-semibold uppercase mb-3 px-1"
+        style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--text-muted)' }}
+      >
+        {t('admin.overview.whatsNew.sectionStats')}
+      </div>
 
       {/* Snapshot timestamp */}
       {stats?.generated_at && (
@@ -583,7 +602,7 @@ function KpiSkeleton() {
 function MetricRow({ label, value, hint, lang }) {
   const display =
     typeof value === 'number'
-      ? new Intl.NumberFormat(lang || undefined).format(value)
+      ? new Intl.NumberFormat(`${lang || 'en'}-u-nu-latn`).format(value)
       : value;
   return (
     <li className="flex items-center justify-between gap-3">

@@ -1586,9 +1586,10 @@ export default {
           title: 'RASD Projects',
           desc: 'Reports on construction and real-estate development projects, their companies and decision makers, with alerts for your regions and sectors.',
           audience: 'Contractors · Engineering offices · Suppliers · Developers',
-          price: 'Quote',
-          priceNote: 'Based on activity and number of users',
+          priceNote: 'SAR / year',
+          bundledNote: '{bundled} SAR with a Taahud plan',
           cta: 'Register interest',
+          subscribeCta: 'Subscribe now',
         },
         solidarity: {
           title: 'Solidarity',
@@ -1610,8 +1611,8 @@ export default {
     },
     addons: {
       title: 'Add-ons & standalone services',
-      subtitle: 'Isnad Arena adds on to your plan, Solidarity can be bought without a plan, and RASD is priced to your activity.',
-      badges: { rasd: 'On request', isnad: 'Adds to your plan', solidarity: 'No plan needed' },
+      subtitle: 'Isnad Arena adds on to your plan, Solidarity can be bought without a plan, and RASD is a yearly subscription, cheaper for plan subscribers.',
+      badges: { rasd: 'Yearly', isnad: 'Adds to your plan', solidarity: 'No plan needed' },
       rasdDesc: 'Reports on projects, companies and decision makers in the construction and real-estate market — the opportunity reaches you before it is tendered.',
       rasdPoints: {
         planning: 'Projects in planning and pre-tender',
@@ -3819,6 +3820,43 @@ export default {
         empty: 'No data available yet.',
         retry: 'Try again',
       },
+      whatsNew: {
+        title: "What's new",
+        subtitle: 'Fresh activity on the platform, and what is waiting on you.',
+        sectionStats: 'Platform metrics',
+        windows: { today: 'Today', '3d': 'Last 3 days', '7d': 'Last week' },
+        markAllRead: 'Mark all as read',
+        markAllHint: "Projects and partner-request badges stay until they're handled — marking read doesn't clear them.",
+        badgeActivityHint: 'New activity since your last visit',
+        badgeQueueHint: "Awaiting action — stays until it's handled",
+        oldestWaiting: 'Oldest project awaiting review was submitted {ago}, {count} in the queue',
+        review: 'Review now',
+        activityNote: 'In the selected period',
+        queueNote: 'Everything waiting · oldest first',
+        viewAll: 'View all',
+        revenue: 'Revenue: {amount}',
+        guestApplicant: 'Guest (no account)',
+        rasdNew: 'Added in this period',
+        rasdActive: 'Active projects',
+        cards: {
+          newUsers: 'New users',
+          projectsPending: 'Projects awaiting review',
+          newOffers: 'New offers',
+          newSubscriptions: 'New subscriptions',
+          partnerRequests: 'Partner requests',
+          rasd: 'Rasd',
+        },
+        empty: {
+          activity: 'Nothing new in this period.',
+          queue: 'Nothing waiting — the queue is clear.',
+        },
+        subStatus: {
+          trialing: 'Trial',
+          canceled: 'Canceled',
+          past_due: 'Past due',
+          expired: 'Expired',
+        },
+      },
       cards: {
         users: 'Users',
         usersDesc: 'Search the directory, suspend abusive accounts, force phone verification or password resets.',
@@ -3845,6 +3883,11 @@ export default {
       eyebrow: 'Operations · Users',
       title: 'Users',
       subtitle: 'Find any account, review status, take moderation action.',
+      export: 'Export CSV',
+      exporting: 'Exporting…',
+      exportHint: 'Downloads every user matching the current filters',
+      exportRoleNote: 'The role filter is not applied to the export.',
+      exportError: 'Export failed. Try again.',
       filters: {
         accountType: 'Account type',
         suspendedAll: 'All accounts',
@@ -4095,6 +4138,18 @@ export default {
         applicationsCount: 'Applications',
         actions: {
           override: 'Override decision',
+          edit: 'Edit offer',
+        },
+        edit: {
+          title: 'Edit offer',
+          description:
+            "Correct the offer's amount, delivery date or text. Status isn't changed here — use Override for that.",
+          current: 'Current',
+          budgetWarning:
+            "This offer is accepted — changing its amount will also update the project's budget to the new figure.",
+          noChanges: 'Change at least one field to save.',
+          confirm: 'Save changes',
+          done: 'Offer updated.',
         },
         override: {
           title: 'Override application',
@@ -4890,6 +4945,13 @@ export default {
       solidarityAddon: {
         label: 'Solidarity add-on active',
         body: 'You have access to the Solidarity arena.',
+      },
+      rasdAddon: {
+        label: 'RASD subscription active',
+        body: 'You have access to RASD project, company and decision-maker reports.',
+        period: 'Renews on {date}',
+        canceledPending: 'Renewal canceled — RASD stays available until {date}',
+        open: 'Open RASD',
       },
     },
   },

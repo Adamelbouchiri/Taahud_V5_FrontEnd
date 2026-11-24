@@ -177,7 +177,8 @@ export function tierFeatureList(entry) {
 export function formatPrice(price, lang) {
   const n = typeof price === 'string' ? parseFloat(price) : price;
   if (n == null || Number.isNaN(n)) return String(price ?? '');
-  const locale = lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA';
+  // Prices are always Western digits (0-9), in every language.
+  const locale = `${lang === 'en' ? 'en-US' : lang === 'zh' ? 'zh-CN' : 'ar-SA'}-u-nu-latn`;
   try {
     return new Intl.NumberFormat(locale, {
       minimumFractionDigits: 0,

@@ -40,6 +40,8 @@ import http from './http';
  *    GET    /admin/applications/:id             show (+ full applicant & the
  *                                               admin-rich project)
  *    POST   /admin/applications/:id/override    { reason }
+ *    PATCH  /admin/applications/:id             { bid_amount?, delivery_date?,
+ *                                               cover_letter?, reason }
  *
  *    Partnership requests (Solidarity offers)
  *    GET    /admin/partnership-requests              list (project_id, partner_identifier, status, offering_type, with/only_trashed)
@@ -264,6 +266,38 @@ export const admin = {
 
 
   /* ============================================================
+   * OVERVIEW — the «الجديد» panel + sidebar badges
+   * ----------------------------------------------------------------
+   * ADMIN_OVERVIEW_API.md. Two kinds of badge:
+   *   activity — users / offers / subscriptions / rasd: rows created
+   *              since the admin's last read; markRead() zeroes them.
+   *   queue    — projects / partners: items awaiting action; markRead()
+   *              never touches them (by design, not a bug).
+   *
+   *   GET  /admin/overview/badges           { data: { users, …, partners } }
+   *   POST /admin/overview/read  {section?} → the refreshed badges
+   *   GET  /admin/overview?window=today|3d|7d
+   *        → { data: { window, since, generated_at, cards: {…} } }
+   * ============================================================ */
+  overview: {
+    async badges() {
+      return unwrap(await http.get('/admin/overview/badges'));
+    },
+
+    /** No section = mark ALL activity sections read. Returns the badges. */
+    async markRead(section) {
+      return unwrap(
+        await http.post('/admin/overview/read', section ? { section } : {})
+      );
+    },
+
+    async cards(window = 'today') {
+      return unwrap(await http.get('/admin/overview', { params: { window } }));
+    },
+  },
+
+
+  /* ============================================================
    * USERS
    * ============================================================ */
   users: {
@@ -284,19 +318,68 @@ export const admin = {
       return unwrapPage(await http.get('/admin/users', { params }));
     },
 
+    /** GET /admin/users/export → CSV (BOM-prefixed, streamed).
+     *  Same filters as list() minus role/paging — the BE whitelists
+     *  search / account_type / city / suspended and 422s anything else.
+     *
+     *  The doc says "just open the URL", but our auth is a Bearer token
+     *  in storage, not a cookie, so a bare navigation would 401. We fetch
+     *  the bytes with the token and hand them to the browser as a file.
+     *  Returns a Blob; a 4xx arrives as a Blob too, so decode it into
+     *  the usual error message.
+     */
+    async export(filters = {}) {
+      const params = strip({
+        search: filters.search,
+        account_type: filters.account_type,
+        city: filters.city,
+        suspended: filters.suspended,
+      });
+      try {
+        return await http.get('/admin/users/export', {
+          params,
+          responseType: 'blob',
+          headers: { Accept: 'text/csv' },
+        });
+      } catch (err) {
+        if (err.data instanceof Blob) {
+          try {
+            const body = JSON.parse(await err.data.text());
+            err.message =
+              body?.message ||
+              (body?.errors && Object.values(body.errors).flat()[0]) ||
+              err.message;
+            err.data = body;
+          } catch {
+            /* not JSON — keep the generic message */
+          }
+        }
+        throw err;
+      }
+    },
+
     /** GET /admin/users/:id */
     async get(id) {
       return unwrap(await http.get(`/admin/users/${id}`));
     },
 
-    /** PATCH /admin/users/:id */
+    /** PATCH /admin/users/:id
+     *  name / email / city / account_type / phone / specialty — all
+     *  optional. phone is required-if-present and unique, so an empty
+     *  phone is dropped rather than sent. specialty is nullable: an
+     *  empty value is sent as null so an admin can clear it. */
     async update(id, payload) {
       const body = strip({
         name: payload.name,
         email: payload.email,
         city: payload.city,
         account_type: payload.account_type,
+        phone: typeof payload.phone === 'string' ? payload.phone.trim() : payload.phone,
       });
+      if ('specialty' in payload) {
+        const s = (payload.specialty ?? '').trim();
+        body.specialty = s === '' ? null : s;
+      }
       return unwrap(await http.patch(`/admin/users/${id}`, body));
     },
 
@@ -505,6 +588,20 @@ export const admin = {
     async override(id, reason) {
       return unwrap(
         await http.post(`/admin/applications/${id}/override`, { reason })
+      );
+    },
+
+    /** PATCH /admin/applications/:id
+     *  { bid_amount?, delivery_date?, cover_letter?, reason }
+     *  Corrects the offer's contents — status is NOT editable here
+     *  (that's override()). Send only the fields that changed; an
+     *  empty change set is a 422. Rejected offers can't be edited (422).
+     *  Editing bid_amount on an ACCEPTED offer also moves
+     *  project.budget to the new figure (original_budget untouched).
+     *  Audited as `application.edit` with old/new values. */
+    async update(id, changes, reason) {
+      return unwrap(
+        await http.patch(`/admin/applications/${id}`, { ...changes, reason })
       );
     },
   },

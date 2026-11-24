@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ExternalLink, RefreshCw, Receipt } from 'lucide-react';
+import { ExternalLink, RefreshCw, Receipt, Pencil, AlertTriangle } from 'lucide-react';
 import { admin } from '../../services';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { formatSar } from '../../utils/money';
@@ -79,6 +79,14 @@ export default function AdminApplicationsPage() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
   const [toast, setToast] = useState('');
+
+  // Edit-offer state (PATCH /admin/applications/:id). The form is
+  // seeded from the row on open; only changed fields are sent.
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editForm, setEditForm] = useState({ bid_amount: '', delivery_date: '', cover_letter: '' });
+  const [editReason, setEditReason] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -163,6 +171,56 @@ export default function AdminApplicationsPage() {
       setActionError(err.message || t('admin.common.actionError'));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const current = detail || selected;
+
+  const startEdit = () => {
+    if (!current) return;
+    setEditForm({
+      bid_amount: current.bid_amount != null ? String(current.bid_amount) : '',
+      delivery_date: current.delivery_date ? String(current.delivery_date).slice(0, 10) : '',
+      cover_letter: current.cover_letter || '',
+    });
+    setEditReason('');
+    setEditError('');
+    setOpenEdit(true);
+  };
+
+  // Diff against the row so an untouched field never hits the audit log.
+  const editChanges = useMemo(() => {
+    if (!current) return {};
+    const out = {};
+    const origBid = current.bid_amount != null ? Number(current.bid_amount) : null;
+    if (editForm.bid_amount !== '' && Number(editForm.bid_amount) !== origBid) {
+      out.bid_amount = Number(editForm.bid_amount);
+    }
+    const origDate = current.delivery_date ? String(current.delivery_date).slice(0, 10) : '';
+    if (editForm.delivery_date && editForm.delivery_date !== origDate) {
+      out.delivery_date = editForm.delivery_date;
+    }
+    if (editForm.cover_letter !== (current.cover_letter || '')) {
+      out.cover_letter = editForm.cover_letter;
+    }
+    return out;
+  }, [current, editForm]);
+
+  const handleEdit = async () => {
+    if (!selected) return;
+    setEditBusy(true);
+    setEditError('');
+    try {
+      await admin.applications.update(selected.id, editChanges, editReason);
+      showToast(t('admin.applications.detail.edit.done'));
+      setOpenEdit(false);
+      setEditReason('');
+      load();
+      openDetail(selected); // re-pull the admin-rich view (budget may have moved)
+    } catch (err) {
+      setEditError(err.message || t('admin.common.actionError'));
+    } finally {
+      setEditBusy(false);
     }
   };
 
@@ -345,7 +403,7 @@ export default function AdminApplicationsPage() {
 
       {/* Detail modal */}
       <Modal
-        open={!!selected && !openOverride}
+        open={!!selected && !openOverride && !openEdit}
         onClose={closeDetail}
         title={selected ? `#${selected.id}` : ''}
         width={760}
@@ -359,6 +417,15 @@ export default function AdminApplicationsPage() {
                 onClick={closeDetail}
               >
                 {t('admin.common.close')}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: 'auto', padding: '10px 18px' }}
+                onClick={startEdit}
+              >
+                <Pencil size={14} />
+                {t('admin.applications.detail.actions.edit')}
               </button>
               <button
                 type="button"
@@ -417,7 +484,179 @@ export default function AdminApplicationsPage() {
         busy={busy}
         error={actionError}
       />
+
+      <EditApplicationModal
+        open={openEdit}
+        onClose={() => !editBusy && setOpenEdit(false)}
+        onSubmit={handleEdit}
+        application={current}
+        form={editForm}
+        setForm={setEditForm}
+        changes={editChanges}
+        reason={editReason}
+        setReason={setEditReason}
+        busy={editBusy}
+        error={editError}
+        t={t}
+        lang={lang}
+      />
     </div>
+  );
+}
+
+
+/* ============================================================
+ *  EditApplicationModal — PATCH /admin/applications/:id
+ *  ----------------------------------------------------------------
+ *  Corrects bid / delivery date / cover letter. Status is not here
+ *  (that's override). On an ACCEPTED offer a bid change also moves
+ *  the project's budget — we warn before submit.
+ * ============================================================ */
+function EditApplicationModal({
+  open,
+  onClose,
+  onSubmit,
+  application,
+  form,
+  setForm,
+  changes,
+  reason,
+  setReason,
+  busy,
+  error,
+  t,
+  lang,
+}) {
+  if (!open || !application) return null;
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const hasChanges = Object.keys(changes).length > 0;
+  const reasonOk = reason.trim().length >= 10;
+  const bidInvalid = form.bid_amount !== '' && !(Number(form.bid_amount) >= 0);
+  const movesBudget = application.status === 'accepted' && 'bid_amount' in changes;
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`${t('admin.applications.detail.edit.title')} #${application.id}`}
+      width={560}
+      footer={
+        <>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: 'auto', padding: '10px 18px' }}
+            onClick={onClose}
+            disabled={busy}
+          >
+            {t('admin.common.cancel')}
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ width: 'auto', padding: '10px 18px' }}
+            onClick={onSubmit}
+            disabled={busy || !hasChanges || !reasonOk || bidInvalid}
+          >
+            {busy ? '…' : t('admin.applications.detail.edit.confirm')}
+          </button>
+        </>
+      }
+    >
+      <p
+        className="m-0 mb-4"
+        style={{ fontSize: 13.5, color: 'var(--text-ink-soft)', lineHeight: 1.6 }}
+      >
+        {t('admin.applications.detail.edit.description')}
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="field-label">{t('admin.applications.columns.bid')}</label>
+          <input
+            className="field"
+            type="number"
+            min="0"
+            step="any"
+            inputMode="decimal"
+            value={form.bid_amount}
+            onChange={set('bid_amount')}
+          />
+          {application.bid_amount != null && (
+            <div className="field-hint">
+              {t('admin.applications.detail.edit.current')}:{' '}
+              {formatSar(application.bid_amount, lang, t)}
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="field-label">{t('admin.applications.columns.delivery')}</label>
+          <input
+            className="field"
+            type="date"
+            value={form.delivery_date}
+            onChange={set('delivery_date')}
+          />
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <label className="field-label">{t('admin.applications.detail.coverLetter')}</label>
+        <textarea
+          className="field"
+          rows={5}
+          maxLength={5000}
+          value={form.cover_letter}
+          onChange={set('cover_letter')}
+          style={{ padding: '12px 14px', resize: 'vertical' }}
+        />
+      </div>
+
+      {movesBudget && (
+        <div
+          className="mt-3 p-3 rounded-[10px] flex gap-2"
+          style={{
+            background: 'rgba(180,83,9,0.08)',
+            border: '1px solid rgba(180,83,9,0.22)',
+            color: '#92400e',
+            fontSize: 12.5,
+            lineHeight: 1.55,
+          }}
+        >
+          <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>{t('admin.applications.detail.edit.budgetWarning')}</span>
+        </div>
+      )}
+
+      <div className="mt-3">
+        <label className="field-label">{t('admin.common.reasonLabel')}</label>
+        <textarea
+          className="field"
+          rows={3}
+          placeholder={t('admin.common.reasonPlaceholder')}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          style={{ padding: '12px 14px', resize: 'vertical' }}
+        />
+        {!hasChanges && (
+          <div className="field-hint">{t('admin.applications.detail.edit.noChanges')}</div>
+        )}
+      </div>
+
+      {error && (
+        <div
+          className="p-3 rounded-[10px] mt-3"
+          style={{
+            background: 'rgba(185,28,28,0.06)',
+            border: '1px solid rgba(185,28,28,0.18)',
+            color: 'var(--accent-danger)',
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+    </Modal>
   );
 }
 

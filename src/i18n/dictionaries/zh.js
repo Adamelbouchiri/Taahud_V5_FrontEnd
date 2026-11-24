@@ -1446,8 +1446,8 @@ export default {
     },
     addons: {
       title: '附加服务与独立服务',
-      subtitle: 'Isnad 场域可添加到您的套餐，Solidarity 无需套餐即可购买，RASD 按您的业务定价。',
-      badges: { rasd: '按需报价', isnad: '添加到套餐', solidarity: '无需套餐' },
+      subtitle: 'Isnad 场域可添加到您的套餐，Solidarity 无需套餐即可购买，RASD 为年度订阅，套餐用户享优惠价。',
+      badges: { rasd: '年度订阅', isnad: '添加到套餐', solidarity: '无需套餐' },
       rasdDesc: '建筑与房地产开发市场的项目、企业与决策者报告——在招标之前就掌握机会。',
       rasdPoints: {
         planning: '处于规划和招标前阶段的项目',
@@ -3356,6 +3356,11 @@ export default {
       eyebrow: '运营 · 用户',
       title: '用户',
       subtitle: '查找任意账号,审查状态,执行审核操作。',
+      export: '导出 CSV',
+      exporting: '正在导出…',
+      exportHint: '下载符合当前筛选条件的所有用户',
+      exportRoleNote: '角色筛选不适用于导出。',
+      exportError: '导出失败,请重试。',
       filters: {
         accountType: '账号类型',
         suspendedAll: '所有账号',
@@ -3598,6 +3603,16 @@ export default {
         applicationsCount: '投标数',
         actions: {
           override: '推翻决定',
+          edit: '编辑投标',
+        },
+        edit: {
+          title: '编辑投标',
+          description: '更正投标金额、交付日期或内容。此处不更改状态 — 请使用「推翻决定」。',
+          current: '当前',
+          budgetWarning: '该投标已被接受 — 修改金额也会将项目预算更新为新金额。',
+          noChanges: '至少修改一个字段才能保存。',
+          confirm: '保存修改',
+          done: '投标已更新。',
         },
         override: {
           title: '推翻投标决定',
@@ -4384,6 +4399,13 @@ export default {
       solidarityAddon: {
         label: 'Solidarity 附加包已激活',
         body: '您可访问 Solidarity 专区。',
+      },
+      rasdAddon: {
+        label: 'RASD 订阅已激活',
+        body: '您可访问 RASD 的项目、企业与决策者报告。',
+        period: '将于 {date} 续订',
+        canceledPending: '已取消续订 — RASD 可使用至 {date}',
+        open: '打开 RASD',
       },
     },
   },

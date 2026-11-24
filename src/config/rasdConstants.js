@@ -199,10 +199,10 @@ export function isRasdPlan(code) {
  *    1. ONE destination. The dashboard banner, the broker workspace,
  *       the 403 screen and the two plan cards all route here, so
  *       switching them to a real checkout later is one edit.
- *    2. NO PRICE. A price on a card whose button doesn't charge it is
- *       a quote we haven't made — isRasdPlan() suppresses the figure
- *       on both plan cards, and the copy blocks describe what you get
- *       and who it's for instead of what it costs.
+ *    2. When the backend returns a رصد plan it checks out like any
+ *       add-on, with "register interest" (this route) beside the
+ *       subscribe button. When it doesn't, only this route is offered.
+ *       The price always comes from the backend.
  *
  *  The landing page scrolls to `#rasd` on mount and on hash change,
  *  so this works from anywhere in the app.

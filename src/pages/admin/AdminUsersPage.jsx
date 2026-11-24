@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Download } from 'lucide-react';
 import { admin } from '../../services';
 import { useTranslation } from '../../i18n/LanguageContext';
 import {
@@ -37,6 +37,37 @@ export default function AdminUsersPage() {
   const [data, setData] = useState({ rows: [], meta: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
+
+  // Export = "what I'm looking at now": the current filters go to the
+  // BE as-is. Role isn't an export filter, so it's left out (the hint
+  // under the button says so when a role is selected).
+  const handleExport = async () => {
+    setExporting(true);
+    setError('');
+    try {
+      const blob = await admin.users.export({
+        search: search || undefined,
+        account_type: accountType || undefined,
+        suspended: suspended === '' ? undefined : suspended,
+      });
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      const name = `users-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.csv`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      setError(err.message || t('admin.users.exportError'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,7 +88,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, accountType, suspended, page, t]);
+  }, [search, accountType, suspended, role, page, t]);
 
   // Debounce the search input so we don't spam the BE on every keystroke.
   useEffect(() => {
@@ -189,16 +220,36 @@ export default function AdminUsersPage() {
         title={t('admin.users.title')}
         subtitle={t('admin.users.subtitle')}
         actions={
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ width: 'auto', padding: '10px 16px' }}
-            onClick={load}
-            disabled={loading}
-          >
-            <RefreshCw size={14} />
-            {t('admin.common.refresh')}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: 'auto', padding: '10px 16px' }}
+                onClick={handleExport}
+                disabled={exporting}
+                title={t('admin.users.exportHint')}
+              >
+                <Download size={14} />
+                {exporting ? t('admin.users.exporting') : t('admin.users.export')}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: 'auto', padding: '10px 16px' }}
+                onClick={load}
+                disabled={loading}
+              >
+                <RefreshCw size={14} />
+                {t('admin.common.refresh')}
+              </button>
+            </div>
+            {role && (
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                {t('admin.users.exportRoleNote')}
+              </div>
+            )}
+          </div>
         }
       />
 
